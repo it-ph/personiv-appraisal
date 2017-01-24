@@ -1,0 +1,21 @@
+{
+  "name": "personiv-appraisal",
+  "description": "",
+  "main": "",
+  "authors": [
+    "Marco Paco <marcopaco1230@gmail.com>"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/mcoyevans/personiv-appraisal",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "ngInfiniteScroll": "1.0.0"
+  }
+}
