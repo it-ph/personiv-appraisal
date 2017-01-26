@@ -11,9 +11,11 @@
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// Route::get('/', function () {
+//     return view('welcome');
+// });
+
+Route::get('/', 'HomeController@index');
 
 Auth::routes();
 
@@ -29,6 +31,23 @@ Route::resource('review', 'ReviewController');
 Route::resource('review-behavioral', 'ReviewBehavioralCompetencyController');
 Route::resource('review-goal', 'ReviewGoalController');
 Route::resource('role', 'RolesController');
+Route::resource('user', 'UserController');
 Route::resource('user-role', 'UserRoleController');
 
 Route::post('/pusher/auth', 'PusherController@auth');
+
+/* User Routes */
+Route::group(['prefix' => 'user'], function(){
+	Route::post('check', 'UserController@check');
+	Route::post('check-email', 'UserController@checkEmail');
+	Route::post('change-password', 'UserController@changePassword');
+	Route::post('check-password', 'UserController@checkPassword');
+	Route::post('enlist', 'UserController@enlist');
+	Route::post('logout', 'UserController@logout');
+	Route::post('mark-all-as-read', 'UserController@markAllAsRead');
+	Route::post('mark-as-read', 'UserController@markAsRead');
+	Route::post('notifications', 'UserController@notifications');
+	Route::post('reset-password', 'UserController@resetPassword');
+	Route::post('upload-avatar/{userID}', 'UserController@uploadAvatar');
+	Route::get('avatar/{userID}', 'UserController@avatar');
+});

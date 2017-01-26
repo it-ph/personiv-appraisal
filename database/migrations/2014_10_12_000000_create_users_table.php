@@ -26,6 +26,7 @@ class CreateUsersTable extends Migration
             $table->integer('department_id')->nullable()->unsigned();
             $table->integer('immediate_supervisor_id')->nullable()->unsigned();
             $table->boolean('super_admin');
+            $table->string('avatar_path')->nullable();
             $table->rememberToken();
             $table->timestamps();
             $table->softDeletes();

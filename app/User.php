@@ -34,6 +34,11 @@ class User extends Authenticatable
         return $this->belongsTo('App\User', 'immediate_supervisor_id');
     }
 
+    public function subordinates()
+    {
+        return $this->hasMany('App\User', 'immediate_supervisor_id');
+    }
+
     public function department()
     {
         return $this->belongsTo('App\Department');
@@ -47,5 +52,10 @@ class User extends Authenticatable
     public function account()
     {
         return $this->belongsTo('App\Account');
+    }
+
+    public function roles()
+    {
+        return $this->belongsToMany('App\Role', 'user_roles');
     }
 }

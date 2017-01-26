@@ -26,7 +26,7 @@ class Department extends Model
         return $this->hasMany('App\Account');
     }
 
-    public function appraisal_forms()
+    public function appraisal_periods()
     {
         return $this->belongsToMany('App\AppraisalForm', 'department_appraisal_forms');
     }

@@ -16,6 +16,11 @@
     "tests"
   ],
   "dependencies": {
-    "ngInfiniteScroll": "1.0.0"
+    "ngInfiniteScroll": "1.0.0",
+    "angular-timeline": "^1.7.0",
+    "angular-file-upload": "^2.4.1",
+    "mdi": "^1.8.36",
+    "angular-material": "^1.1.1",
+    "pusher-js": "pusher#^4.0.0"
   }
 }
