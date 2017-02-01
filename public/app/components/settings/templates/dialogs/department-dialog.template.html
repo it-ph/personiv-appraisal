@@ -1,0 +1,55 @@
+<md-dialog aria-label="Model Form"  flex flex-gt-sm="50" ng-cloak>
+    <form name="departmentForm">
+        <md-toolbar >
+            <div class="md-toolbar-tools">
+                <h2 class="white-text">Department</h2>
+                <span flex></span>
+                <md-button class="md-icon-button" ng-click="cancel()">
+                    <md-icon class="mdi mdi-close mdi-24px" aria-label="Close dialog"></md-icon>
+                </md-button>
+            </div>
+        </md-toolbar>
+        <md-dialog-content flex layout-padding layout-wrap>
+            <md-subheader class="red-text" ng-if="error">Oops! Something went wrong! An error occured. Please try again.</md-subheader>
+            <md-subheader class="red-text" ng-if="duplicate_accounts">Check for duplicate errors and try again.</md-subheader>
+            <div layout="row" layout-wrap flex>
+                <!-- Department -->
+                <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
+                    <label>Department</label>
+                    <input type="text" name="Department" required ng-model="department.name" ng-disabled="busy" ng-blur="checkDuplicate()">
+                    <div class="pattern" ng-if="duplicate && departmentForm.Department.$touched">Department already exists.</div>
+                    <div ng-messages="departmentForm.Department.$error" ng-if="departmentForm.Department.$touched">
+                        <div ng-message="required">Department is required.</div>
+                    </div>
+                </md-input-container>
+            </div>
+            <!-- Accounts -->
+            <md-subheader>Accounts</md-subheader>
+            <div layout="row" layout-wrap flex>
+                <div layout="row" flex-xs="100" flex-sm="100" flex-gt-sm="50" ng-repeat="account in department.accounts">
+                    <md-input-container flex class="md-block">
+                        <label>Account</label>
+                        <input type="text" name="Account{{$index}}" required ng-model="account.name" ng-disabled="busy" ng-blur="checkDuplicateAccount(account, $index)">
+                        <div class="pattern" ng-if="account.duplicate && departmentForm['Account' + $index].$touched">Account already exists or has a duplicate.</div>
+                        <div ng-messages="departmentForm['Account' + $index].$error" ng-if="departmentForm['Account' + $index].$touched">
+                            <div ng-message="required">Account is required.</div>
+                        </div>
+                    </md-input-container>
+                    <md-button class="md-fab md-mini md-warn" ng-if="!account.users.length" ng-click="remove($index)">
+                        <md-icon class="mdi mdi-minus"></md-icon>
+                        <md-tooltip>Remove Account</md-tooltip>
+                    </md-button>
+                </div>
+            </div>
+            <md-button class="md-primary" ng-click="add()">
+                Add Account
+            </md-button>
+        </md-dialog-content>
+    </form>
+    <div layout="row" layout-align="end center">   
+        <md-button ng-if="!busy" class="md-primary" aria-label="Submit" ng-click="submit()">
+            Save
+        </md-button>
+        <md-progress-circular ng-if="busy" md-mode="indeterminate" class="md-primary" md-diameter="60"></md-progress-circular>
+    </div>
+</md-dialog>

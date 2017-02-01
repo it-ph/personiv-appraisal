@@ -1,0 +1,61 @@
+<div infinite-scroll='model.paginateLoad()' infinite-scroll-distance="1" infinite-scroll-disabled="model.busy" infinite-scroll-parent ng-if="model.show">
+	<div ng-if="model.items.length" flex flex-gt-md="90">
+		<md-list>
+			<md-list-item class="md-3-line" ng-repeat="model in model.items | filter: toolbar.searchText | orderBy:sortType:sortReverse" ng-if="showInactive || !model.deleted_at">
+				<h2 class="md-avatar" ng-class="model.deleted_at ? 'red-bg': 'primary-bg'" layout="row" layout-align="center center">
+					<span class="md-headline white-text">{{model.name.charAt(0).toUpperCase()}} {{model.last_name.charAt(0).toUpperCase()}}</span>
+				</h2>
+				<div class="md-list-item-text">
+					<h3>{{model.name}} {{model.last_name}}<span ng-if="model.last_name">,</span> {{model.first_name}} {{model.middle_name.charAt(0)}}<span ng-if="model.middle_name">.</span></h3>
+					<h4>{{model.model}} <span ng-if="model.users_count">Users: {{model.users_count}}</span> {{model.email}} {{model.lob}}</h4>
+					<p>
+						<span ng-if="model.deleted_at">| Deleted at: {{model.deleted_at | date: 'EEEE, MMM. dd, yyyy, hh:mma'}}</span>
+						<span ng-if="model.department">Department: {{model.department.name}}</span>
+						<span ng-if="model.account">| Account: {{model.account.name}}</span>
+						<span ng-if="model.roles.length">
+							<br>
+							Roles : 
+							<span ng-repeat="role in model.roles">{{role.description}} <span ng-if="!$last">|</span> </span>
+						</span>
+						{{model.birthdate | date: 'MMMM dd, yyyy'}}
+						{{model.description}}
+					</p>
+				</div>
+				<md-menu ng-show="!model.deleted_at">
+					<md-button aria-label="Menu" class="md-icon-button" ng-click="$mdOpenMenu($event)">
+			            <md-icon class="mdi mdi-dots-vertical grey"></md-icon>
+			            <md-tooltip>{{model.name}} {{model.last_name + ','}} {{model.first_name}} {{model.middle_name.charAt(0) + '.'}}</md-tooltip>
+			        </md-button>
+
+			        <md-menu-content width="4" ng-show="!model.deleted_at">
+						<md-subheader class="md-no-sticky">{{model.name}} {{model.last_name + ','}} {{model.first_name}} {{model.middle_name.charAt(0) + '.'}}</md-subheader>
+						<!-- Update -->
+			            <md-menu-item>
+				            <md-button aria-label="Update" ng-click="updateModel(model)" flex>
+				                Update
+				            </md-button>
+			        	</md-menu-item>
+			        	<!-- Reset Password -->
+			            <md-menu-item ng-if="state == 'main.users'">
+				            <md-button aria-label="Update" ng-click="resetPassword(model)" flex>
+				                Reset Password
+				            </md-button>
+			        	</md-menu-item>
+			        	<md-menu-item ng-if="!model.hideDelete">
+				            <!-- Delete -->
+				            <md-button aria-label="Delete" ng-click="deleteModel(model)" flex>
+				                Delete
+				            </md-button>
+			        	</md-menu-item>
+			        </md-menu-content>
+				</md-menu>
+			</md-list-item>
+		</md-list>
+	</div>	
+</div>
+<div layout="row" layout-align="center center" layout-padding layout-margin ng-if="isLoading">
+	<md-progress-circular class="md-primary" md-diameter="60"></md-progress-circular>
+</div>
+<div layout-padding layout-margin ng-if="!model.items.length && model.show && !model.no_matches">
+	Nothing to display.
+</div>

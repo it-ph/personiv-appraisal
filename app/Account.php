@@ -16,7 +16,7 @@ class Account extends Model
     	return $this->belongsTo('App\Department');
     }
 
-    public function user()
+    public function users()
     {
     	return $this->hasMany('App\User');
     }

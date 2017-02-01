@@ -116,18 +116,31 @@ app
 
 						$scope.menu.static.splice(2, 0, item);
 					}
-					else if(role.name == 'manage-groups')
+					else if(role.name == 'appraisal-periods')
 					{
 						settings = true;
 
 						var item = {
-							'label': 'Groups',
+							'label': 'Appraisal Periods',
 							action: function(){
-								$state.go('main.groups');
+								$state.go('main.appraisal-periods');
 							},
 						}
 
 						settings_menu.push(item);
+					}
+					else if(role.name == 'manage-departments')
+					{
+						settings = true;
+
+						var item = {
+							'label': 'Departments',
+							action: function(){
+								$state.go('main.departments');
+							},
+						}
+
+						settings_menu.push(item); 
 					}
 					else if(role.name == 'manage-users')
 					{
@@ -137,71 +150,6 @@ app
 							'label': 'Users',
 							action: function(){
 								$state.go('main.users');
-							},
-						}
-
-						settings_menu.push(item); 
-					}
-					else if(role.name == 'manage-locations')
-					{
-						settings = true;
-
-						var item = {
-							'label': 'Rooms',
-							action: function(){
-								$state.go('main.locations');
-							},
-						}
-
-						settings_menu.push(item); 
-					}
-					else if(role.name == 'manage-equipment')
-					{
-						settings = true;
-
-						var item = {
-							'label': 'Equipment',
-							action: function(){
-								$state.go('main.equipment');
-							},
-						}
-
-						settings_menu.push(item); 
-					}
-					else if(role.name == 'manage-links')
-					{
-						settings = true;
-
-						var item = {
-							'label': 'Links',
-							action: function(){
-								$state.go('main.links');
-							},
-						}
-
-						settings_menu.push(item); 
-					}
-					else if(role.name == 'manage-birthdays')
-					{
-						settings = true;
-
-						var item = {
-							'label': 'Birthdays',
-							action: function(){
-								$state.go('main.birthdays');
-							},
-						}
-
-						settings_menu.push(item); 
-					}
-					else if(role.name == 'manage-forms')
-					{
-						settings = true;
-
-						var item = {
-							'label': 'Forms',
-							action: function(){
-								$state.go('main.forms');
 							},
 						}
 

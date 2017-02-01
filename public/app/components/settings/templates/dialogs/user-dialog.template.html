@@ -1,0 +1,120 @@
+<md-dialog aria-label="User Form"  flex flex-gt-sm="60" ng-cloak>
+    <form name="modelForm">
+        <md-toolbar >
+            <div class="md-toolbar-tools">
+                <h2 class="white-text">User</h2>
+                <span flex></span>
+                <md-button class="md-icon-button" ng-click="cancel()">
+                    <md-icon class="mdi mdi-close mdi-24px" aria-label="Close dialog"></md-icon>
+                </md-button>
+            </div>
+        </md-toolbar>
+        <md-dialog-content flex layout-padding layout-wrap>
+            <md-subheader class="red-text" ng-if="error">Oops! Something went wrong! An error occured. Please try again.</md-subheader>
+            <div layout="row" layout-wrap flex>
+                <!-- First name -->
+                <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
+                    <label>First name</label>
+                    <input type="text" name="FirstName" required ng-model="model.first_name" ng-disabled="busy">
+                    <div ng-messages="modelForm.FirstName.$error" ng-if="modelForm.FirstName.$touched">
+                        <div ng-message="required">First name is required.</div>
+                    </div>
+                </md-input-container>
+                <!-- Middle name -->
+                <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
+                    <label>Middle name</label>
+                    <input type="text" name="MiddleName" ng-model="model.middle_name" ng-disabled="busy">
+                </md-input-container>
+                <!-- Last name -->
+                <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
+                    <label>Last name</label>
+                    <input type="text" name="LastName" required ng-model="model.last_name" ng-disabled="busy">
+                    <div ng-messages="modelForm.LastName.$error" ng-if="modelForm.LastName.$touched">
+                        <div ng-message="required">Last name is required.</div>
+                    </div>
+                </md-input-container>
+                <!-- Suffix -->
+                <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
+                    <label>Suffix</label>
+                    <input type="text" name="Suffix" ng-model="model.suffix" ng-disabled="busy">
+                </md-input-container>
+            </div>
+            <div layout="row" layout-wrap flex>
+                <!-- Employee Number -->
+                <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
+                    <label>Employee Number</label>
+                    <input type="text" name="EmployeeNumber" required ng-model="model.employee_number" ng-blur="checkDuplicateEmployeeNumber()" ng-disabled="busy">
+                    <div class="pattern" ng-if="duplicateEmployeeNumber && modelForm.EmployeeNumber.$valid">Employee number already in use.</div>
+                    <div ng-messages="modelForm.EmployeeNumber.$error" ng-if="modelForm.EmployeeNumber.$touched">
+                        <div ng-message="required">Employee number is required.</div>
+                    </div>
+                </md-input-container>
+                <!-- Email -->
+                <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
+                    <label>Email</label>
+                    <input type="email" name="Email" required minlength="10" maxlength="100" ng-pattern="/^.+@.+\..+$/" ng-model="model.email" ng-blur="checkDuplicate()" ng-disabled="busy">
+                    <div class="pattern" ng-if="duplicate && modelForm.Email.$valid">Email already in use.</div>
+                    <div ng-messages="modelForm.Email.$error" ng-if="modelForm.Email.$touched">
+                        <div ng-message-exp="['required', 'minlength', 'maxlength', 'pattern']">
+                            Email must be between 10 and 100 characters long and look like an e-mail address.
+                        </div>
+                    </div>
+                </md-input-container>
+            </div>
+            <div layout="row" flex layout-wrap ng-if="config.action != 'edit'">            
+                <!-- Password -->
+                <md-input-container class="md-block" flex="100" flex-gt-sm="50">
+                    <label>Password</label>
+                    <input type="password" name="Password" required ng-model="model.password" ng-minlength="8" ng-disabled="busy">
+                    <div class="pattern" ng-if="model.password != model.confirm && modelForm.Password.$touched && modelForm.confirmPassword.$touched">Passwords doesn't match.</div>
+                    <div ng-messages="modelForm.Password.$error" ng-if="modelForm.Password.$touched">
+                        <div ng-message="required">Password is required.</div>
+                        <div ng-message="minlength">Password must be at least 8 characters.</div>
+                    </div>
+                </md-input-container>
+                <!-- Confirm -->
+                <md-input-container class="md-block" flex="100" flex-gt-sm="50">
+                    <label>Confirm Password</label>
+                    <input type="password" name="confirmPassword" required ng-model="model.confirm" ng-minlength="8" ng-disabled="busy">
+                    <div class="pattern" ng-if="model.password != model.confirm && modelForm.Password.$touched && modelForm.confirmPassword.$touched">Passwords doesn't match.</div>
+                    <div ng-messages="modelForm.confirmPassword.$error" ng-if="modelForm.confirmPassword.$touched">
+                        <div ng-message="required">Confirm password is required.</div>
+                        <div ng-message="minlength">Confirm password must be at least 8 characters.</div>
+                    </div>
+                </md-input-container>
+            </div>
+            <div layout="row" flex>
+                <!-- Department -->
+                <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
+                    <label>Department</label>
+                    <md-select name="Department" required ng-model="model.department_id" ng-disabled="busy">
+                        <md-option ng-repeat="department in departments | orderBy:'name'" value="{{department.id}}">{{department.name}}</md-option>
+                    </md-select>
+                    <div ng-messages="modelForm.Department.$error" ng-if="modelForm.Department.$touched">
+                        <div ng-message="required">Department is required.</div>
+                    </div>
+                </md-input-container>
+                <!-- Account -->
+                <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
+                    <label>Account</label>
+                    <md-select name="Account" ng-model="model.account_id" ng-disabled="busy">
+                        <md-option ng-repeat="account in accounts | orderBy:'name'" value="{{account.id}}">{{account.name}}</md-option>
+                    </md-select>
+                </md-input-container>
+            </div>
+            <md-subheader>Role</md-subheader>
+            <md-progress-circular ng-if="count || !roles.length" md-mode="indeterminate" class="md-primary" md-diameter="60"></md-progress-circular>
+            <div layout="column" flex ng-if="!count">
+                <md-checkbox ng-repeat="role in roles" ng-model="model.roles[$index]" aria-label="{{role.name}}" ng-true-value="{{role}}" ng-false-value="null" flex class="md-primary">
+                    {{role.description}}
+                </md-checkbox>
+            </div>
+        </md-dialog-content>
+    </form>
+    <div layout="row" layout-align="end center">   
+        <md-button ng-if="!busy" class="md-primary" aria-label="Submit" ng-click="submit()">
+            Save
+        </md-button>
+        <md-progress-circular ng-if="busy" md-mode="indeterminate" class="md-primary" md-diameter="60"></md-progress-circular>
+    </div>
+</md-dialog>

@@ -4,17 +4,27 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
-use App\Http\Requests;
-
-use App\UserRole;
+use App\Account;
 
 use Auth;
 use Carbon\Carbon;
 use DB;
 use Gate;
 
-class UserRoleController extends Controller
+class AccountController extends Controller
 {
+    /**
+     * Check if resource already exists.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function checkDuplicate(Request $request)
+    {
+        $duplicate = $request->id ? Account::whereNotIn('id', [$request->id])->where('name', $request->name)->where('department_id', $request->department_id)->first() : Account::where('name', $request->name)->where('department_id', $request->department_id)->first();
+    
+        return response()->json($duplicate ? true : false);
+    }
+
     /**
      * Display a listing of the resource with parameters.
      *
@@ -22,14 +32,19 @@ class UserRoleController extends Controller
      */
     public function enlist(Request $request)
     {
-        $user_roles = UserRole::query();
+        $accounts = Account::query();
 
         if($request->has('with'))
         {
             for ($i=0; $i < count($request->with); $i++) { 
                 if(!$request->input('with')[$i]['withTrashed'])
                 {
-                    $user_roles->with($request->input('with')[$i]['relation']);
+                    $accounts->with($request->input('with')[$i]['relation']);
+                }
+                else{
+                    $accounts->with([$request->input('with')[$i]['relation'] => function($query){
+                        $query->withTrashed();
+                    }]);
                 }
             }
         }
@@ -37,16 +52,21 @@ class UserRoleController extends Controller
         if($request->has('where'))
         {
             for ($i=0; $i < count($request->where); $i++) { 
-                $user_roles->where($request->input('where')[$i]['label'], $request->input('where')[$i]['condition'], $request->input('where')[$i]['value']);
+                $accounts->where($request->input('where')[$i]['label'], $request->input('where')[$i]['condition'], $request->input('where')[$i]['value']);
             }
         }
 
         if($request->has('first'))
         {
-            return $user_roles->first();
+            return $accounts->first();
         }
 
-        return $user_roles->get();
+        if($request->has('paginate'))
+        {
+            return $accounts->paginate($request->paginate);
+        }
+
+        return $accounts->get();
     }
 
     /**

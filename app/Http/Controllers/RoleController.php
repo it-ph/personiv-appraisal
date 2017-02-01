@@ -4,8 +4,34 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
+use App\Http\Requests;
+
+use App\Role;
+
+use Auth;
+use Carbon\Carbon;
+use DB;
+use Gate;
+
 class RoleController extends Controller
 {
+    /**
+     * Display a listing of the resource with parameters.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function enlist(Request $request)
+    {
+        $roles = Role::query();
+
+        if(!$request->user()->super_admin)
+        {
+            $roles->where('super_admin_action', 0);
+        }
+
+        return $roles->get();
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -13,7 +39,7 @@ class RoleController extends Controller
      */
     public function index()
     {
-        //
+        return Role::all();
     }
 
     /**

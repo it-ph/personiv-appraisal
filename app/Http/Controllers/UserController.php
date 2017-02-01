@@ -155,7 +155,7 @@ class UserController extends Controller
 
         if($request->has('search'))
         {
-            $users->where('name', 'like', '%'.$request->search.'%')->orWhere('email', 'like', '%'.$request->search.'%');
+            $users->where('first_name', 'like', '%'.$request->search.'%')->orWhere('middle_name', 'like', '%'.$request->search.'%')->orWhere('last_name', 'like', '%'.$request->search.'%')->orWhere('suffix', 'like', '%'.$request->search.'%')->orWhere('employee_number', $request->search)->orWhere('email', $request->search);
         }
 
         if($request->has('paginate'))
@@ -185,6 +185,18 @@ class UserController extends Controller
         $user->load('department', 'account', 'immediate_supervisor', 'departments', 'roles');
 
         return $user;
+    }
+
+    /**
+     * Checks if the employee number is already taken.
+     *
+     * @return bool
+     */
+    public function checkEmployeeNumber(Request $request)
+    {
+        $user = $request->id ? User::withTrashed()->whereNotIn('id', [$request->id])->where('employee_number', $request->employee_number)->first() : User::withTrashed()->where('employee_number', $request->employee_number)->first();
+
+        return response()->json($user ? true : false);
     }
 
     /**
@@ -267,7 +279,54 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        if(Gate::forUser($request->user())->denies('manage-users'))
+        {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $duplicate = User::where('employee_number', $request->employee_number)->orWhere('email', $request->email)->first();
+
+        if($duplicate)
+        {
+            return response()->json(true);
+        }
+
+        $this->validate($request, [
+            'first_name' => 'required',
+            'last_name' => 'required',
+            'employee_number' => 'required',
+            'email' => 'required',
+            'password' => 'required',
+            'department_id' => 'required',
+        ]);
+
+        DB::transaction(function() use($request){
+            $user = new User;
+
+            $user->first_name = $request->first_name;
+            $user->middle_name = $request->middle_name;
+            $user->last_name = $request->last_name;
+            $user->suffix = $request->suffix;
+            $user->employee_number = $request->employee_number;
+            $user->email = $request->email;
+            $user->password = bcrypt($request->password);
+            $user->department_id = $request->department_id;
+            $user->account_id = $request->account_id;
+            $user->super_admin = false;
+
+            $user->save();
+
+            $roles = array();
+
+            for ($i=0; $i < count($request->roles); $i++) { 
+                if(isset($request->input('roles')[$i]['id']))
+                {
+                    array_push($roles, $request->input('roles')[$i]['id']);
+                }
+            }
+            
+            $user->roles()->attach($roles);
+        });
     }
 
     /**
@@ -301,7 +360,58 @@ class UserController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        if(Gate::forUser($request->user())->denies('manage-users'))
+        {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $duplicate = User::where(function($query) use($request){
+            $query->whereNotIn('id', [$request->id])->where('employee_number', $request->employee_number);
+        })
+        ->orWhere(function($query) use($request){
+            $query->whereNotIn('id', [$request->id])->where('email', $request->email);
+        })->first();
+
+        if($duplicate)
+        {
+            return response()->json(true);
+        }
+
+        $this->validate($request, [
+            'first_name' => 'required',
+            'last_name' => 'required',
+            'employee_number' => 'required',
+            'email' => 'required',
+            'department_id' => 'required',
+        ]);
+
+        DB::transaction(function() use($request, $id){
+            $user = User::find($id);
+
+            $user->first_name = $request->first_name;
+            $user->middle_name = $request->middle_name;
+            $user->last_name = $request->last_name;
+            $user->suffix = $request->suffix;
+            $user->employee_number = $request->employee_number;
+            $user->email = $request->email;
+            $user->password = bcrypt($request->password);
+            $user->department_id = $request->department_id;
+            $user->account_id = $request->account_id;
+            $user->super_admin = false;
+
+            $user->save();
+
+            $roles = array();
+
+            for ($i=0; $i < count($request->roles); $i++) { 
+                if(isset($request->input('roles')[$i]['id']))
+                {
+                    array_push($roles, $request->input('roles')[$i]['id']);
+                }
+            }
+            
+            $user->roles()->sync($roles);
+        });
     }
 
     /**
@@ -312,6 +422,11 @@ class UserController extends Controller
      */
     public function destroy($id)
     {
-        //
+        if(!Gate::forUser(Auth::user())->allows('manage-users') && !Auth::user()->super_admin)
+        {
+            abort(403, 'Unauthorized action.');
+        }
+
+        User::where('id', $id)->delete();
     }
 }
