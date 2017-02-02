@@ -24,6 +24,36 @@ app
 					}
 				}
 			})
+		.state('main.appraisal-periods', {
+				url: 'settings/appraisal-periods',
+				resolve:{
+					authorization: ['Helper', '$state', function(Helper, $state){
+						Helper.get('/appraisal-period/create')
+							.success(function(data){
+								return;
+							})
+							.error(function(){
+								return $state.go('page-not-found');
+							});
+					}],
+				},
+				views: {
+					'content-container': {
+						templateUrl: '/app/shared/views/content-container.view.html',
+						controller: 'appraisalPeriodsContentContainerController',
+					},
+					'toolbar@main.appraisal-periods': {
+						templateUrl: '/app/shared/templates/toolbar.template.html',
+						controller: 'appraisalPeriodsToolbarController',
+					},
+					'left-sidenav@main.appraisal-periods': {
+						templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
+					},
+					'content@main.appraisal-periods':{
+						templateUrl: '/app/components/settings/templates/content/settings-content.template.html',
+					}
+				}
+			})
 		.state('main.departments', {
 				url: 'settings/departments',
 				resolve:{

@@ -76,3 +76,8 @@ Route::group(['prefix' => 'account'], function(){
 	Route::post('enlist', 'AccountController@enlist');
 });
 
+/* Appraisal Period Routes*/
+Route::group(['prefix' => 'appraisal-period'], function(){
+	Route::post('check-duplicate', 'AppraisalPeriodController@checkDuplicate');
+	Route::post('enlist', 'AppraisalPeriodController@enlist');
+});

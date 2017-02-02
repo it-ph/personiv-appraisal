@@ -1,0 +1,80 @@
+<md-dialog aria-label="Model Form"  flex flex-gt-sm="50" ng-cloak>
+    <form name="appraisalPeriodForm">
+        <md-toolbar >
+            <div class="md-toolbar-tools">
+                <h2 class="white-text">Appraisal Period</h2>
+                <span flex></span>
+                <md-button class="md-icon-button" ng-click="cancel()">
+                    <md-icon class="mdi mdi-close mdi-24px" aria-label="Close dialog"></md-icon>
+                </md-button>
+            </div>
+        </md-toolbar>
+        <md-dialog-content flex layout-padding layout-wrap>
+            <md-subheader class="red-text" ng-if="error">Oops! Something went wrong! An error occured. Please try again.</md-subheader>
+            <md-subheader class="red-text" ng-if="duplicate">Appraisal period already exists.</md-subheader>
+            <div layout="row" layout-wrap flex>
+                <!-- Start -->
+                <div flex-xs="100" flex-sm="100" flex-gt-sm>
+                    <h4>Start</h4>
+                    <md-datepicker name="Start" ng-model="appraisal_period.start" md-placeholder="Enter date" md-min-date="minDate" md-max-date="appraisal_period.end" ng-disabled="busy" ng-change="checkDuplicate()"></md-datepicker>
+                    <div class="validation-messages" ng-messages="appraisalPeriodForm.Start.$error" ng-if="appraisalPeriodForm.Start.$touched">
+                        <div ng-message="valid">The entered value is not a date!</div>
+                        <div ng-message="required">This date is required!</div>
+                        <div ng-message="mindate">Date is too early!</div>
+                        <div ng-message="maxdate">Date is too late!</div>
+                    </div>
+                </div>
+                <!-- End -->
+                <div flex-xs="100" flex-sm="100" flex-gt-sm>
+                    <h4>End</h4>
+                    <md-datepicker name="End" ng-model="appraisal_period.end" md-placeholder="Enter date" md-min-date="appraisal_period.start" md-max-date="today" ng-disabled="busy" ng-change="checkDuplicate()"></md-datepicker>
+                    <div class="validation-messages" ng-messages="appraisalPeriodForm.End.$error" ng-if="appraisalPeriodForm.End.$touched">
+                        <div ng-message="valid">The entered value is not a date!</div>
+                        <div ng-message="required">This date is required!</div>
+                        <div ng-message="mindate">Date is too early!</div>
+                        <div ng-message="maxdate">Date is too late!</div>
+                    </div>
+                </div>
+            </div>
+            <div layout="row" layout-wrap flex>                
+                <!-- Appraisal Year -->
+                <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
+                    <label>Appraisal Year</label>
+                    <md-select name="AppraisalYear" required ng-model="appraisal_period.appraisal_year" ng-disabled="busy" ng-change="checkDuplicate()">
+                        <md-option ng-repeat="year in years" value="{{year}}">{{year}}</md-option>
+                    </md-select>
+                    <div ng-messages="appraisalPeriodForm.AppraisalYear.$error" ng-if="appraisalPeriodForm.AppraisalYear.$touched">
+                        <div ng-message="required">Appraisal Year is required.</div>
+                    </div>
+                </md-input-container>
+            </div>
+            <md-subheader>Percentage - 100%</md-subheader>
+            <div layout="row" layout-wrap flex>                
+                <!-- Goals -->
+                <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
+                    <label>Goals</label>
+                    <input type="number" name="GoalsPercentage" ng-model="appraisal_period.goals_percentage" required ng-disabled="busy" ng-change="setBehavorial()" min="0" max="{{100-appraisal_period.behavoiral_competency_percentage}}">
+                    <div ng-messages="appraisalPeriodForm.GoalsPercentage.$error" ng-if="appraisalPeriodForm.GoalsPercentage.$touched">
+                        <div ng-message="required">Goals is required.</div>
+                        <div ng-message="min">Goals cannot be lower than 0.</div>
+                        <div ng-message="max">The sum of goals and behavioral competency cannot be higher than 100%.</div>
+                    </div>
+                </md-input-container>
+                <!-- Behavioral Competency -->
+                <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
+                    <label>Behavioral Competency</label>
+                    <input type="number" name="BehavioralCompetencyPercentage" ng-model="appraisal_period.behavioral_competency_percentage" required ng-disabled="busy" ng-change="setGoals()" min="0" max="{{100-appraisal_period.goals_percentage}}">
+                    <div ng-messages="appraisalPeriodForm.BehavioralCompetencyPercentage.$error" ng-if="appraisalPeriodForm.BehavioralCompetencyPercentage.$touched">
+                        <div ng-message="required">Behavioral Competency Percentage is required.</div>
+                    </div>
+                </md-input-container>
+            </div>
+        </md-dialog-content>
+    </form>
+    <div layout="row" layout-align="end center">   
+        <md-button ng-if="!busy" class="md-primary" aria-label="Submit" ng-click="submit()">
+            Save
+        </md-button>
+        <md-progress-circular ng-if="busy" md-mode="indeterminate" class="md-primary" md-diameter="60"></md-progress-circular>
+    </div>
+</md-dialog>

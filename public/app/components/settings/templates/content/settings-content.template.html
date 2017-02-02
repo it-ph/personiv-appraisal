@@ -2,33 +2,48 @@
 	<div ng-if="model.items.length" flex flex-gt-md="90">
 		<md-list>
 			<md-list-item class="md-3-line" ng-repeat="model in model.items | filter: toolbar.searchText | orderBy:sortType:sortReverse" ng-if="showInactive || !model.deleted_at">
-				<h2 class="md-avatar" ng-class="model.deleted_at ? 'red-bg': 'primary-bg'" layout="row" layout-align="center center">
+				<h2 class="md-avatar" ng-class="model.deleted_at ? 'red-bg': 'primary-bg'" layout="row" layout-align="center center" ng-if="!model.appraisal_year">
 					<span class="md-headline white-text">{{model.name.charAt(0).toUpperCase()}} {{model.last_name.charAt(0).toUpperCase()}}</span>
 				</h2>
 				<div class="md-list-item-text">
-					<h3>{{model.name}} {{model.last_name}}<span ng-if="model.last_name">,</span> {{model.first_name}} {{model.middle_name.charAt(0)}}<span ng-if="model.middle_name">.</span></h3>
-					<h4>{{model.model}} <span ng-if="model.users_count">Users: {{model.users_count}}</span> {{model.email}} {{model.lob}}</h4>
+					<h3>{{model.name}} {{model.last_name}}<span ng-if="model.last_name">,</span> {{model.first_name}} {{model.middle_name.charAt(0)}}<span ng-if="model.middle_name">.</span> 
+						<span ng-if="model.appraisal_year">{{model.appraisal_year}}</span>
+					</h3>
+					<h4>
+						<span ng-if="model.users_count">Users: {{model.users_count}}</span>
+						<span ng-if="model.email">{{model.email}}</span>
+						<span ng-if="model.employee_number">| Employee Number: {{model.employee_number}}</span>
+						<span ng-if="model.appraisal_year">{{model.start | date: 'MMM. dd, yyyy'}} to {{model.end | date: 'MMM. dd, yyyy'}}</span>
+					</h4>
 					<p>
 						<span ng-if="model.deleted_at">| Deleted at: {{model.deleted_at | date: 'EEEE, MMM. dd, yyyy, hh:mma'}}</span>
 						<span ng-if="model.department">Department: {{model.department.name}}</span>
+						<span ng-if="model.departments.length">| Head: <span ng-repeat="department in model.departments">{{department.name}}</span></span>
 						<span ng-if="model.account">| Account: {{model.account.name}}</span>
-						<span ng-if="model.roles.length">
+						<span
+						 ng-if="model.roles.length">
 							<br>
 							Roles : 
 							<span ng-repeat="role in model.roles">{{role.description}} <span ng-if="!$last">|</span> </span>
 						</span>
-						{{model.birthdate | date: 'MMMM dd, yyyy'}}
-						{{model.description}}
+						<span
+						 ng-if="model.accounts.length">
+							Accounts : 
+							<span ng-repeat="account in model.accounts">{{account.name}} <span ng-if="!$last">|</span> </span>
+						</span>
+						<span ng-if="model.description">{{model.description}}</span>
+						<span ng-if="model.goals_percentage">Goals: {{model.goals_percentage}}%</span>
+						<span ng-if="model.behavioral_competency_percentage"> | Behavioral Competency: {{model.behavioral_competency_percentage}}%</span>
 					</p>
 				</div>
 				<md-menu ng-show="!model.deleted_at">
 					<md-button aria-label="Menu" class="md-icon-button" ng-click="$mdOpenMenu($event)">
 			            <md-icon class="mdi mdi-dots-vertical grey"></md-icon>
-			            <md-tooltip>{{model.name}} {{model.last_name + ','}} {{model.first_name}} {{model.middle_name.charAt(0) + '.'}}</md-tooltip>
+			            <md-tooltip>{{model.name}} <span ng-if="model.last_name">{{model.last_name + ','}}</span> <span ng-if="model.first_name">{{model.first_name}}</span> <span ng-if="model.middle_name">{{model.middle_name.charAt(0) + '.'}}</span><span ng-if="model.appraisal_year">{{model.appraisal_year}}</span></md-tooltip>
 			        </md-button>
 
 			        <md-menu-content width="4" ng-show="!model.deleted_at">
-						<md-subheader class="md-no-sticky">{{model.name}} {{model.last_name + ','}} {{model.first_name}} {{model.middle_name.charAt(0) + '.'}}</md-subheader>
+						<md-subheader class="md-no-sticky">{{model.name}} <span ng-if="model.last_name">{{model.last_name + ','}}</span> <span ng-if="model.first_name">{{model.first_name}}</span> <span ng-if="model.middle_name">{{model.middle_name.charAt(0) + '.'}}</span><span ng-if="model.appraisal_year">{{model.appraisal_year}}</span></md-subheader>
 						<!-- Update -->
 			            <md-menu-item>
 				            <md-button aria-label="Update" ng-click="updateModel(model)" flex>

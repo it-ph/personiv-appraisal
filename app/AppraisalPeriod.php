@@ -6,8 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class AppraisalPeriod extends Model
 {
-    public function departments()
+    public function appraisal_forms()
     {
-    	return $this->belongsToMany('App\Department', 'appraisal_forms');
+    	return $this->hasMany('App\AppraisalForm');
     }
 }

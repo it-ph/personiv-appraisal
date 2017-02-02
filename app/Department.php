@@ -11,7 +11,7 @@ class Department extends Model
 
     protected $dates = ['deleted_at'];
 
-    public function employees()
+    public function users()
     {
     	return $this->hasMany('App\User');
     }
@@ -26,8 +26,8 @@ class Department extends Model
         return $this->hasMany('App\Account');
     }
 
-    public function appraisal_periods()
+    public function appraisal_forms()
     {
-        return $this->belongsToMany('App\AppraisalForm', 'department_appraisal_forms');
+        return $this->hasMany('App\AppraisalForm');
     }
 }

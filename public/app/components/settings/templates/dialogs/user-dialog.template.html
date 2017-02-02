@@ -102,10 +102,14 @@
                     </md-select>
                 </md-input-container>
             </div>
+            <!-- Department Head -->
+            <div layout="column" flex-xs="100" flex-sm="100" flex-gt-sm>                    
+                <md-checkbox class="md-primary" aria-label="Department Head" ng-model="model.department_head" ng-disabled="busy">Department Head</md-checkbox>
+            </div>
             <md-subheader>Role</md-subheader>
             <md-progress-circular ng-if="count || !roles.length" md-mode="indeterminate" class="md-primary" md-diameter="60"></md-progress-circular>
             <div layout="column" flex ng-if="!count">
-                <md-checkbox ng-repeat="role in roles" ng-model="model.roles[$index]" aria-label="{{role.name}}" ng-true-value="{{role}}" ng-false-value="null" flex class="md-primary">
+                <md-checkbox ng-repeat="role in roles" ng-model="model.roles[$index]" aria-label="{{role.name}}" ng-true-value="{{role}}" ng-false-value="null" flex class="md-primary" ng-disabled="busy">
                     {{role.description}}
                 </md-checkbox>
             </div>

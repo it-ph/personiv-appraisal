@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 
 use App\User;
+use App\Department;
 use App\Notification;
 
 use Auth;
@@ -326,6 +327,13 @@ class UserController extends Controller
             }
             
             $user->roles()->attach($roles);
+
+            if($request->department_head)
+            {
+                $department = Department::find($user->department_id);
+
+                $department->heads()->attach($user->id);
+            }
         });
     }
 

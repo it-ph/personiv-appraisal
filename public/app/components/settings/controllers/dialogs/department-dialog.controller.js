@@ -44,7 +44,19 @@ app
 		}
 
 		$scope.remove = function(idx){
-			$scope.department.accounts.splice(idx, 1);
+			if($scope.config.action == 'edit' && $scope.department.accounts[idx].id)
+			{
+				Helper.delete('/account/' + $scope.department.accounts[idx].id)
+					.success(function(){
+						$scope.department.accounts.splice(idx, 1);
+					})
+					.error(function(){
+						$scope.error = true;
+					})
+			}
+			else{
+				$scope.department.accounts.splice(idx, 1);
+			}
 		}
 
 		$scope.duplicate = false;
@@ -102,6 +114,10 @@ app
 
 				return;
 			}
+
+			angular.forEach($scope.department.accounts, function(item, idx){
+				checkEveryItem(item, idx);
+			});
 
 
 			if(!$scope.duplicate && !$scope.duplicate_accounts)

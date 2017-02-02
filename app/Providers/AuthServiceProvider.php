@@ -67,14 +67,6 @@ class AuthServiceProvider extends ServiceProvider
             return $user_access || $user->super_admin ? true : false;
         });
 
-        Gate::define('manage-accounts', function($user){
-            $user_access = User::where('id', $user->id)->whereHas('roles', function($query){
-                $query->where('name', 'accounts');
-            })->first();
-
-            return $user_access || $user->super_admin ? true : false;
-        });
-
         Gate::define('manage-departments', function($user){
             $user_access = User::where('id', $user->id)->whereHas('roles', function($query){
                 $query->where('name', 'departments');

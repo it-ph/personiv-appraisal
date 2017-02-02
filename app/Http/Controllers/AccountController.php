@@ -142,6 +142,18 @@ class AccountController extends Controller
      */
     public function destroy($id)
     {
-        //
+        if(Gate::forUser(Auth::user())->denies('manage-departments'))
+        {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $account = Account::withCount('users')->where('id', $id)->first();
+
+        if($account->users_count)
+        {
+            abort(403, 'Unable to delete account with users associated with it.');
+        }
+
+        $account->delete();
     }
 }

@@ -1,8 +1,10 @@
 app
-	.controller('departmentsContentContainerController', ['$scope', '$state', 'Helper', function($scope, $state, Helper){
+	.controller('appraisalPeriodsContentContainerController', ['$scope', '$state', 'Helper', function($scope, $state, Helper){
 		$scope.$emit('closeSidenav');
 
 		$scope.state = $state.current.name;
+
+		var route = '/appraisal-period';
 		/*
 		 * Object for toolbar
 		 *
@@ -29,8 +31,8 @@ app
 
 		$scope.fab.action = function(){
 			var dialog = {
-				'template':'/app/components/settings/templates/dialogs/department-dialog.template.html',
-				'controller': 'departmentDialogController',
+				'template':'/app/components/settings/templates/dialogs/appraisal-period-dialog.template.html',
+				'controller': 'appraisalPeriodDialogController',
 			}
 
 			dialog.action = 'create';
@@ -39,7 +41,7 @@ app
 
 			Helper.customDialog(dialog)
 				.then(function(){
-					Helper.notify('Department created.');
+					Helper.notify('Appraisal Period created.');
 					$scope.refresh();
 				}, function(){
 					return;
@@ -64,8 +66,8 @@ app
 
 		$scope.updateModel = function(data){
 			var dialog = {
-				'template':'/app/components/settings/templates/dialogs/department-dialog.template.html',
-				'controller': 'departmentDialogController',
+				'template':'/app/components/settings/templates/dialogs/appraisal-period-dialog.template.html',
+				'controller': 'appraisalPeriodDialogController',
 			}
 
 			data.action = 'edit';
@@ -75,7 +77,7 @@ app
 			Helper.customDialog(dialog)
 				.then(function(){
 					$scope.refresh();
-					Helper.notify('Department updated.');
+					Helper.notify('Appraisal Period updated.');
 				}, function(){
 					return;
 				});
@@ -84,16 +86,16 @@ app
 		$scope.deleteModel = function(data){
 			var dialog = {};
 			dialog.title = 'Delete';
-			dialog.message = 'Delete ' + data.name + '?'
+			dialog.message = 'Delete ' + data.appraisal_year + '?'
 			dialog.ok = 'Delete';
 			dialog.cancel = 'Cancel';
 
 			Helper.confirm(dialog)
 				.then(function(){
-					Helper.delete('/department/' + data.id)
+					Helper.delete(route + '/' + data.id)
 						.success(function(){
 							$scope.refresh();
-							Helper.notify('Department deleted.');
+							Helper.notify('Appraisal Period deleted.');
 						})
 						.error(function(){
 							Helper.error();
@@ -106,11 +108,13 @@ app
 		/* Formats every data in the paginated call */
 		var pushItem = function(data){
 			data.deleted_at =  data.deleted_at ? new Date(data.deleted_at) : null;
-			data.hideDelete = data.users_count ? true : false;
+			data.start = new Date(data.start);
+			data.end = new Date(data.end);
+			data.hideDelete = data.appraisal_forms_count ? true : false;
 
 			var item = {};
 
-			item.display = data.name;
+			item.display = data.appraisal_year;
 
 			$scope.toolbar.items.push(item);
 		}
@@ -123,7 +127,7 @@ app
 			// 2 is default so the next page to be loaded will be page 2 
 			$scope.model.page = 2;
 
-			Helper.post('/department/enlist', query)
+			Helper.post(route + '/enlist', query)
 				.success(function(data){
 					$scope.model.details = data;
 					$scope.model.items = data.data;
@@ -152,7 +156,7 @@ app
 						$scope.model.busy = true;
 						$scope.isLoading = true;
 						// Calls the next page of pagination.
-						Helper.post('/department/enlist' + '?page=' + $scope.model.page, query)
+						Helper.post(route + '/enlist' + '?page=' + $scope.model.page, query)
 							.success(function(data){
 								// increment the page to set up next page for next AJAX Call
 								$scope.model.page++;
@@ -182,19 +186,9 @@ app
 
 		$scope.request.withTrashed = true;
 		$scope.request.paginate = 20;	
-		$scope.request.with = [
-			{
-				'relation':'accounts',
-				'withTrashed':false,
-			},
-			{
-				'relation':'heads',
-				'withTrashed':false,
-			},
-		];
 		$scope.request.withCount = [
 			{
-				'relation':'users',
+				'relation':'appraisal_forms',
 				'withTrashed': false,
 			},
 		];

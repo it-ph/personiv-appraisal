@@ -15,7 +15,7 @@ class CreateAppraisalPeriodsTable extends Migration
     {
         Schema::create('appraisal_periods', function (Blueprint $table) {
             $table->increments('id');
-            $table->dateTime('from');
+            $table->dateTime('start');
             $table->dateTime('end');
             $table->integer('appraisal_year');
             $table->float('goals_percentage')->unsigned();

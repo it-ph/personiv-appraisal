@@ -209,6 +209,10 @@ app
 				'withTrashed':false,
 			},
 			{
+				'relation':'departments',
+				'withTrashed':false,
+			},
+			{
 				'relation':'account',
 				'withTrashed':false,
 			},

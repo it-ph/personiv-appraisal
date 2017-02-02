@@ -28,8 +28,25 @@ app
 				.success(function(data){
 					$scope.roles = data;
 					$scope.count = $scope.roles.length;
-		
-					Helper.get('/user' + '/' + $scope.config.id)
+					
+					var user_query = {
+						'with': [
+							{
+								'relation': 'departments',
+								'withTrashed': false,
+							},
+						],
+						'where': [
+							{
+								'label': 'id',
+								'condition': '=',
+								'value': $scope.config.id,
+							},
+						],
+						'first': true,
+					}
+
+					Helper.post('/user/enlist' , user_query)
 						.success(function(data){
 							$scope.model = data;
 							$scope.model.roles = [];
