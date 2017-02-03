@@ -11,8 +11,13 @@ class AppraisalForm extends Model
     	return $this->belongsTo('App\AppraisalForm');
     }
 
-	public function departments()
+	public function department()
     {
-    	return $this->belongsToMany('App\Department', 'department_appraisal_forms');
+    	return $this->belongsTo('App\Department');
+    }
+
+    public function reviews()
+    {
+    	return $this->hasMany('App\Review');
     }    
 }

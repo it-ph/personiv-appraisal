@@ -1,0 +1,43 @@
+<div infinite-scroll='appraisal_form.paginateLoad()' infinite-scroll-distance="1" infinite-scroll-disabled="appraisal_form.busy" infinite-scroll-parent ng-if="appraisal_form.show">
+	<div ng-if="appraisal_form.items.length" flex flex-gt-md="90">
+		<md-list>
+			<md-list-item class="md-3-line" ng-repeat="appraisal_form in appraisal_form.items | filter: toolbar.searchText | orderBy:sortType:sortReverse" ng-if="showInactive || !appraisal_form.deleted_at">
+				<h2 class="md-avatar" ng-class="appraisal_form.deleted_at ? 'red-bg': 'primary-bg'" layout="row" layout-align="center center">
+					<span class="md-headline white-text"></span>
+				</h2>
+				<div class="md-list-item-text">
+					<h3></h3>
+					<h4></h4>
+					<p></p>
+				</div>
+				<md-menu ng-show="!appraisal_form.deleted_at">
+					<md-button aria-label="Menu" class="md-icon-button" ng-click="$mdOpenMenu($event)">
+			            <md-icon class="mdi mdi-dots-vertical grey"></md-icon>
+			            <md-tooltip></md-tooltip>
+			        </md-button>
+
+			        <md-menu-content width="4" ng-show="!appraisal_form.deleted_at">
+						<!-- Update -->
+			            <md-menu-item>
+				            <md-button aria-label="Update" ng-click="update(appraisal_form)" flex>
+				                Update
+				            </md-button>
+			        	</md-menu-item>
+			        	<md-menu-item ng-if="!appraisal_form.hideDelete">
+				            <!-- Delete -->
+				            <md-button aria-label="Delete" ng-click="delete(appraisal_form)" flex>
+				                Delete
+				            </md-button>
+			        	</md-menu-item>
+			        </md-menu-content>
+				</md-menu>
+			</md-list-item>
+		</md-list>
+	</div>	
+</div>
+<div layout="row" layout-align="center center" layout-padding layout-margin ng-if="isLoading">
+	<md-progress-circular class="md-primary" md-diameter="60"></md-progress-circular>
+</div>
+<div layout-padding layout-margin ng-if="!appraisal_form.items.length && appraisal_form.show && !appraisal_form.no_matches">
+	Nothing to display.
+</div>

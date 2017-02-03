@@ -24,6 +24,66 @@ app
 					}
 				}
 			})
+		.state('main.appraisal-forms', {
+				url: 'appraisal-forms',
+				resolve:{
+					authorization: ['Helper', '$state', function(Helper, $state){
+						Helper.get('/appraisal-form/create')
+							.success(function(data){
+								return;
+							})
+							.error(function(){
+								return $state.go('page-not-found');
+							});
+					}],
+				},
+				views: {
+					'content-container': {
+						templateUrl: '/app/shared/views/content-container.view.html',
+						controller: 'appraisalFormsContentContainerController',
+					},
+					'toolbar@main.appraisal-forms': {
+						templateUrl: '/app/shared/templates/toolbar.template.html',
+						controller: 'appraisalFormsToolbarController',
+					},
+					'left-sidenav@main.appraisal-forms': {
+						templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
+					},
+					'content@main.appraisal-forms':{
+						templateUrl: '/app/components/appraisal-forms/templates/content/appraisal-forms-content.template.html',
+					}
+				}
+			})
+		.state('main.manage-appraisal-forms', {
+				url: 'appraisal-forms/{appraisalFormID}',
+				params: {'appraisalFormID': null},
+				resolve:{
+					authorization: ['Helper', '$state', function(Helper, $state){
+						Helper.get('/appraisal-form/create')
+							.success(function(data){
+								return;
+							})
+							.error(function(){
+								return $state.go('page-not-found');
+							});
+					}],
+				},
+				views: {
+					'content-container': {
+						templateUrl: '/app/shared/views/content-container.view.html',
+						controller: 'manageAppraisalFormsContentContainerController',
+					},
+					'toolbar@main.manage-appraisal-forms': {
+						templateUrl: '/app/shared/templates/toolbar.template.html',
+					},
+					'left-sidenav@main.manage-appraisal-forms': {
+						templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
+					},
+					'content@main.manage-appraisal-forms':{
+						templateUrl: '/app/components/appraisal-forms/templates/content/manage-appraisal-forms-content.template.html',
+					}
+				}
+			})
 		.state('main.appraisal-periods', {
 				url: 'settings/appraisal-periods',
 				resolve:{

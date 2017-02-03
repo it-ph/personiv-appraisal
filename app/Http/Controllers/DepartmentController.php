@@ -72,6 +72,11 @@ class DepartmentController extends Controller
             }
         }
 
+        if($request->has('search'))
+        {
+            $departments->where('name', 'like', '%'.$request->search.'%');
+        }
+
         if($request->has('first'))
         {
             return $departments->first();

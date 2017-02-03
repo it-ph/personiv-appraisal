@@ -56,6 +56,11 @@ class AppraisalPeriodController extends Controller
             }
         }
 
+        if($request->has('search'))
+        {
+            $appraisal_periods->where('start', 'like', '%'.$request->search.'%')->orWhere('end', 'like', '%'.$request->search.'%')->orWhere('appraisal_year', $request->search);
+        }
+
         if($request->has('first'))
         {
             return $appraisal_periods->first();

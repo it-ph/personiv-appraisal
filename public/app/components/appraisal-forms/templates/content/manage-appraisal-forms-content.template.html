@@ -1,0 +1,43 @@
+<form name="form.appraisalForm" layout="row" layout-align="center center">
+	<div flex flex-gt-md="80" layout-padding>
+		<div layout="column" flex>
+			<div layout="row" layout-wrap flex>                
+	            <!-- Appraisal Period -->
+                <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
+                    <label>Appraisal Period</label>
+                    <md-select name="AppraisalPeriod" required ng-model="appraisal_form.appraisal_period" ng-disabled="busy">
+                        <md-option ng-repeat="appraisal_period in appraisal_periods" ng-value="{{appraisal_period}}">{{appraisal_period.appraisal_year}}</md-option>
+                    </md-select>
+                    <div class="secondary-text" ng-if="appraisal_form.appraisal_period">{{appraisal_form.appraisal_period.start | date: 'MMM. dd, yyyy' }} to {{appraisal_form.appraisal_period.end | date: 'MMM. dd, yyyy'}}</div>
+                    <div ng-messages="form.appraisalForm.AppraisalPeriod.$error" ng-if="form.appraisalForm.AppraisalPeriod.$touched">
+                        <div ng-message="required">Appraisal Period is required.</div>
+                    </div>
+                </md-input-container>
+				<!-- Department -->
+                <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm ng-if="super_admin">
+                	<label>Department</label>
+                	<md-select name="Department" required ng-model="appraisal_form.department_id" ng-disabled="busy">
+                        <md-option ng-repeat="department in departments" value="{{department.id}}">{{department.name}}</md-option>
+                    </md-select>
+                    <div ng-messages="form.appraisalForm.Department.$error" ng-if="form.appraisalForm.Department.$touched">
+                        <div ng-message="required">Department is required.</div>
+                    </div>
+                </md-input-container>
+            </div>
+            <div layout="row" layout-wrap flex>
+            	<!-- Description -->
+            	<md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
+            		<label>Description</label>
+            		<textarea name="Description" ng-model="appraisal_form.description"></textarea>
+            	</md-input-container>
+            </div>
+            <md-subheader class="md-no-sticky">Goals</md-subheader>
+            <div layout="row" layout-wrap flex>
+            	<md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm ng-repeat="goal in appraisal_form.goals">
+            		<label>Parameter</label>
+            		<input type="text" ng-model="goal.parameter">
+            	</md-input-container>
+            </div>
+		</div>
+	</div>
+</form>

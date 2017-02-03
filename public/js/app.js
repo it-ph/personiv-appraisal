@@ -25,6 +25,66 @@ app
 					}
 				}
 			})
+		.state('main.appraisal-forms', {
+				url: 'appraisal-forms',
+				resolve:{
+					authorization: ['Helper', '$state', function(Helper, $state){
+						Helper.get('/appraisal-form/create')
+							.success(function(data){
+								return;
+							})
+							.error(function(){
+								return $state.go('page-not-found');
+							});
+					}],
+				},
+				views: {
+					'content-container': {
+						templateUrl: '/app/shared/views/content-container.view.html',
+						controller: 'appraisalFormsContentContainerController',
+					},
+					'toolbar@main.appraisal-forms': {
+						templateUrl: '/app/shared/templates/toolbar.template.html',
+						controller: 'appraisalFormsToolbarController',
+					},
+					'left-sidenav@main.appraisal-forms': {
+						templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
+					},
+					'content@main.appraisal-forms':{
+						templateUrl: '/app/components/appraisal-forms/templates/content/appraisal-forms-content.template.html',
+					}
+				}
+			})
+		.state('main.manage-appraisal-forms', {
+				url: 'appraisal-forms/{appraisalFormID}',
+				params: {'appraisalFormID': null},
+				resolve:{
+					authorization: ['Helper', '$state', function(Helper, $state){
+						Helper.get('/appraisal-form/create')
+							.success(function(data){
+								return;
+							})
+							.error(function(){
+								return $state.go('page-not-found');
+							});
+					}],
+				},
+				views: {
+					'content-container': {
+						templateUrl: '/app/shared/views/content-container.view.html',
+						controller: 'manageAppraisalFormsContentContainerController',
+					},
+					'toolbar@main.manage-appraisal-forms': {
+						templateUrl: '/app/shared/templates/toolbar.template.html',
+					},
+					'left-sidenav@main.manage-appraisal-forms': {
+						templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
+					},
+					'content@main.manage-appraisal-forms':{
+						templateUrl: '/app/components/appraisal-forms/templates/content/manage-appraisal-forms-content.template.html',
+					}
+				}
+			})
 		.state('main.appraisal-periods', {
 				url: 'settings/appraisal-periods',
 				resolve:{
@@ -392,6 +452,281 @@ app
 		$scope.$on('closeSidenav', function(){
 			$mdSidenav('left').close();
 		});
+	}]);
+app
+	.controller('appraisalFormsContentContainerController', ['$scope', '$state', 'Helper', function($scope, $state, Helper){
+		$scope.$emit('closeSidenav');
+
+		$scope.state = $state.current.name;
+		/*
+		 * Object for toolbar
+		 *
+		*/
+		$scope.toolbar = {};
+
+		$scope.toolbar.toggleActive = function(){
+			$scope.showInactive = !$scope.showInactive;
+		}
+		$scope.toolbar.sortBy = function(filter){
+			filter.sortReverse = !filter.sortReverse;			
+			$scope.sortType = filter.type;
+			$scope.sortReverse = filter.sortReverse;
+		}
+
+		/*
+		 * Object for fab
+		 *
+		*/
+		$scope.fab = {};
+		$scope.fab.icon = 'mdi-plus';
+
+		$scope.fab.label = 'Users';
+
+		$scope.fab.action = function(){
+			$state.go('main.manage-appraisal-forms');
+		}
+
+
+		/* Action originates from toolbar */
+		$scope.$on('search', function(){
+			$scope.showInactive = true;
+			$scope.request.search = $scope.toolbar.searchText;
+			$scope.refresh();
+		});
+
+		/* Listens for any request for refresh */
+		$scope.$on('refresh', function(){
+			$scope.showInactive = false;
+			$scope.request.search = null;
+			$scope.$broadcast('close');
+			$scope.refresh();
+		});
+
+		$scope.updateModel = function(data){
+			
+		}
+
+		$scope.deleteModel = function(data){
+			var dialog = {};
+			dialog.title = 'Delete';
+			dialog.message = 'Delete ' + data.name + '?'
+			dialog.ok = 'Delete';
+			dialog.cancel = 'Cancel';
+
+			Helper.confirm(dialog)
+				.then(function(){
+					Helper.delete('/appraisal-form/' + data.id)
+						.success(function(){
+							$scope.refresh();
+							Helper.notify('Department deleted.');
+						})
+						.error(function(){
+							Helper.error();
+						});
+				}, function(){
+					return;
+				})
+		}
+
+		/* Formats every data in the paginated call */
+		var pushItem = function(data){
+			data.deleted_at =  data.deleted_at ? new Date(data.deleted_at) : null;
+			data.hideDelete = data.users_count ? true : false;
+
+			var item = {};
+
+			item.display = data.name;
+
+			$scope.toolbar.items.push(item);
+		}
+
+		$scope.init = function(query){
+			$scope.appraisal_form = {};
+			$scope.appraisal_form.items = [];
+			$scope.toolbar.items = [];
+
+			// 2 is default so the next page to be loaded will be page 2 
+			$scope.appraisal_form.page = 2;
+
+			Helper.post('/appraisal-form/enlist', query)
+				.success(function(data){
+					$scope.appraisal_form.details = data;
+					$scope.appraisal_form.items = data.data;
+					$scope.appraisal_form.show = true;
+
+					$scope.fab.show = true;
+
+					if(data.data.length){
+						// iterate over each record and set the format
+						angular.forEach(data.data, function(item){
+							pushItem(item);
+						});
+					}
+
+					$scope.appraisal_form.paginateLoad = function(){
+						// kills the function if ajax is busy or pagination reaches last page
+						if($scope.appraisal_form.busy || ($scope.appraisal_form.page > $scope.appraisal_form.details.last_page)){
+							$scope.isLoading = false;
+							return;
+						}
+						/**
+						 * Executes pagination call
+						 *
+						*/
+						// sets to true to disable pagination call if still busy.
+						$scope.appraisal_form.busy = true;
+						$scope.isLoading = true;
+						// Calls the next page of pagination.
+						Helper.post('/appraisal-form/enlist' + '?page=' + $scope.appraisal_form.page, query)
+							.success(function(data){
+								// increment the page to set up next page for next AJAX Call
+								$scope.appraisal_form.page++;
+
+								// iterate over each data then splice it to the data array
+								angular.forEach(data.data, function(item, key){
+									pushItem(item);
+									$scope.appraisal_form.items.push(item);
+								});
+
+								// Enables again the pagination call for next call.
+								$scope.appraisal_form.busy = false;
+								$scope.isLoading = false;
+							});
+					}
+				});
+		}
+
+		$scope.refresh = function(){
+			$scope.isLoading = true;
+  			$scope.appraisal_form.show = false;
+
+  			$scope.init($scope.request);
+		};
+
+		Helper.post('/user/check')
+    		.success(function(data){
+    			var user = data;
+				
+				$scope.request = {};
+
+				$scope.request.withTrashed = true;
+				$scope.request.paginate = 20;	
+				$scope.request.with = [
+					{
+						'relation':'appraisal_period',
+						'withTrashed':false,
+					},
+					{
+						'relation':'department',
+						'withTrashed':false,
+					},
+				];
+				$scope.request.withCount = [
+					{
+						'relation':'reivews',
+						'withTrashed': false,
+					},
+				];
+				$scope.request.where = [];
+
+				if(!user.super_admin)
+				{
+					$scope.request.where.push(
+						{
+							'label': 'department_id',
+							'condition': '=',
+							'value': user.department_id,
+						}
+					);
+				}
+
+				$scope.isLoading = true;
+				$scope.$broadcast('close');
+
+				$scope.init($scope.request);
+    		});
+
+	}]);
+app
+	.controller('manageAppraisalFormsContentContainerController', ['$scope', '$state', '$stateParams', 'Helper', function($scope, $state, $stateParams, Helper){
+		$scope.$emit('closeSidenav');
+
+		$scope.form = {};
+
+		var appraisalFormID = $stateParams.appraisalFormID;
+
+		/*
+		 * Object for toolbar
+		 *
+		*/
+		$scope.toolbar = {};
+
+		$scope.toolbar.hideSearchIcon = true;
+
+		$scope.toolbar.parentState = 'Appraisal Forms';
+		$scope.toolbar.childState =  appraisalFormID ? 'Edit' : 'New';
+
+		var error_dialog = {
+			'title': 'Aw Snap!',
+			'message': 'An error occured loading the resource.',
+			'ok': 'Try Again'
+		}
+
+		var appraisalPeriods = function(){		
+			Helper.get('/appraisal-period')
+				.success(function(data){
+					angular.forEach(data, function(item){
+						item.start = new Date(item.start);
+						item.end = new Date(item.end);
+					});
+
+					$scope.appraisal_periods = data;
+				})
+				.error(function(){
+					Helper.confirm(error_dialog)
+						.then(function(){
+							appraisalPeriods();
+						});
+				});
+		}
+
+		var departments = function(){		
+			Helper.get('/department')
+				.success(function(data){
+					$scope.departments = data;
+				})
+				.error(function(){
+					Helper.confirm(error_dialog)
+						.then(function(){
+							departments();
+						});
+				});
+		}
+
+		/*
+		 * Object for fab
+		 *
+		*/
+		$scope.fab = {};
+		$scope.fab.icon = 'mdi-check';
+		$scope.fab.label = 'Submit';
+		$scope.fab.show = true;
+
+		$scope.fab.action = function(){
+			
+		}
+
+		$scope.init = function(){
+			Helper.post('/user/check')
+				.success(function(data){
+					$scope.super_admin = data.super_admin;
+					appraisalPeriods();
+
+					if($scope.super_admin){
+						departments();
+					}
+				})
+		}();
 	}]);
 app
 	.controller('appraisalPeriodsContentContainerController', ['$scope', '$state', 'Helper', function($scope, $state, Helper){
@@ -1038,9 +1373,8 @@ app
 		$scope.init($scope.request);
 	}]);
 app
-	.controller('appraisalPeriodsToolbarController', ['$scope', '$filter', function($scope, $filter){
-		$scope.toolbar.parentState = 'Settings';
-		$scope.toolbar.childState = 'Appraisal Periods';
+	.controller('appraisalFormsToolbarController', ['$scope', '$filter', function($scope, $filter){
+		$scope.toolbar.childState = 'Appraisal Forms';
 
 		$scope.$on('close', function(){
 			$scope.hideSearchBar();
@@ -1087,167 +1421,9 @@ app
 		$scope.toolbar.showInactive = true;
 
 		$scope.toolbar.sort = [
-			{
-				'label': 'Start',
-				'type': 'start',
-				'sortReverse': false,
-			},
-			{
-				'label': 'End',
-				'type': 'end',
-				'sortReverse': false,
-			},
 			{
 				'label': 'Appraisal Year',
 				'type': 'appraisal_year',
-				'sortReverse': false,
-			},
-			{
-				'label': 'Recently added',
-				'type': 'created_at',
-				'sortReverse': false,
-			},
-		];
-
-		$scope.toolbar.refresh = function(){
-			$scope.$emit('refresh');
-		}
-	}]);
-app
-	.controller('departmentsToolbarController', ['$scope', '$filter', function($scope, $filter){
-		$scope.toolbar.parentState = 'Settings';
-		$scope.toolbar.childState = 'Departments';
-
-		$scope.$on('close', function(){
-			$scope.hideSearchBar();
-		});
-
-		$scope.toolbar.getItems = function(query){
-			var results = query ? $filter('filter')($scope.toolbar.items, query) : $scope.toolbar.items;
-			return results;
-		}
-
-		$scope.toolbar.searchAll = true;
-		/**
-		 * Reveals the search bar.
-		 *
-		*/
-		$scope.showSearchBar = function(){
-			$scope.model.busy = true;
-			$scope.searchBar = true;
-		};
-
-		/**
-		 * Hides the search bar.
-		 *
-		*/
-		$scope.hideSearchBar = function(){
-			$scope.searchBar = false;
-			$scope.toolbar.searchText = '';
-			$scope.toolbar.searchItem = '';
-			/* Cancels the paginate when the user sent a query */
-			if($scope.searched){
-				$scope.model.page = 1;
-				$scope.model.items = [];
-				$scope.searched = false;
-				$scope.$emit('refresh');
-			}
-		};
-
-		$scope.searchUserInput = function(){
-			$scope.$emit('search');
-			$scope.searched = true;
-		};
-
-		$scope.toolbar.options = true;
-		$scope.toolbar.showInactive = true;
-
-		$scope.toolbar.sort = [
-			{
-				'label': 'Name',
-				'type': 'employee_number',
-				'sortReverse': false,
-			},
-			{
-				'label': 'Recently added',
-				'type': 'created_at',
-				'sortReverse': false,
-			},
-		];
-
-		$scope.toolbar.refresh = function(){
-			$scope.$emit('refresh');
-		}
-	}]);
-app
-	.controller('usersToolbarController', ['$scope', '$filter', function($scope, $filter){
-		$scope.toolbar.parentState = 'Settings';
-		$scope.toolbar.childState = 'Users';
-
-		$scope.$on('close', function(){
-			$scope.hideSearchBar();
-		});
-
-		$scope.toolbar.getItems = function(query){
-			var results = query ? $filter('filter')($scope.toolbar.items, query) : $scope.toolbar.items;
-			return results;
-		}
-
-		$scope.toolbar.searchAll = true;
-		/**
-		 * Reveals the search bar.
-		 *
-		*/
-		$scope.showSearchBar = function(){
-			$scope.model.busy = true;
-			$scope.searchBar = true;
-		};
-
-		/**
-		 * Hides the search bar.
-		 *
-		*/
-		$scope.hideSearchBar = function(){
-			$scope.searchBar = false;
-			$scope.toolbar.searchText = '';
-			$scope.toolbar.searchItem = '';
-			/* Cancels the paginate when the user sent a query */
-			if($scope.searched){
-				$scope.model.page = 1;
-				$scope.model.no_matches = false;
-				$scope.model.items = [];
-				$scope.searched = false;
-				$scope.$emit('refresh');
-			}
-		};
-
-		$scope.searchUserInput = function(){
-			$scope.$emit('search');
-			$scope.searched = true;
-		};
-
-		$scope.toolbar.options = true;
-		$scope.toolbar.showInactive = true;
-
-		$scope.toolbar.sort = [
-			{
-				'label': 'Employee Number',
-				'type': 'employee_number',
-				'sortReverse': false,
-			},
-			{
-				'label': 'Last Name',
-				'type': 'last_name',
-				'sortReverse': false,
-			},
-			{
-				'label': 'First Name',
-				'type': 'first_name',
-				'sortReverse': false,
-			},
-			{
-				'label': 'Email',
-				'type': 'email',
 				'sortReverse': false,
 			},
 			{
@@ -1721,6 +1897,230 @@ app
 						});
 				}
 			}
+		}
+	}]);
+app
+	.controller('appraisalPeriodsToolbarController', ['$scope', '$filter', function($scope, $filter){
+		$scope.toolbar.parentState = 'Settings';
+		$scope.toolbar.childState = 'Appraisal Periods';
+
+		$scope.$on('close', function(){
+			$scope.hideSearchBar();
+		});
+
+		$scope.toolbar.getItems = function(query){
+			var results = query ? $filter('filter')($scope.toolbar.items, query) : $scope.toolbar.items;
+			return results;
+		}
+
+		$scope.toolbar.searchAll = true;
+		/**
+		 * Reveals the search bar.
+		 *
+		*/
+		$scope.showSearchBar = function(){
+			$scope.model.busy = true;
+			$scope.searchBar = true;
+		};
+
+		/**
+		 * Hides the search bar.
+		 *
+		*/
+		$scope.hideSearchBar = function(){
+			$scope.searchBar = false;
+			$scope.toolbar.searchText = '';
+			$scope.toolbar.searchItem = '';
+			/* Cancels the paginate when the user sent a query */
+			if($scope.searched){
+				$scope.model.page = 1;
+				$scope.model.items = [];
+				$scope.searched = false;
+				$scope.$emit('refresh');
+			}
+		};
+
+		$scope.searchUserInput = function(){
+			$scope.$emit('search');
+			$scope.searched = true;
+		};
+
+		$scope.toolbar.options = true;
+		$scope.toolbar.showInactive = true;
+
+		$scope.toolbar.sort = [
+			{
+				'label': 'Start',
+				'type': 'start',
+				'sortReverse': false,
+			},
+			{
+				'label': 'End',
+				'type': 'end',
+				'sortReverse': false,
+			},
+			{
+				'label': 'Appraisal Year',
+				'type': 'appraisal_year',
+				'sortReverse': false,
+			},
+			{
+				'label': 'Recently added',
+				'type': 'created_at',
+				'sortReverse': false,
+			},
+		];
+
+		$scope.toolbar.refresh = function(){
+			$scope.$emit('refresh');
+		}
+	}]);
+app
+	.controller('departmentsToolbarController', ['$scope', '$filter', function($scope, $filter){
+		$scope.toolbar.parentState = 'Settings';
+		$scope.toolbar.childState = 'Departments';
+
+		$scope.$on('close', function(){
+			$scope.hideSearchBar();
+		});
+
+		$scope.toolbar.getItems = function(query){
+			var results = query ? $filter('filter')($scope.toolbar.items, query) : $scope.toolbar.items;
+			return results;
+		}
+
+		$scope.toolbar.searchAll = true;
+		/**
+		 * Reveals the search bar.
+		 *
+		*/
+		$scope.showSearchBar = function(){
+			$scope.model.busy = true;
+			$scope.searchBar = true;
+		};
+
+		/**
+		 * Hides the search bar.
+		 *
+		*/
+		$scope.hideSearchBar = function(){
+			$scope.searchBar = false;
+			$scope.toolbar.searchText = '';
+			$scope.toolbar.searchItem = '';
+			/* Cancels the paginate when the user sent a query */
+			if($scope.searched){
+				$scope.model.page = 1;
+				$scope.model.items = [];
+				$scope.searched = false;
+				$scope.$emit('refresh');
+			}
+		};
+
+		$scope.searchUserInput = function(){
+			$scope.$emit('search');
+			$scope.searched = true;
+		};
+
+		$scope.toolbar.options = true;
+		$scope.toolbar.showInactive = true;
+
+		$scope.toolbar.sort = [
+			{
+				'label': 'Name',
+				'type': 'employee_number',
+				'sortReverse': false,
+			},
+			{
+				'label': 'Recently added',
+				'type': 'created_at',
+				'sortReverse': false,
+			},
+		];
+
+		$scope.toolbar.refresh = function(){
+			$scope.$emit('refresh');
+		}
+	}]);
+app
+	.controller('usersToolbarController', ['$scope', '$filter', function($scope, $filter){
+		$scope.toolbar.parentState = 'Settings';
+		$scope.toolbar.childState = 'Users';
+
+		$scope.$on('close', function(){
+			$scope.hideSearchBar();
+		});
+
+		$scope.toolbar.getItems = function(query){
+			var results = query ? $filter('filter')($scope.toolbar.items, query) : $scope.toolbar.items;
+			return results;
+		}
+
+		$scope.toolbar.searchAll = true;
+		/**
+		 * Reveals the search bar.
+		 *
+		*/
+		$scope.showSearchBar = function(){
+			$scope.model.busy = true;
+			$scope.searchBar = true;
+		};
+
+		/**
+		 * Hides the search bar.
+		 *
+		*/
+		$scope.hideSearchBar = function(){
+			$scope.searchBar = false;
+			$scope.toolbar.searchText = '';
+			$scope.toolbar.searchItem = '';
+			/* Cancels the paginate when the user sent a query */
+			if($scope.searched){
+				$scope.model.page = 1;
+				$scope.model.no_matches = false;
+				$scope.model.items = [];
+				$scope.searched = false;
+				$scope.$emit('refresh');
+			}
+		};
+
+		$scope.searchUserInput = function(){
+			$scope.$emit('search');
+			$scope.searched = true;
+		};
+
+		$scope.toolbar.options = true;
+		$scope.toolbar.showInactive = true;
+
+		$scope.toolbar.sort = [
+			{
+				'label': 'Employee Number',
+				'type': 'employee_number',
+				'sortReverse': false,
+			},
+			{
+				'label': 'Last Name',
+				'type': 'last_name',
+				'sortReverse': false,
+			},
+			{
+				'label': 'First Name',
+				'type': 'first_name',
+				'sortReverse': false,
+			},
+			{
+				'label': 'Email',
+				'type': 'email',
+				'sortReverse': false,
+			},
+			{
+				'label': 'Recently added',
+				'type': 'created_at',
+				'sortReverse': false,
+			},
+		];
+
+		$scope.toolbar.refresh = function(){
+			$scope.$emit('refresh');
 		}
 	}]);
 //# sourceMappingURL=app.js.map

@@ -56,6 +56,11 @@ class AccountController extends Controller
             }
         }
 
+        if($request->has('search'))
+        {
+            $accounts->where('name', 'like', '%'.$request->search.'%');
+        }
+
         if($request->has('first'))
         {
             return $accounts->first();
