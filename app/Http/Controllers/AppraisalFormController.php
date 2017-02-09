@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 
 use App\AppraisalForm;
+use App\BehavioralCompetency;
+use App\Goal;
 
 use Auth;
 use Carbon\Carbon;
@@ -71,7 +73,7 @@ class AppraisalFormController extends Controller
      */
     public function index()
     {
-        //
+        return AppraisalForm::all();
     }
 
     /**
@@ -95,7 +97,48 @@ class AppraisalFormController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        if(Gate::forUser($request->user())->denies('parameters'))
+        {
+            abort(403, 'Unauthorized action');
+        }
+
+        $this->validate($request, [
+            'appraisal_period_id' => 'required',
+            'goals' => 'required',
+            'behavioral_competencies' => 'required',
+        ]);
+
+        $appraisal_form = new AppraisalForm;
+
+        DB::transaction(function() use($request, $appraisal_form){
+            $appraisal_form->appraisal_period_id = $request->input('appraisal_period_id');
+            $appraisal_form->department_id = $request->department_id;
+            $appraisal_form->description = $request->description;
+
+            $appraisal_form->save();
+
+            for ($i=0; $i < count($request->input('behavioral_competencies')); $i++) { 
+                $behavorial_competency = new BehavioralCompetency;
+
+                $behavorial_competency->appraisal_form_id = $appraisal_form->id;
+                $behavorial_competency->parameter = $request->input('behavioral_competencies')[$i]['parameter'];
+                $behavorial_competency->description = $request->input('behavioral_competencies')[$i]['description'];
+
+                $behavorial_competency->save();
+            }
+
+            for ($i=0; $i < count($request->input('goals')); $i++) { 
+                $goal = new Goal;
+
+                $goal->appraisal_form_id = $appraisal_form->id;
+                $goal->parameter = $request->input('goals')[$i]['parameter'];
+                $goal->weight = $request->input('goals')[$i]['weight'] / 100;
+
+                $goal->save();
+            }
+        });
+
+        return $appraisal_form;
     }
 
     /**
@@ -106,7 +149,7 @@ class AppraisalFormController extends Controller
      */
     public function show($id)
     {
-        //
+        return AppraisalForm::findOrFail($id);
     }
 
     /**
@@ -129,7 +172,61 @@ class AppraisalFormController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        if(Gate::forUser($request->user())->denies('parameters'))
+        {
+            abort(403, 'Unauthorized action');
+        }
+
+        $this->validate($request, [
+            'appraisal_period' => 'required',
+            'goals' => 'required',
+            'behavioral_competencies' => 'required',
+        ]);
+
+        DB::transaction(function() use($request, $id){
+            $appraisal_form = AppraisalForm::find($id);
+
+            $appraisal_form->appraisal_period_id = $request->input('appraisal_period_id');
+            $appraisal_form->department_id = $request->department_id;
+            $appraisal_form->description = $request->description;
+
+            $appraisal_form->save();
+
+            for ($i=0; $i < count($request->input('behavioral_competencies')); $i++) { 
+                if(isset($request->input('behavioral_competencies')[$i]['id']))
+                {
+                    $behavorial_competency = BehavioralCompetency::find($request->input('behavioral_competencies')[$i]['id']);
+                }
+                else
+                {
+
+                    $behavorial_competency = new BehavioralCompetency;
+                }
+
+                $behavorial_competency->appraisal_form_id = $appraisal_form->id;
+                $behavorial_competency->parameter = $request->input('behavioral_competencies')[$i]['parameter'];
+                $behavorial_competency->description = $request->input('behavioral_competencies')[$i]['description'];
+
+                $behavorial_competency->save();
+            }
+
+            for ($i=0; $i < count($request->input('goals')); $i++) { 
+                if(isset($request->input('goals')[$i]['id']))
+                {
+                    $goal = Goal::find($request->input('goals')[$i]['id']);
+                }
+                else
+                {
+                    $goal = new Goal;
+                }
+
+                $goal->appraisal_form_id = $appraisal_form->id;
+                $goal->parameter = $request->input('goals')[$i]['parameter'];
+                $goal->weight = $request->input('goals')[$i]['weight'] / 100;
+
+                $goal->save();
+            }
+        });
     }
 
     /**
@@ -140,6 +237,18 @@ class AppraisalFormController extends Controller
      */
     public function destroy($id)
     {
-        //
+        if(Gate::forUser(Auth::user())->denies('parameters'))
+        {
+            abort(403, 'Unauthorized action');
+        }
+
+        $appraisal_form = AppraisalForm::withCount('reviews')->where('id', $id)->first();
+
+        if($appraisal_form->reviews_count)
+        {
+            abort(403, 'Cannot delete appraisal form with associated reviews already.');
+        }
+
+        $appraisal_form->delete();
     }
 }

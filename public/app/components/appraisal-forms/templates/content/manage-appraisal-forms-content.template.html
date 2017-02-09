@@ -5,10 +5,9 @@
 	            <!-- Appraisal Period -->
                 <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
                     <label>Appraisal Period</label>
-                    <md-select name="AppraisalPeriod" required ng-model="appraisal_form.appraisal_period" ng-disabled="busy">
-                        <md-option ng-repeat="appraisal_period in appraisal_periods" ng-value="{{appraisal_period}}">{{appraisal_period.appraisal_year}}</md-option>
+                    <md-select name="AppraisalPeriod" required ng-model="appraisal_form.appraisal_period_id" ng-disabled="busy">
+                        <md-option ng-repeat="appraisal_period in appraisal_periods" ng-value="{{appraisal_period.id}}">{{appraisal_period.appraisal_year}} - {{appraisal_period.start | date: 'MMM. dd, yyyy' }} to {{appraisal_period.end | date: 'MMM. dd, yyyy'}}</md-option>
                     </md-select>
-                    <div class="secondary-text" ng-if="appraisal_form.appraisal_period">{{appraisal_form.appraisal_period.start | date: 'MMM. dd, yyyy' }} to {{appraisal_form.appraisal_period.end | date: 'MMM. dd, yyyy'}}</div>
                     <div ng-messages="form.appraisalForm.AppraisalPeriod.$error" ng-if="form.appraisalForm.AppraisalPeriod.$touched">
                         <div ng-message="required">Appraisal Period is required.</div>
                     </div>
@@ -31,13 +30,79 @@
             		<textarea name="Description" ng-model="appraisal_form.description"></textarea>
             	</md-input-container>
             </div>
-            <md-subheader class="md-no-sticky">Goals</md-subheader>
-            <div layout="row" layout-wrap flex>
-            	<md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm ng-repeat="goal in appraisal_form.goals">
-            		<label>Parameter</label>
-            		<input type="text" ng-model="goal.parameter">
-            	</md-input-container>
-            </div>
+            <md-subheader class="md-no-sticky md-primary">Goals</md-subheader>
+            <md-subheader class="md-no-sticky red-text" ng-if="incomplete_goals">Sum of goals must be 100%</md-subheader>
+            <md-card flex ng-repeat="goal in appraisal_form.goals">
+                <md-card-content layout="column">
+                    <div layout="row" layout-align="end center" flex>                    
+                        <!-- Remove Goal -->
+                        <md-button class="md-icon-button" ng-if="appraisal_form.goals.length > 1" ng-click="removeGoal($index)">
+                            <md-icon class="mdi mdi-close grey"></md-icon>
+                            <md-tooltip>Remove Goal</md-tooltip>
+                        </md-button>    
+                    </div>
+                    <div layout="row" layout-wrap flex>
+                        <!-- Parameter -->
+                        <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
+                            <label>Parameter</label>
+                            <input type="text" name="GoalParameter{{$index}}" ng-model="goal.parameter" required>
+                            <div ng-messages="form.appraisalForm['GoalParameter' + $index].$error" ng-if="form.appraisalForm['GoalParameter' + $index].$touched">
+                                <div ng-message="required">Parameter is required.</div>
+                            </div>
+                        </md-input-container>
+                        <!-- Weight -->
+                        <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
+                            <label>Weight</label>
+                            <input type="number" name="Weight{{$index}}" ng-model="goal.weight" required min="0" max="{{100 - total_weight + goal.weight}}" ng-blur="setGoal()">
+                            <div class="hint" ng-if="form.appraisalForm['Weight' + $index].$untouched">{{100 - total_weight}}% left</div>
+                            <div ng-messages="form.appraisalForm['Weight' + $index].$error" ng-if="form.appraisalForm['Weight' + $index].$touched">
+                                <div ng-message="required">Weight is required.</div>
+                                <div ng-message="max">Goal parameters' sum cannot be more than 100.</div>
+                            </div>
+                        </md-input-container>
+                    </div>
+                </md-card-content>
+            </md-card>
+            <!-- Add Goal -->
+            <md-button class="md-fab md-mini md-primary" ng-if="total_weight < 100" ng-click="addGoal()">
+                <md-icon class="mdi mdi-plus"></md-icon>
+                <md-tooltip>Add Goal</md-tooltip>
+            </md-button>
+            <md-subheader class="md-no-sticky md-primary">Behavioral Competency</md-subheader>
+            <md-card ng-repeat="behavioral_competency in appraisal_form.behavioral_competencies">
+                <md-card-content layout="column">
+                    <div layout="row" layout-align="end center">
+                        <!-- Remove Behavioral Competency -->
+                        <md-button class="md-icon-button" ng-if="appraisal_form.behavioral_competencies.length > 1" ng-click="removeBehavioralCompetency($index)">
+                            <md-icon class="mdi mdi-close grey"></md-icon>
+                            <md-tooltip>Remove Behavioral Competency</md-tooltip>
+                        </md-button> 
+                    </div>
+                    <div layout="column" layout-wrap flex>
+                        <!-- Parameter -->
+                        <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
+                            <label>Parameter</label>
+                            <input type="text" name="BehavioralParameter{{$index}}" ng-model="behavioral_competency.parameter" required>
+                            <div ng-messages="form.appraisalForm['BehavioralParameter' + $index].$error" ng-if="form.appraisalForm['BehavioralParameter' + $index].$touched">
+                                <div ng-message="required">Parameter is required.</div>
+                            </div>
+                        </md-input-container>
+                        <!-- Description -->
+                        <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
+                            <label>Description</label>
+                            <textarea type="text" name="BehavioralDescription{{$index}}" ng-model="behavioral_competency.description" required></textarea>
+                            <div ng-messages="form.appraisalForm['BehavioralDescription' + $index].$error" ng-if="form.appraisalForm['BehavioralDescription' + $index].$touched">
+                                <div ng-message="required">Description is required.</div>
+                            </div>
+                        </md-input-container>
+                    </div>
+                </md-card-content>
+            </md-card>
+            <!-- Add Behavioral Competency -->
+            <md-button class="md-fab md-mini md-primary" ng-click="addBehavioralCompetency()">
+                <md-icon class="mdi mdi-plus"></md-icon>
+                <md-tooltip>Add Behavioral Competency</md-tooltip>
+            </md-button>
 		</div>
 	</div>
 </form>

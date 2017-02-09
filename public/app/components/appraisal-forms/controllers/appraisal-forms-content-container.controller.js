@@ -47,14 +47,14 @@ app
 			$scope.refresh();
 		});
 
-		$scope.updateModel = function(data){
-			
+		$scope.update = function(data){
+			$state.go('main.manage-appraisal-forms', {'appraisalFormID':data.id});
 		}
 
-		$scope.deleteModel = function(data){
+		$scope.delete = function(data){
 			var dialog = {};
 			dialog.title = 'Delete';
-			dialog.message = 'Delete ' + data.name + '?'
+			dialog.message = 'Delete ' + data.department.name + 'appraisal form?'
 			dialog.ok = 'Delete';
 			dialog.cancel = 'Cancel';
 
@@ -63,7 +63,7 @@ app
 					Helper.delete('/appraisal-form/' + data.id)
 						.success(function(){
 							$scope.refresh();
-							Helper.notify('Department deleted.');
+							Helper.notify('Appraisal form deleted.');
 						})
 						.error(function(){
 							Helper.error();
@@ -76,7 +76,10 @@ app
 		/* Formats every data in the paginated call */
 		var pushItem = function(data){
 			data.deleted_at =  data.deleted_at ? new Date(data.deleted_at) : null;
-			data.hideDelete = data.users_count ? true : false;
+			data.hideDelete = data.reviews_count ? true : false;
+
+			data.appraisal_period.start = new Date(data.appraisal_period.start);
+			data.appraisal_period.end = new Date(data.appraisal_period.end);
 
 			var item = {};
 
@@ -168,7 +171,7 @@ app
 				];
 				$scope.request.withCount = [
 					{
-						'relation':'reivews',
+						'relation':'reviews',
 						'withTrashed': false,
 					},
 				];

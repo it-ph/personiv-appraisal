@@ -15,7 +15,7 @@ class CreateBehavioralCompetenciesTable extends Migration
     {
         Schema::create('behavioral_competencies', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('paramater');
+            $table->string('parameter');
             $table->string('description');
             $table->integer('appraisal_form_id')->unsigned();
             $table->timestamps();

@@ -4,6 +4,13 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
+use App\BehavioralCompetency;
+
+use Auth;
+use Carbon\Carbon;
+use DB;
+use Gate;
+
 class BehavioralCompetencyController extends Controller
 {
     /**
@@ -79,6 +86,11 @@ class BehavioralCompetencyController extends Controller
      */
     public function destroy($id)
     {
-        //
+        if(Gate::forUser(Auth::user())->denies('parameters'))
+        {
+            abort(403, 'Unauthorized action.');
+        }
+
+        BehavioralCompetency::where('id', $id)->delete();
     }
 }

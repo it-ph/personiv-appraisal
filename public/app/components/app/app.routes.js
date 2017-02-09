@@ -84,6 +84,36 @@ app
 					}
 				}
 			})
+		.state('main.manage-appraisal-form-employees', {
+				url: 'appraisal-forms/{appraisalFormID}/employees',
+				params: {'appraisalFormID': null},
+				resolve:{
+					authorization: ['Helper', '$state', function(Helper, $state){
+						Helper.get('/appraisal-form/create')
+							.success(function(data){
+								return;
+							})
+							.error(function(){
+								return $state.go('page-not-found');
+							});
+					}],
+				},
+				views: {
+					'content-container': {
+						templateUrl: '/app/shared/views/content-container.view.html',
+						controller: 'manageAppraisalFormEmployeesContentContainerController',
+					},
+					'toolbar@main.manage-appraisal-form-employees': {
+						templateUrl: '/app/shared/templates/toolbar.template.html',
+					},
+					'left-sidenav@main.manage-appraisal-form-employees': {
+						templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
+					},
+					'content@main.manage-appraisal-form-employees':{
+						templateUrl: '/app/components/appraisal-forms/templates/content/manage-appraisal-form-employees-content.template.html',
+					}
+				}
+			})
 		.state('main.appraisal-periods', {
 				url: 'settings/appraisal-periods',
 				resolve:{

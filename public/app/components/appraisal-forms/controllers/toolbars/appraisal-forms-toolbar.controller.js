@@ -53,6 +53,11 @@ app
 				'sortReverse': false,
 			},
 			{
+				'label': 'Department',
+				'type': 'department',
+				'sortReverse': false,
+			},
+			{
 				'label': 'Recently added',
 				'type': 'created_at',
 				'sortReverse': false,

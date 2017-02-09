@@ -17,9 +17,9 @@ class CreateReviewsTable extends Migration
             $table->increments('id');
             $table->integer('user_id')->unsigned();
             $table->integer('appraisal_form_id')->unsigned();
-            $table->float('average_goals_score');
-            $table->float('average_behavioral_competency_score');
-            $table->float('overall_rating');
+            $table->float('average_goals_score')->nullable();
+            $table->float('average_behavioral_competency_score')->nullable();
+            $table->float('overall_rating')->nullable();
             $table->text('commitment_remarks')->nullable();
             $table->text('trainings_needed_self_assessment')->nullable();
             $table->text('trainings_needed_supervisor_assessment')->nullable();

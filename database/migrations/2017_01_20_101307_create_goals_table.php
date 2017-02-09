@@ -15,7 +15,7 @@ class CreateGoalsTable extends Migration
     {
         Schema::create('goals', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('paramater');
+            $table->string('parameter');
             $table->float('weight');
             $table->integer('appraisal_form_id')->unsigned();
             $table->timestamps();

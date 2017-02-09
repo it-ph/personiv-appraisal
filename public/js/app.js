@@ -85,6 +85,36 @@ app
 					}
 				}
 			})
+		.state('main.manage-appraisal-form-employees', {
+				url: 'appraisal-forms/{appraisalFormID}/employees',
+				params: {'appraisalFormID': null},
+				resolve:{
+					authorization: ['Helper', '$state', function(Helper, $state){
+						Helper.get('/appraisal-form/create')
+							.success(function(data){
+								return;
+							})
+							.error(function(){
+								return $state.go('page-not-found');
+							});
+					}],
+				},
+				views: {
+					'content-container': {
+						templateUrl: '/app/shared/views/content-container.view.html',
+						controller: 'manageAppraisalFormEmployeesContentContainerController',
+					},
+					'toolbar@main.manage-appraisal-form-employees': {
+						templateUrl: '/app/shared/templates/toolbar.template.html',
+					},
+					'left-sidenav@main.manage-appraisal-form-employees': {
+						templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
+					},
+					'content@main.manage-appraisal-form-employees':{
+						templateUrl: '/app/components/appraisal-forms/templates/content/manage-appraisal-form-employees-content.template.html',
+					}
+				}
+			})
 		.state('main.appraisal-periods', {
 				url: 'settings/appraisal-periods',
 				resolve:{
@@ -502,14 +532,14 @@ app
 			$scope.refresh();
 		});
 
-		$scope.updateModel = function(data){
-			
+		$scope.update = function(data){
+			$state.go('main.manage-appraisal-forms', {'appraisalFormID':data.id});
 		}
 
-		$scope.deleteModel = function(data){
+		$scope.delete = function(data){
 			var dialog = {};
 			dialog.title = 'Delete';
-			dialog.message = 'Delete ' + data.name + '?'
+			dialog.message = 'Delete ' + data.department.name + 'appraisal form?'
 			dialog.ok = 'Delete';
 			dialog.cancel = 'Cancel';
 
@@ -518,7 +548,7 @@ app
 					Helper.delete('/appraisal-form/' + data.id)
 						.success(function(){
 							$scope.refresh();
-							Helper.notify('Department deleted.');
+							Helper.notify('Appraisal form deleted.');
 						})
 						.error(function(){
 							Helper.error();
@@ -531,7 +561,10 @@ app
 		/* Formats every data in the paginated call */
 		var pushItem = function(data){
 			data.deleted_at =  data.deleted_at ? new Date(data.deleted_at) : null;
-			data.hideDelete = data.users_count ? true : false;
+			data.hideDelete = data.reviews_count ? true : false;
+
+			data.appraisal_period.start = new Date(data.appraisal_period.start);
+			data.appraisal_period.end = new Date(data.appraisal_period.end);
 
 			var item = {};
 
@@ -623,7 +656,7 @@ app
 				];
 				$scope.request.withCount = [
 					{
-						'relation':'reivews',
+						'relation':'reviews',
 						'withTrashed': false,
 					},
 				];
@@ -646,6 +679,170 @@ app
 				$scope.init($scope.request);
     		});
 
+	}]);
+app
+	.controller('manageAppraisalFormEmployeesContentContainerController', ['$scope', '$filter', '$state', '$stateParams', 'Helper', function($scope, $filter, $state, $stateParams, Helper){
+		$scope.$emit('closeSidenav');
+
+		$scope.form = {};
+
+		var appraisalFormID = $stateParams.appraisalFormID;
+
+		/*
+		 * Object for toolbar
+		 *
+		*/
+		$scope.toolbar = {};
+
+		$scope.toolbar.hideSearchIcon = true;
+
+		$scope.toolbar.parentState = 'Appraisal Form';
+		$scope.toolbar.childState =  'Employees';
+
+		var error_dialog = {
+			'title': 'Aw Snap!',
+			'message': 'An error occured loading the resource.',
+			'ok': 'Try Again'
+		}
+
+		$scope.items = [];
+
+		$scope.querySearch = function(query){
+			var results = query ? $filter('filter')($scope.items, query) : $scope.items;
+			return results;
+		}
+
+		/*
+		 * Object for fab
+		 *
+		*/
+		$scope.fab = {};
+		$scope.fab.icon = 'mdi-check';
+		$scope.fab.label = 'Submit';
+		$scope.fab.show = true;
+
+		$scope.fab.action = function(){
+			if($scope.form.appraisalForm.$invalid){
+				angular.forEach($scope.form.appraisalForm.$error, function(field){
+					angular.forEach(field, function(errorField){
+						errorField.$setTouched();
+					});
+				});
+
+				return;
+			}
+
+			console.log($scope.appraisal_form);
+
+			return;
+
+			$scope.busy = true;
+
+			Helper.preload();
+
+			if(!appraisalFormID)
+			{
+				Helper.post('/appraisal-form', $scope.appraisal_form)
+					.success(function(data){
+						Helper.stop();
+						$state.go('main.manage-appraisal-form-employees', {'appraisalFormID':data.id});
+					})
+					.error(function(){
+						$scope.busy = false;
+						Helper.error();
+					})
+			}
+			else{
+				Helper.put('/appraisal-form/' + appraisalFormID, $scope.appraisal_form)
+					.success(function(data){
+						Helper.stop();
+						$state.go('main.appraisal-forms');
+					})
+					.error(function(){
+						$scope.busy = false;
+						Helper.error();
+					})
+			}
+		}
+
+		$scope.init = function(){		
+			var appraisal_form_query = {}
+
+			appraisal_form_query.with = [
+				{
+					'relation': 'appraisal_period',
+					'withTrashed': false,
+				},
+				{
+					'relation': 'department',
+					'withTrashed': false,
+				},
+			];
+
+			appraisal_form_query.where = [
+				{
+					'label': 'id',
+					'condition': '=',
+					'value': appraisalFormID,
+				},
+			];
+
+			appraisal_form_query.first = true;
+
+			var appraisalForm = function(){
+				Helper.post('/appraisal-form/enlist', appraisal_form_query)
+					.success(function(data){
+						data.appraisal_period.start = new Date(data.appraisal_period.start);
+						data.appraisal_period.end = new Date(data.appraisal_period.end);
+
+						$scope.appraisal_form = data;
+						$scope.appraisal_form.reviews = [];
+
+						var users_query = {}
+
+						users_query.where = [
+							{
+								'label': 'department_id',
+								'condition': '=',
+								'value': $scope.appraisal_form.department_id,
+							},
+						];
+
+						var users = function(){
+							Helper.post('/user/enlist', users_query)
+								.success(function(data){
+									angular.forEach(data, function(user){
+										var item = {};
+
+										item.id = user.id;
+										item.name = user.last_name + ', ' + user.first_name;
+										item.email = user.email;
+										
+										$scope.items.push(item);
+									});
+
+									$scope.users = data;
+								})
+								.error(function(){
+									Helper.confirm(error_dialog)
+										.then(function(){
+											users();
+										});
+								});
+						}
+
+						users();
+					})
+					.error(function(){
+						Helper.confirm(error_dialog)
+							.then(function(){
+								appraisalForm();
+							});
+					});
+			}
+
+			appraisalForm();
+		}();
 	}]);
 app
 	.controller('manageAppraisalFormsContentContainerController', ['$scope', '$state', '$stateParams', 'Helper', function($scope, $state, $stateParams, Helper){
@@ -713,17 +910,199 @@ app
 		$scope.fab.show = true;
 
 		$scope.fab.action = function(){
-			
+			if($scope.form.appraisalForm.$invalid){
+				angular.forEach($scope.form.appraisalForm.$error, function(field){
+					angular.forEach(field, function(errorField){
+						errorField.$setTouched();
+					});
+				});
+
+				return;
+			}
+
+			if($scope.total_weight == 100)
+			{
+				$scope.busy = true;
+
+				Helper.preload();
+
+				if(!appraisalFormID)
+				{
+					Helper.post('/appraisal-form', $scope.appraisal_form)
+						.success(function(data){
+							Helper.stop();
+							$state.go('main.appraisal-forms');
+						})
+						.error(function(){
+							$scope.busy = false;
+							Helper.error();
+						})
+				}
+				else{
+					Helper.put('/appraisal-form/' + appraisalFormID, $scope.appraisal_form)
+						.success(function(data){
+							Helper.stop();
+							$state.go('main.appraisal-forms');
+						})
+						.error(function(){
+							$scope.busy = false;
+							Helper.error();
+						})
+				}
+			}
+			else{
+				$scope.incomplete_goals = true;
+			}
+		}
+
+		$scope.addGoal = function(){
+			$scope.appraisal_form.goals.push({});
+		}
+		
+		$scope.setGoal = function(){
+			$scope.total_weight = 0;
+
+			angular.forEach($scope.appraisal_form.goals, function(item){
+				if(item.weight)
+				{
+					$scope.total_weight += item.weight;		
+				}
+			});
+
+			if($scope.total_weight == 100)
+			{
+				$scope.incomplete_goals = false;
+			}
+		}
+
+		$scope.removeGoal = function(idx){
+			if(appraisalFormID)
+			{
+				var dialog = {
+					'title': 'Remove Goal',
+					'message': 'This goal will be removed permanently.',
+					'ok': 'Delete',
+					'cancel': 'cancel',
+				}
+
+				Helper.confirm(dialog)
+					.then(function(){
+						Helper.delete('/goal/' + $scope.appraisal_form.goals[idx].id)
+							.success(function(){
+								$scope.appraisal_form.goals.splice(idx, 1);
+								$scope.setGoal();
+							})
+							.error(function(){
+								Helper.error();
+							});
+					}, function(){
+						return;
+					});
+			}
+			else{				
+				$scope.appraisal_form.goals.splice(idx, 1);
+				$scope.setGoal();
+			}
+		}
+
+		$scope.addBehavioralCompetency = function(){
+			$scope.appraisal_form.behavioral_competencies.push({});
+		}
+
+		$scope.removeBehavioralCompetency = function(idx){
+			if(appraisalFormID)
+			{
+				var dialog = {
+					'title': 'Remove Behavioral Competency',
+					'message': 'This item will be removed permanently.',
+					'ok': 'Delete',
+					'cancel': 'Cancel',
+				}
+
+				Helper.confirm(dialog)
+					.then(function(){
+						Helper.delete('/behavioral-competency/' + $scope.appraisal_form.behavioral_competencies[idx].id)
+							.success(function(){
+								$scope.appraisal_form.behavioral_competencies.splice(idx, 1);
+							})
+							.error(function(){
+								Helper.error();
+							});
+					}, function(){
+						return;
+					});
+			}
+			else{				
+				$scope.appraisal_form.behavioral_competencies.splice(idx, 1);
+			}
 		}
 
 		$scope.init = function(){
 			Helper.post('/user/check')
 				.success(function(data){
 					$scope.super_admin = data.super_admin;
+					
 					appraisalPeriods();
 
 					if($scope.super_admin){
 						departments();
+					}
+					
+					if(!appraisalFormID)
+					{
+						$scope.appraisal_form = {};
+						
+						$scope.appraisal_form.goals = [{}];
+						$scope.appraisal_form.behavioral_competencies = [{}];
+					}
+					else{
+						var query = {}
+
+						query.with = [
+							{
+								'relation': 'appraisal_period',
+								'withTrashed': false,
+							},
+							{
+								'relation': 'goals',
+								'withTrashed': false,
+							},
+							{
+								'relation': 'behavioral_competencies',
+								'withTrashed': false,
+							},
+						];
+
+						query.where = [
+							{
+								'label': 'id',
+								'condition': '=',
+								'value': appraisalFormID,
+							},
+						];
+
+						query.first = true;
+
+						var appraisalForm = function(){
+							Helper.post('/appraisal-form/enlist', query)
+								.success(function(data){
+									angular.forEach(data.goals, function(item){
+										item.weight = item.weight * 100;
+									});
+
+									$scope.appraisal_form = data;
+
+									$scope.setGoal();
+								})
+								.error(function(){
+									Helper.confirm(error_dialog)
+										.then(function(){
+											appraisalForm();
+										});
+								});
+						}
+
+						appraisalForm();
 					}
 				})
 		}();
@@ -1424,6 +1803,11 @@ app
 			{
 				'label': 'Appraisal Year',
 				'type': 'appraisal_year',
+				'sortReverse': false,
+			},
+			{
+				'label': 'Department',
+				'type': 'department',
 				'sortReverse': false,
 			},
 			{
