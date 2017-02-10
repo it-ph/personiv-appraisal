@@ -1,0 +1,66 @@
+<md-dialog aria-label="Model Form"  flex flex-gt-sm="50" ng-cloak>
+	<md-toolbar>
+        <div class="md-toolbar-tools">
+            <h2 class="white-text">Appraisal Form</h2>
+            <span flex></span>
+            <md-button class="md-icon-button" ng-click="cancel()">
+                <md-icon class="mdi mdi-close mdi-24px" aria-label="Close dialog"></md-icon>
+            </md-button>
+        </div>
+    </md-toolbar>
+    <md-dialog-content flex layout-wrap>
+    	<md-tabs md-dynamic-height md-border-bottom>
+			<md-tab label="Goals">
+				<md-list layout="row" layout-wrap>
+					<md-list-item class="md-2-line" ng-repeat="goal in appraisal_form.goals" flex-xs flex-sm flex-gt-sm="50">
+						<h2 class="md-headline md-avatar primary-bg" layout="row" layout-align="center center">
+							<span class="white-text">{{goal.parameter.charAt(0).toUpperCase()}}</span>
+						</h2>
+						<div class="md-list-item-text">
+							<h3>{{goal.parameter}}</h3>
+							<h4>{{goal.weight * 100}}%</h4>
+						</div>
+					</md-list-item>
+				</md-list>
+			</md-tab>
+			<md-tab label="Behavioral Competency">
+				<md-list layout-padding>
+					<md-list-item class="md-2-line" ng-repeat="behavioral_competency in appraisal_form.behavioral_competencies">
+						<h2 class="md-headline md-avatar primary-bg" layout="row" layout-align="center center">
+							<span class="white-text">{{behavioral_competency.parameter.charAt(0).toUpperCase()}}</span>
+						</h2>
+						<div class="md-list-item-text">
+							<h3>{{behavioral_competency.parameter}}</h3>
+							<p>{{behavioral_competency.description}}</p>
+						</div>
+						<md-divider md-inset ng-if="!$last"></md-divider>
+					</md-list-item>
+				</md-list>
+			</md-tab>
+			<md-tab label="Employees">
+				<md-list layout="row" layout-wrap class="md-dense">
+					<md-list-item class="md-2-line" ng-repeat="review in appraisal_form.reviews" flex-xs flex-sm flex-gt-sm="30">
+						<img ng-if="!review.user.avatar_path" src="/img/2Color-Favicon_512x512-1.png" alt="" class="md-avatar">
+						<img ng-if="review.user.avatar_path" ng-src="/user/avatar/{{review.user.id}}" alt="" class="md-avatar">
+						<div class="md-list-item-text">
+							<h3>{{review.user.last_name}}, {{review.user.first_name}}</h3>
+							<h4>{{behavioral_competency.description}}</h4>
+						</div>
+					</md-list-item>
+				</md-list>
+			</md-tab>
+    	</md-tabs>
+	    <div layout="row" flex>
+	    	<md-button aria-label="Manage Employees" ng-click="manageEmployees()">
+	            Manage Employees
+	        </md-button>
+	    	<span flex></span>
+	        <md-button aria-label="Update" ng-click="update()">
+	            Update
+	        </md-button>
+	        <md-button aria-label="Delete" ng-click="delete(appraisal_form.id)">
+	            Delete
+	        </md-button>
+	    </div>
+    </md-dialog-content>
+</md-dialog>

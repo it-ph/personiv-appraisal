@@ -3,6 +3,7 @@ app
 		$scope.$emit('closeSidenav');
 
 		$scope.form = {};
+		$scope.form.include_all = false;
 
 		var appraisalFormID = $stateParams.appraisalFormID;
 
@@ -30,6 +31,16 @@ app
 			return results;
 		}
 
+		$scope.checkAll = function(){
+			if($scope.form.include_all)
+			{
+				$scope.appraisal_form.reviews = $scope.items;
+			}
+			else{
+				$scope.appraisal_form.reviews = [];
+			}
+		}
+
 		/*
 		 * Object for fab
 		 *
@@ -40,47 +51,21 @@ app
 		$scope.fab.show = true;
 
 		$scope.fab.action = function(){
-			if($scope.form.appraisalForm.$invalid){
-				angular.forEach($scope.form.appraisalForm.$error, function(field){
-					angular.forEach(field, function(errorField){
-						errorField.$setTouched();
-					});
-				});
-
-				return;
-			}
-
 			console.log($scope.appraisal_form);
-
-			return;
 
 			$scope.busy = true;
 
 			Helper.preload();
 
-			if(!appraisalFormID)
-			{
-				Helper.post('/appraisal-form', $scope.appraisal_form)
-					.success(function(data){
-						Helper.stop();
-						$state.go('main.manage-appraisal-form-employees', {'appraisalFormID':data.id});
-					})
-					.error(function(){
-						$scope.busy = false;
-						Helper.error();
-					})
-			}
-			else{
-				Helper.put('/appraisal-form/' + appraisalFormID, $scope.appraisal_form)
-					.success(function(data){
-						Helper.stop();
-						$state.go('main.appraisal-forms');
-					})
-					.error(function(){
-						$scope.busy = false;
-						Helper.error();
-					})
-			}
+			Helper.post('/review', $scope.appraisal_form.reviews)
+				.success(function(data){
+					Helper.stop();
+					$state.go('main.appraisal-forms');
+				})
+				.error(function(){
+					$scope.busy = false;
+					Helper.error();
+				})
 		}
 
 		$scope.init = function(){		
@@ -94,6 +79,10 @@ app
 				{
 					'relation': 'department',
 					'withTrashed': false,
+				},
+				{
+					'relation': 'reviews.user',
+					'withTrashed': 'false',
 				},
 			];
 
@@ -116,6 +105,19 @@ app
 						$scope.appraisal_form = data;
 						$scope.appraisal_form.reviews = [];
 
+						var exclude_users = [];
+
+						$scope.locked_reviews = [];
+
+						angular.forEach($scope.appraisal_form.reviews, function(item){
+							if(item.overall_rating)
+							{
+								var name = item.first_name + ' ' + item.last_name;
+								$scope.locked_reviews.push(name);
+								exclude_users.push(item.id);
+							}
+						});
+
 						var users_query = {}
 
 						users_query.where = [
@@ -126,6 +128,13 @@ app
 							},
 						];
 
+						users_query.whereNotIn = [
+							{
+								'label': 'id',
+								'values': exclude_users,
+							},
+						];
+
 						var users = function(){
 							Helper.post('/user/enlist', users_query)
 								.success(function(data){
@@ -133,8 +142,10 @@ app
 										var item = {};
 
 										item.id = user.id;
+										item.appraisal_form_id = appraisalFormID;
 										item.name = user.last_name + ', ' + user.first_name;
 										item.email = user.email;
+										item.image = user.avatar_path ? '/user/avatar/' + user.id : '/img/2Color-Favicon_512x512-1.png';
 										
 										$scope.items.push(item);
 									});

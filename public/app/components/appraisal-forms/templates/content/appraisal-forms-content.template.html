@@ -1,7 +1,7 @@
 <div infinite-scroll='appraisal_form.paginateLoad()' infinite-scroll-distance="1" infinite-scroll-disabled="appraisal_form.busy" infinite-scroll-parent ng-if="appraisal_form.show">
 	<div ng-if="appraisal_form.items.length" flex flex-gt-md="90">
 		<md-list>
-			<md-list-item class="md-3-line secondary-button-padding" ng-repeat="appraisal_form in appraisal_form.items | filter: toolbar.searchText | orderBy:sortType:sortReverse" ng-if="showInactive || !appraisal_form.deleted_at" ng-click="viewReviews()">
+			<md-list-item class="md-3-line secondary-button-padding" ng-repeat="appraisal_form in appraisal_form.items | filter: toolbar.searchText | orderBy:sortType:sortReverse" ng-if="showInactive || !appraisal_form.deleted_at" ng-click="view(appraisal_form.id)">
 				<h2 class="md-avatar" ng-class="appraisal_form.deleted_at ? 'red-bg': 'primary-bg'" layout="row" layout-align="center center">
 					<span class="md-headline white-text">{{ appraisal_form.department.name.charAt(0).toUpperCase() }}</span>
 				</h2>

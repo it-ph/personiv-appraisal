@@ -47,6 +47,23 @@ app
 			$scope.refresh();
 		});
 
+		$scope.view = function(id){
+			Helper.set(id);
+
+			var dialog = {
+				'controller': 'appraisalFormDialogController',
+				'template': '/app/components/appraisal-forms/templates/dialogs/appraisal-form-dialog.template.html',
+				'fullscreen': true,
+			}
+
+			Helper.customDialog(dialog)
+				.then(function(){
+					
+				}, function(){
+					return;
+				})
+		}
+
 		$scope.update = function(data){
 			$state.go('main.manage-appraisal-forms', {'appraisalFormID':data.id});
 		}

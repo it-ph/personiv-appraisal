@@ -11,6 +11,8 @@ class Review extends Model
 
     protected $dates = ['deleted_at'];
 
+    protected $fillable = ['user_id', 'appraisal_form_id'];
+
     public function user()
     {
     	return $this->belongsTo('App\User');

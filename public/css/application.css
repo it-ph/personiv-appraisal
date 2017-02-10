@@ -394,7 +394,7 @@ md-content.dirty-white {
 }
 
 md-content.autocomplete {
-  min-height: 100px;
+  min-height: 250px;
 }
 
 md-content.autocomplete input {

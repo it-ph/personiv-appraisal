@@ -149,6 +149,13 @@ class UserController extends Controller
             }
         }
 
+        if($request->has('whereNotIn'))
+        {
+            for ($i=0; $i < count($request->whereNotIn); $i++) { 
+                $users->whereNotIn($request->input('whereNotIn')[$i]['label'], $request->input('whereNotIn')[$i]['values']);
+            }
+        }        
+
         if($request->has('do_not_include_current_user'))
         {
             $users->whereNotIn('id', [$request->user()->id]);
