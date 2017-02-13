@@ -48,6 +48,9 @@
 						</div>
 					</md-list-item>
 				</md-list>
+				<div layout-padding>
+					<p ng-if="!appraisal_form.reviews.length">Nothing to display</p>
+				</div>
 			</md-tab>
     	</md-tabs>
 	    <div layout="row" flex>
@@ -58,7 +61,7 @@
 	        <md-button aria-label="Update" ng-click="update()">
 	            Update
 	        </md-button>
-	        <md-button aria-label="Delete" ng-click="delete(appraisal_form.id)">
+	        <md-button aria-label="Delete" ng-if="!appraisal_form.reviews.length" ng-click="delete(appraisal_form.id)">
 	            Delete
 	        </md-button>
 	    </div>

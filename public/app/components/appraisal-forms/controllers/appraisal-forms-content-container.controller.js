@@ -57,8 +57,10 @@ app
 			}
 
 			Helper.customDialog(dialog)
-				.then(function(){
-					
+				.then(function(data){
+					if(data){
+						$scope.delete(data);
+					}
 				}, function(){
 					return;
 				})
@@ -71,7 +73,7 @@ app
 		$scope.delete = function(data){
 			var dialog = {};
 			dialog.title = 'Delete';
-			dialog.message = 'Delete ' + data.department.name + 'appraisal form?'
+			dialog.message = 'Delete ' + data.department.name + ' appraisal form?'
 			dialog.ok = 'Delete';
 			dialog.cancel = 'Cancel';
 

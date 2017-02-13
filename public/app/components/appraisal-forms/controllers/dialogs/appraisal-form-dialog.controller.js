@@ -18,9 +18,17 @@ app
 			$state.go('main.manage-appraisal-forms', {'appraisalFormID': appraisalFormID});
 		}
 
+		$scope.delete = function(){
+			Helper.stop($scope.appraisal_form);
+		}
+
 		var query = {};
 
 		query.with = [
+			{
+				'relation': 'department',
+				'withTrashed': false,
+			},
 			{
 				'relation': 'goals',
 				'withTrashed': false,

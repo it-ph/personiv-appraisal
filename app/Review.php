@@ -3,14 +3,9 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Review extends Model
 {
-	use SoftDeletes;
-
-    protected $dates = ['deleted_at'];
-
     protected $fillable = ['user_id', 'appraisal_form_id'];
 
     public function user()
@@ -25,11 +20,11 @@ class Review extends Model
 
     public function behavioral_competencies()
     {
-    	return $this->belongsToMany('App\BehavioralCompetency', 'review_behavioral_competency_responses');
+    	return $this->hasMany('App\ReviewBehavioralCompetencyResponse');
     }
 
     public function goals()
     {
-    	return $this->belongsToMany('App\Goal', 'review_goal_responses');
+    	return $this->hasMany('App\ReviewGoalResponse');
     }
 }

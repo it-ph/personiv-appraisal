@@ -51,21 +51,34 @@ app
 		$scope.fab.show = true;
 
 		$scope.fab.action = function(){
-			console.log($scope.appraisal_form);
-
 			$scope.busy = true;
 
 			Helper.preload();
 
-			Helper.post('/review', $scope.appraisal_form.reviews)
-				.success(function(data){
-					Helper.stop();
-					$state.go('main.appraisal-forms');
-				})
-				.error(function(){
-					$scope.busy = false;
-					Helper.error();
-				})
+			if(!appraisalFormID)
+			{
+				Helper.post('/review', $scope.appraisal_form.reviews)
+					.success(function(data){
+						Helper.stop();
+						$state.go('main.appraisal-forms');
+					})
+					.error(function(){
+						$scope.busy = false;
+						Helper.error();
+					})
+			}
+			else
+			{
+				Helper.put('/review/' + appraisalFormID, $scope.appraisal_form.reviews)
+					.success(function(data){
+						Helper.stop();
+						$state.go('main.appraisal-forms');
+					})
+					.error(function(){
+						$scope.busy = false;
+						Helper.error();
+					})	
+			}
 		}
 
 		$scope.init = function(){		
@@ -82,7 +95,15 @@ app
 				},
 				{
 					'relation': 'reviews.user',
-					'withTrashed': 'false',
+					'withTrashed': false,
+				},
+				{
+					'relation': 'reviews.goals',
+					'withTrashed': false,
+				},
+				{
+					'relation': 'reviews.behavioral_competencies',
+					'withTrashed': false,
 				},
 			];
 
@@ -99,24 +120,29 @@ app
 			var appraisalForm = function(){
 				Helper.post('/appraisal-form/enlist', appraisal_form_query)
 					.success(function(data){
+						$scope.locked_reviews = [];
+
+						var exclude_users = [];
+
+						angular.forEach(data.reviews, function(item){
+							var name = item.user.first_name + ' ' + item.user.last_name;
+
+							if(item.goals.length || item.behavioral_competencies.length)
+							{
+								$scope.locked_reviews.push(name);
+								exclude_users.push(item.user_id);
+							}
+
+							item.user_id = item.user.id;
+							item.name = name;
+							item.image = item.user.avatar_path ? '/user/avatar/' + user.id : '/img/2Color-Favicon_512x512-1.png';
+						});
+						
 						data.appraisal_period.start = new Date(data.appraisal_period.start);
 						data.appraisal_period.end = new Date(data.appraisal_period.end);
 
 						$scope.appraisal_form = data;
-						$scope.appraisal_form.reviews = [];
-
-						var exclude_users = [];
-
-						$scope.locked_reviews = [];
-
-						angular.forEach($scope.appraisal_form.reviews, function(item){
-							if(item.overall_rating)
-							{
-								var name = item.first_name + ' ' + item.last_name;
-								$scope.locked_reviews.push(name);
-								exclude_users.push(item.id);
-							}
-						});
+						// $scope.appraisal_form.reviews = [];
 
 						var users_query = {}
 
@@ -141,7 +167,7 @@ app
 									angular.forEach(data, function(user){
 										var item = {};
 
-										item.id = user.id;
+										item.user_id = user.id;
 										item.appraisal_form_id = appraisalFormID;
 										item.name = user.last_name + ', ' + user.first_name;
 										item.email = user.email;

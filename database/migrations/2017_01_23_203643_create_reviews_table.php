@@ -24,7 +24,6 @@ class CreateReviewsTable extends Migration
             $table->text('trainings_needed_self_assessment')->nullable();
             $table->text('trainings_needed_supervisor_assessment')->nullable();
             $table->timestamps();
-            $table->softDeletes();
         });
     }
 

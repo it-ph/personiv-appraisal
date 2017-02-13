@@ -207,283 +207,6 @@ app
 			})
 	}]);
 app
-	.controller('mainViewController', ['$scope', '$filter', '$state', '$mdDialog', '$mdSidenav', '$mdToast', 'Helper', 'FileUploader', function($scope, $filter, $state, $mdDialog, $mdSidenav, $mdToast, Helper, FileUploader){
-		$scope.toggleSidenav = function(menuID){
-			$mdSidenav(menuID).toggle();
-		}
-
-		$scope.menu = {};
-		$scope.menu.pages = [];
-
-		$scope.menu.static = [
-			{
-				'state': 'main',
-				'icon': 'mdi-home',
-				'label': 'Home',
-			},
-			{
-				'state': 'main.reviews',
-				'icon': 'mdi-file-document-box',
-				'label': 'Reviews',
-			},
-		];
-
-		$scope.menu.section = [];
-
-		// set section as active
-		$scope.setActive = function(index){
-		 	angular.element($('[aria-label="'+ 'section-' + index + '"]').closest('li').toggleClass('active'));
-		 	angular.element($('[aria-label="'+ 'section-' + index + '"]').closest('li').siblings().removeClass('active'));
-		};
-		
-		$scope.logout = function(){
-			Helper.post('/user/logout')
-				.success(function(){
-					window.location.href = '/';
-				});
-		}
-
-		$scope.changePassword = function()
-		{
-			$mdDialog.show({
-		      controller: 'changePasswordDialogController',
-		      templateUrl: '/app/shared/templates/dialogs/change-password-dialog.template.html',
-		      parent: angular.element(document.body),
-		      fullscreen: true,
-		    })
-		    .then(function(){
-		    	Helper.notify('Password changed.')
-		    });
-		}
-
-		var uploader = {};
-
-		uploader.filter = {
-            name: 'photoFilter',
-            fn: function(item /*{File|FileLikeObject}*/, options) {
-                var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
-                return '|jpg|png|jpeg|bmp|gif|'.indexOf(type) !== -1;
-            }
-        };
-
-        uploader.sizeFilter = {
-		    'name': 'enforceMaxFileSize',
-		    'fn': function (item) {
-		        return item.size <= 2000000;
-		    }
-        }
-
-        uploader.error = function(item /*{File|FileLikeObject}*/, filter, options) {
-            $scope.fileError = true;
-            $scope.photoUploader.queue = [];
-        };
-
-        uploader.headers = { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')};
-
-		$scope.clickUpload = function(){
-		    angular.element('#upload').trigger('click');
-		};
-
-		$scope.markAllAsRead = function(){
-			Helper.post('/user/mark-all-as-read')
-				.success(function(){
-					$scope.user.unread_notifications = [];
-				})
-		}
-
-		var fetchUnreadNotifications = function(){
-			Helper.post('/user/check')
-	    		.success(function(data){
-	    			$scope.user = data;
-	    		});
-		}
-
-		Helper.post('/user/check')
-			.success(function(data){
-				var settings = false;
-				var settings_menu = [];
-
-				angular.forEach(data.roles, function(role){
-					if(role.name == 'supervisor')
-					{
-						var item = {
-							'state': 'main.team-reviews',
-							'icon': 'mdi-account-multiple',
-							'label': 'Team Reviews',
-						}
-
-						$scope.menu.static.splice(2, 0, item);
-					}
-					else if(role.name == 'parameters')
-					{
-						var item = {
-							'state': 'main.appraisal-forms',
-							'icon': 'mdi-playlist-check',
-							'label': 'Appraisal Forms',
-						}
-
-						$scope.menu.static.splice(2, 0, item);
-					}
-					else if(role.name == 'appraisal-periods')
-					{
-						settings = true;
-
-						var item = {
-							'label': 'Appraisal Periods',
-							action: function(){
-								$state.go('main.appraisal-periods');
-							},
-						}
-
-						settings_menu.push(item);
-					}
-					else if(role.name == 'manage-departments')
-					{
-						settings = true;
-
-						var item = {
-							'label': 'Departments',
-							action: function(){
-								$state.go('main.departments');
-							},
-						}
-
-						settings_menu.push(item); 
-					}
-					else if(role.name == 'manage-users')
-					{
-						settings = true;
-
-						var item = {
-							'label': 'Users',
-							action: function(){
-								$state.go('main.users');
-							},
-						}
-
-						settings_menu.push(item); 
-					}
-				});
-
-				if(settings)
-				{
-					$scope.menu.section[0] = {
-						'name':'Settings',
-						'icon':'mdi-settings',
-					}
-
-					$scope.menu.pages[0] = settings_menu;
-				}
-
-				var notifications = {
-					'state': 'main.notifications',
-					'icon': 'mdi-bell',
-					'label': 'Notifications',
-				}
-
-				$scope.menu.static.push(notifications);
-
-				$scope.user = data;
-
-				$scope.currentTime = Date.now();
-
-				Helper.setAuthUser(data);
-
-				/* Photo Uploader */
-				$scope.photoUploader = new FileUploader({
-					url: '/user/upload-avatar/' + $scope.user.id,
-					headers: uploader.headers,
-					queueLimit : 1
-				})
-
-				// FILTERS
-		        $scope.photoUploader.filters.push(uploader.filter);
-		        $scope.photoUploader.filters.push(uploader.sizeFilter);
-		        
-				$scope.photoUploader.onWhenAddingFileFailed = uploader.error;
-				$scope.photoUploader.onAfterAddingFile  = function(){
-					$scope.fileError = false;
-					if($scope.photoUploader.queue.length)
-					{	
-						$scope.photoUploader.uploadAll()
-					}
-				};
-
-				$scope.photoUploader.onCompleteItem  = function(data, response){
-					if($scope.user.avatar_path)
-					{
-						$scope.currentTime = Date.now();
-						$scope.photoUploader.queue = [];
-					}
-					else{
-						$state.go($state.current, {}, {reload:true});
-					}
-				}
-
-				var pusher = new Pusher('73a46f761ea4637481b5', {
-			      	encrypted: true,
-			      	auth: {
-					    headers: {
-					      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-					    }
-				  	}
-			    });
-
-				var channel = {};
-
-				channel.user = pusher.subscribe('private-App.User.' + $scope.user.id);
-
-				channel.user.bindings = [
-				 	channel.user.bind('Illuminate\\Notifications\\Events\\BroadcastNotificationCreated', function(data) {
-				 		// formating the notification
-				 		data.created_at = data.attachment.created_at;
-
-				 		data.data = {};
-				 		data.data.attachment = data.attachment;
-				 		data.data.url = data.url;
-				 		data.data.withParams = data.withParams;
-				 		data.data.sender = data.sender;
-				 		data.data.message = data.message;
-
-				 		// pushes the new notification in the unread_notifications array
-				 		$scope.$apply(function(){
-					    	$scope.user.unread_notifications.unshift(data);
-				 		});
-
-				 		// notify the user with a toast message
-				 		Helper.notify(data.sender.name + ' ' + data.message);
-
-				 		if($state.current.name == data.data.url)
-						{
-							$state.go($state.current, {}, {reload:true});
-						}
-				    }),
-				];
-			})
-
-		$scope.markAsRead = function(notification){
-			Helper.post('/user/mark-as-read', notification)
-				.success(function(){
-					var index = $scope.user.unread_notifications.indexOf(notification);
-
-					$scope.user.unread_notifications.splice(index, 1);
-				})
-				.error(function(){
-					Helper.error();
-				});
-		}
-
-		$scope.read = function(notification){			
-			$state.go(notification.data.url);
-
-			$scope.markAsRead(notification);
-		}
-
-		$scope.$on('closeSidenav', function(){
-			$mdSidenav('left').close();
-		});
-	}]);
-app
 	.controller('appraisalFormsContentContainerController', ['$scope', '$state', 'Helper', function($scope, $state, Helper){
 		$scope.$emit('closeSidenav');
 
@@ -542,8 +265,10 @@ app
 			}
 
 			Helper.customDialog(dialog)
-				.then(function(){
-					
+				.then(function(data){
+					if(data){
+						$scope.delete(data);
+					}
 				}, function(){
 					return;
 				})
@@ -556,7 +281,7 @@ app
 		$scope.delete = function(data){
 			var dialog = {};
 			dialog.title = 'Delete';
-			dialog.message = 'Delete ' + data.department.name + 'appraisal form?'
+			dialog.message = 'Delete ' + data.department.name + ' appraisal form?'
 			dialog.ok = 'Delete';
 			dialog.cancel = 'Cancel';
 
@@ -750,21 +475,34 @@ app
 		$scope.fab.show = true;
 
 		$scope.fab.action = function(){
-			console.log($scope.appraisal_form);
-
 			$scope.busy = true;
 
 			Helper.preload();
 
-			Helper.post('/review', $scope.appraisal_form.reviews)
-				.success(function(data){
-					Helper.stop();
-					$state.go('main.appraisal-forms');
-				})
-				.error(function(){
-					$scope.busy = false;
-					Helper.error();
-				})
+			if(!appraisalFormID)
+			{
+				Helper.post('/review', $scope.appraisal_form.reviews)
+					.success(function(data){
+						Helper.stop();
+						$state.go('main.appraisal-forms');
+					})
+					.error(function(){
+						$scope.busy = false;
+						Helper.error();
+					})
+			}
+			else
+			{
+				Helper.put('/review/' + appraisalFormID, $scope.appraisal_form.reviews)
+					.success(function(data){
+						Helper.stop();
+						$state.go('main.appraisal-forms');
+					})
+					.error(function(){
+						$scope.busy = false;
+						Helper.error();
+					})	
+			}
 		}
 
 		$scope.init = function(){		
@@ -781,7 +519,15 @@ app
 				},
 				{
 					'relation': 'reviews.user',
-					'withTrashed': 'false',
+					'withTrashed': false,
+				},
+				{
+					'relation': 'reviews.goals',
+					'withTrashed': false,
+				},
+				{
+					'relation': 'reviews.behavioral_competencies',
+					'withTrashed': false,
 				},
 			];
 
@@ -798,24 +544,29 @@ app
 			var appraisalForm = function(){
 				Helper.post('/appraisal-form/enlist', appraisal_form_query)
 					.success(function(data){
+						$scope.locked_reviews = [];
+
+						var exclude_users = [];
+
+						angular.forEach(data.reviews, function(item){
+							var name = item.user.first_name + ' ' + item.user.last_name;
+
+							if(item.goals.length || item.behavioral_competencies.length)
+							{
+								$scope.locked_reviews.push(name);
+								exclude_users.push(item.user_id);
+							}
+
+							item.user_id = item.user.id;
+							item.name = name;
+							item.image = item.user.avatar_path ? '/user/avatar/' + user.id : '/img/2Color-Favicon_512x512-1.png';
+						});
+						
 						data.appraisal_period.start = new Date(data.appraisal_period.start);
 						data.appraisal_period.end = new Date(data.appraisal_period.end);
 
 						$scope.appraisal_form = data;
-						$scope.appraisal_form.reviews = [];
-
-						var exclude_users = [];
-
-						$scope.locked_reviews = [];
-
-						angular.forEach($scope.appraisal_form.reviews, function(item){
-							if(item.overall_rating)
-							{
-								var name = item.first_name + ' ' + item.last_name;
-								$scope.locked_reviews.push(name);
-								exclude_users.push(item.id);
-							}
-						});
+						// $scope.appraisal_form.reviews = [];
 
 						var users_query = {}
 
@@ -840,7 +591,7 @@ app
 									angular.forEach(data, function(user){
 										var item = {};
 
-										item.id = user.id;
+										item.user_id = user.id;
 										item.appraisal_form_id = appraisalFormID;
 										item.name = user.last_name + ', ' + user.first_name;
 										item.email = user.email;
@@ -1134,6 +885,283 @@ app
 					}
 				})
 		}();
+	}]);
+app
+	.controller('mainViewController', ['$scope', '$filter', '$state', '$mdDialog', '$mdSidenav', '$mdToast', 'Helper', 'FileUploader', function($scope, $filter, $state, $mdDialog, $mdSidenav, $mdToast, Helper, FileUploader){
+		$scope.toggleSidenav = function(menuID){
+			$mdSidenav(menuID).toggle();
+		}
+
+		$scope.menu = {};
+		$scope.menu.pages = [];
+
+		$scope.menu.static = [
+			{
+				'state': 'main',
+				'icon': 'mdi-home',
+				'label': 'Home',
+			},
+			{
+				'state': 'main.reviews',
+				'icon': 'mdi-file-document-box',
+				'label': 'Reviews',
+			},
+		];
+
+		$scope.menu.section = [];
+
+		// set section as active
+		$scope.setActive = function(index){
+		 	angular.element($('[aria-label="'+ 'section-' + index + '"]').closest('li').toggleClass('active'));
+		 	angular.element($('[aria-label="'+ 'section-' + index + '"]').closest('li').siblings().removeClass('active'));
+		};
+		
+		$scope.logout = function(){
+			Helper.post('/user/logout')
+				.success(function(){
+					window.location.href = '/';
+				});
+		}
+
+		$scope.changePassword = function()
+		{
+			$mdDialog.show({
+		      controller: 'changePasswordDialogController',
+		      templateUrl: '/app/shared/templates/dialogs/change-password-dialog.template.html',
+		      parent: angular.element(document.body),
+		      fullscreen: true,
+		    })
+		    .then(function(){
+		    	Helper.notify('Password changed.')
+		    });
+		}
+
+		var uploader = {};
+
+		uploader.filter = {
+            name: 'photoFilter',
+            fn: function(item /*{File|FileLikeObject}*/, options) {
+                var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+                return '|jpg|png|jpeg|bmp|gif|'.indexOf(type) !== -1;
+            }
+        };
+
+        uploader.sizeFilter = {
+		    'name': 'enforceMaxFileSize',
+		    'fn': function (item) {
+		        return item.size <= 2000000;
+		    }
+        }
+
+        uploader.error = function(item /*{File|FileLikeObject}*/, filter, options) {
+            $scope.fileError = true;
+            $scope.photoUploader.queue = [];
+        };
+
+        uploader.headers = { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')};
+
+		$scope.clickUpload = function(){
+		    angular.element('#upload').trigger('click');
+		};
+
+		$scope.markAllAsRead = function(){
+			Helper.post('/user/mark-all-as-read')
+				.success(function(){
+					$scope.user.unread_notifications = [];
+				})
+		}
+
+		var fetchUnreadNotifications = function(){
+			Helper.post('/user/check')
+	    		.success(function(data){
+	    			$scope.user = data;
+	    		});
+		}
+
+		Helper.post('/user/check')
+			.success(function(data){
+				var settings = false;
+				var settings_menu = [];
+
+				angular.forEach(data.roles, function(role){
+					if(role.name == 'supervisor')
+					{
+						var item = {
+							'state': 'main.team-reviews',
+							'icon': 'mdi-account-multiple',
+							'label': 'Team Reviews',
+						}
+
+						$scope.menu.static.splice(2, 0, item);
+					}
+					else if(role.name == 'parameters')
+					{
+						var item = {
+							'state': 'main.appraisal-forms',
+							'icon': 'mdi-playlist-check',
+							'label': 'Appraisal Forms',
+						}
+
+						$scope.menu.static.splice(2, 0, item);
+					}
+					else if(role.name == 'appraisal-periods')
+					{
+						settings = true;
+
+						var item = {
+							'label': 'Appraisal Periods',
+							action: function(){
+								$state.go('main.appraisal-periods');
+							},
+						}
+
+						settings_menu.push(item);
+					}
+					else if(role.name == 'manage-departments')
+					{
+						settings = true;
+
+						var item = {
+							'label': 'Departments',
+							action: function(){
+								$state.go('main.departments');
+							},
+						}
+
+						settings_menu.push(item); 
+					}
+					else if(role.name == 'manage-users')
+					{
+						settings = true;
+
+						var item = {
+							'label': 'Users',
+							action: function(){
+								$state.go('main.users');
+							},
+						}
+
+						settings_menu.push(item); 
+					}
+				});
+
+				if(settings)
+				{
+					$scope.menu.section[0] = {
+						'name':'Settings',
+						'icon':'mdi-settings',
+					}
+
+					$scope.menu.pages[0] = settings_menu;
+				}
+
+				var notifications = {
+					'state': 'main.notifications',
+					'icon': 'mdi-bell',
+					'label': 'Notifications',
+				}
+
+				$scope.menu.static.push(notifications);
+
+				$scope.user = data;
+
+				$scope.currentTime = Date.now();
+
+				Helper.setAuthUser(data);
+
+				/* Photo Uploader */
+				$scope.photoUploader = new FileUploader({
+					url: '/user/upload-avatar/' + $scope.user.id,
+					headers: uploader.headers,
+					queueLimit : 1
+				})
+
+				// FILTERS
+		        $scope.photoUploader.filters.push(uploader.filter);
+		        $scope.photoUploader.filters.push(uploader.sizeFilter);
+		        
+				$scope.photoUploader.onWhenAddingFileFailed = uploader.error;
+				$scope.photoUploader.onAfterAddingFile  = function(){
+					$scope.fileError = false;
+					if($scope.photoUploader.queue.length)
+					{	
+						$scope.photoUploader.uploadAll()
+					}
+				};
+
+				$scope.photoUploader.onCompleteItem  = function(data, response){
+					if($scope.user.avatar_path)
+					{
+						$scope.currentTime = Date.now();
+						$scope.photoUploader.queue = [];
+					}
+					else{
+						$state.go($state.current, {}, {reload:true});
+					}
+				}
+
+				var pusher = new Pusher('73a46f761ea4637481b5', {
+			      	encrypted: true,
+			      	auth: {
+					    headers: {
+					      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+					    }
+				  	}
+			    });
+
+				var channel = {};
+
+				channel.user = pusher.subscribe('private-App.User.' + $scope.user.id);
+
+				channel.user.bindings = [
+				 	channel.user.bind('Illuminate\\Notifications\\Events\\BroadcastNotificationCreated', function(data) {
+				 		// formating the notification
+				 		data.created_at = data.attachment.created_at;
+
+				 		data.data = {};
+				 		data.data.attachment = data.attachment;
+				 		data.data.url = data.url;
+				 		data.data.withParams = data.withParams;
+				 		data.data.sender = data.sender;
+				 		data.data.message = data.message;
+
+				 		// pushes the new notification in the unread_notifications array
+				 		$scope.$apply(function(){
+					    	$scope.user.unread_notifications.unshift(data);
+				 		});
+
+				 		// notify the user with a toast message
+				 		Helper.notify(data.sender.name + ' ' + data.message);
+
+				 		if($state.current.name == data.data.url)
+						{
+							$state.go($state.current, {}, {reload:true});
+						}
+				    }),
+				];
+			})
+
+		$scope.markAsRead = function(notification){
+			Helper.post('/user/mark-as-read', notification)
+				.success(function(){
+					var index = $scope.user.unread_notifications.indexOf(notification);
+
+					$scope.user.unread_notifications.splice(index, 1);
+				})
+				.error(function(){
+					Helper.error();
+				});
+		}
+
+		$scope.read = function(notification){			
+			$state.go(notification.data.url);
+
+			$scope.markAsRead(notification);
+		}
+
+		$scope.$on('closeSidenav', function(){
+			$mdSidenav('left').close();
+		});
 	}]);
 app
 	.controller('appraisalPeriodsContentContainerController', ['$scope', '$state', 'Helper', function($scope, $state, Helper){
@@ -1799,9 +1827,17 @@ app
 			$state.go('main.manage-appraisal-forms', {'appraisalFormID': appraisalFormID});
 		}
 
+		$scope.delete = function(){
+			Helper.stop($scope.appraisal_form);
+		}
+
 		var query = {};
 
 		query.with = [
+			{
+				'relation': 'department',
+				'withTrashed': false,
+			},
 			{
 				'relation': 'goals',
 				'withTrashed': false,

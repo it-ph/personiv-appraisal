@@ -39,6 +39,21 @@ class AppraisalFormController extends Controller
             }
         }
 
+        if($request->has('withCount'))
+        {
+            for ($i=0; $i < count($request->withCount); $i++) { 
+                if(!$request->input('withCount')[$i]['withTrashed'])
+                {
+                    $appraisal_forms->withCount($request->input('withCount')[$i]['relation']);
+                }
+                else{
+                    $appraisal_forms->withCount([$request->input('withCount')[$i]['relation'] => function($query){
+                        $query->withTrashed();
+                    }]);
+                }
+            }
+        }
+
         if($request->has('where'))
         {
             for ($i=0; $i < count($request->where); $i++) { 
