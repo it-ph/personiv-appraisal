@@ -86,3 +86,9 @@ Route::group(['prefix' => 'appraisal-period'], function(){
 Route::group(['prefix' => 'appraisal-form'], function(){
 	Route::post('enlist', 'AppraisalFormController@enlist');
 });
+
+/* Review Routes*/
+Route::group(['prefix' => 'review'], function(){
+	Route::post('enlist', 'ReviewController@enlist');
+});
+

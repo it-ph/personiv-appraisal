@@ -18,6 +18,72 @@ class ReviewController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+     public function enlist(Request $request)
+     {
+        $reviews = Review::query();
+
+        if($request->has('with'))
+        {
+            for ($i=0; $i < count($request->with); $i++) { 
+                if(!$request->input('with')[$i]['withTrashed'])
+                {
+                    $reviews->with($request->input('with')[$i]['relation']);
+                }
+                else{
+                    $reviews->with([$request->input('with')[$i]['relation'] => function($query){
+                        $query->withTrashed();
+                    }]);
+                }
+            }
+        }
+
+        if($request->has('withCount'))
+        {
+            for ($i=0; $i < count($request->withCount); $i++) { 
+                if(!$request->input('withCount')[$i]['withTrashed'])
+                {
+                    $reviews->withCount($request->input('withCount')[$i]['relation']);
+                }
+                else{
+                    $reviews->withCount([$request->input('withCount')[$i]['relation'] => function($query){
+                        $query->withTrashed();
+                    }]);
+                }
+            }
+        }
+
+        if($request->has('where'))
+        {
+            for ($i=0; $i < count($request->where); $i++) { 
+                $reviews->where($request->input('where')[$i]['label'], $request->input('where')[$i]['condition'], $request->input('where')[$i]['value']);
+            }
+        }
+
+        if($request->has('search'))
+        {
+            $reviews->whereHas('appraisal_period', function($query){
+                $query->where('start', 'like', '%'.$request->search.'%')->orWhere('end', 'like', '%'.$request->search.'%')->orWhere('appraisal_year', $request->search);
+            });
+        }
+
+        if($request->has('first'))
+        {
+            return $reviews->first();
+        }
+
+        if($request->has('paginate'))
+        {
+            return $reviews->paginate($request->paginate);
+        }
+
+        return $reviews->get();
+     }
+
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
     public function index()
     {
         //

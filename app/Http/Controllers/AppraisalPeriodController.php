@@ -130,8 +130,8 @@ class AppraisalPeriodController extends Controller
         $appraisal_period->start = Carbon::parse($request->start);
         $appraisal_period->end = Carbon::parse($request->end);
         $appraisal_period->appraisal_year = $request->appraisal_year;
-        $appraisal_period->goals_percentage = $request->goals_percentage;
-        $appraisal_period->behavioral_competency_percentage = $request->behavioral_competency_percentage;
+        $appraisal_period->goals_percentage = $request->goals_percentage / 100;
+        $appraisal_period->behavioral_competency_percentage = $request->behavioral_competency_percentage /100;
 
         $appraisal_period->save();
     }
@@ -192,8 +192,8 @@ class AppraisalPeriodController extends Controller
         $appraisal_period->start = Carbon::parse($request->start);
         $appraisal_period->end = Carbon::parse($request->end);
         $appraisal_period->appraisal_year = $request->appraisal_year;
-        $appraisal_period->goals_percentage = $request->goals_percentage;
-        $appraisal_period->behavioral_competency_percentage = $request->behavioral_competency_percentage;
+        $appraisal_period->goals_percentage = $request->goals_percentage / 100;
+        $appraisal_period->behavioral_competency_percentage = $request->behavioral_competency_percentage / 100;
 
         $appraisal_period->save();
     }

@@ -15,8 +15,8 @@ class AppraisalPeriodsTableSeeder extends Seeder
         	'start' => Carbon\Carbon::parse('December 1, 2015'),
         	'end' => Carbon\Carbon::parse('November 30, 2016'),
         	'appraisal_year' => 2016,
-        	'goals_percentage' => 80,
-        	'behavioral_competency_percentage' => 20,
+        	'goals_percentage' => 0.8,
+        	'behavioral_competency_percentage' => 0.2,
         	'created_at' => Carbon\Carbon::now(),
         	'updated_at' => Carbon\Carbon::now(),
         ]);

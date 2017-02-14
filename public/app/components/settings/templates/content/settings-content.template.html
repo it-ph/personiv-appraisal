@@ -32,8 +32,8 @@
 							<span ng-repeat="account in model.accounts">{{account.name}} <span ng-if="!$last">|</span> </span>
 						</span>
 						<span ng-if="model.description">{{model.description}}</span>
-						<span ng-if="model.goals_percentage">Goals: {{model.goals_percentage}}%</span>
-						<span ng-if="model.behavioral_competency_percentage"> | Behavioral Competency: {{model.behavioral_competency_percentage}}%</span>
+						<span ng-if="model.goals_percentage">Goals: {{model.goals_percentage * 100}}%</span>
+						<span ng-if="model.behavioral_competency_percentage"> | Behavioral Competency: {{model.behavioral_competency_percentage * 100}}%</span>
 					</p>
 				</div>
 				<md-menu ng-show="!model.deleted_at">

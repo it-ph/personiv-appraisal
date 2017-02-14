@@ -24,6 +24,25 @@ app
 					}
 				}
 			})
+		.state('main.reviews', {
+				url: 'reviews',
+				views: {
+					'content-container': {
+						templateUrl: '/app/shared/views/content-container.view.html',
+						controller: 'reviewsContentContainerController',
+					},
+					'toolbar@main.reviews': {
+						templateUrl: '/app/shared/templates/toolbar.template.html',
+						controller: 'reviewsToolbarController',
+					},
+					'left-sidenav@main.reviews': {
+						templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
+					},
+					'content@main.reviews':{
+						templateUrl: '/app/components/reviews/templates/content/reviews-content.template.html',
+					}
+				}
+			})
 		.state('main.appraisal-forms', {
 				url: 'appraisal-forms',
 				resolve:{

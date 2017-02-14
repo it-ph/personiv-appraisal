@@ -1,0 +1,64 @@
+<div layout="row" layout-align="center center" infinite-scroll='review.paginateLoad()' infinite-scroll-distance="1" infinite-scroll-disabled="review.busy" infinite-scroll-parent ng-if="review.show">
+	<div layout="column" flex flex-gt-md="80" ng-if="review.items.length">
+		<md-card ng-repeat="review in review.items | filter: toolbar.searchText | orderBy:sortType:sortReverse">
+			<md-card-header>
+		        <md-card-header-text>
+		            <span class="md-title">{{review.appraisal_form.appraisal_period.start | date: 'MMM. dd, yyyy'}} to {{review.appraisal_form.appraisal_period.end | date: 'MMM. dd, yyyy'}}</span>
+		            <span class="md-subhead">Goals: {{review.appraisal_form.appraisal_period.goals_percentage * 100}}% | Behavioral Competency: {{review.appraisal_form.appraisal_period.behavioral_competency_percentage * 100 }}%</span>
+		        </md-card-header-text>
+			</md-card-header>
+			<md-card-content>
+				<div ng-if="review.goals.length">
+					<md-subheader class="md-no-sticky">Goals</md-subheader>
+					<table class="table">
+						<tr>
+							<th>Parameter</th>
+							<th>Raw Score</th>
+							<th>Weight %</th>
+							<th>Self Assessment Rating</th>
+							<th>Employee Remarks</th>
+							<th>Supervisors Rating</th>
+							<th>Remarks</th>
+						</tr>
+						<tr ng-repeat="goal in review.goals">
+							<td>{{goal.goal.parameter}}</td>
+							<td>{{goal.raw_score}}</td>
+							<td>{{goal.goal.weight * 100}}</td>
+							<td>{{goal.self_assessment}}</td>
+							<td>{{goal.employee_remarks}}</td>
+							<td>{{goal.supervisor_rating}}</td>
+							<td>{{goal.supervisor_remarks}}</td>
+						</tr>
+					</table>
+				</div>
+				<div ng-if="review.behavioral_competencies.length">
+					<md-subheader class="md-no-sticky">Behavioral Competency</md-subheader>
+					<table class="table">
+						<tr>
+							<th>Parameter</th>
+							<th>Description</th>
+							<th>Self Appraisal Rating</th>
+							<th>Employee Remarks</th>
+							<th>Supervisors Rating</th>
+							<th>Remarks</th>
+						</tr>
+						<tr ng-repeat="behavioral_competency in review.behavioral_competencies">
+							<td>{{behavioral_competency.behavioral_competency.parameter}}</td>
+							<td>{{behavioral_competency.behavioral_competency.description}}</td>
+							<td>{{behavioral_competency.self_appraisal_rating}}</td>
+							<td>{{behavioral_competency.employee_remarks}}</td>
+							<td>{{behavioral_competency.supervisor_rating}}</td>
+							<td>{{behavioral_competency.supervisor_remarks}}</td>
+						</tr>
+					</table>
+				</div>
+			</md-card-content>
+		</md-card>
+	</div>	
+</div>
+<div layout="row" layout-align="center center" layout-padding layout-margin ng-if="isLoading">
+	<md-progress-circular class="md-primary" md-diameter="60"></md-progress-circular>
+</div>
+<div layout-padding layout-margin ng-if="!review.items.length && review.show && !review.no_matches">
+	Nothing to display.
+</div>
