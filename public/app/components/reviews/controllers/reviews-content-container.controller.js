@@ -19,10 +19,8 @@ app
 			$scope.sortReverse = filter.sortReverse;
 		}
 
-		var error_dialog = {
-			'title': 'Aw Snap!',
-			'message': 'An error occured loading the resource.',
-			'ok': 'Try Again'
+		$scope.evaluate = function(id){
+			$state.go('main.review', {'reviewID':id});
 		}
 
 		var setInit = function(){
@@ -60,7 +58,7 @@ app
 					$scope.init($scope.request);
 				})
 				.error(function(){
-					Helper.confirm(error_dialog)
+					Helper.failed()
 						.then(function(){
 							setInit();
 						})
@@ -131,7 +129,7 @@ app
 									$scope.isLoading = false;
 								})
 								.error(function(){
-									Helper.confirm(error_dialog)
+									Helper.failed()
 										.then(function(){
 											$scope.review.paginateLoad();
 										});
@@ -139,7 +137,7 @@ app
 						}
 					})
 					.error(function(){
-						Helper.confirm(error_dialog)
+						Helper.failed()
 							.then(function(){
 								reviews(query);
 							});

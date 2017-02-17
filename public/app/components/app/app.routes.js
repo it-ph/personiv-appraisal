@@ -24,6 +24,25 @@ app
 					}
 				}
 			})
+		.state('main.review', {
+				url: 'review/{reviewID}',
+				params: {'reviewID':null},
+				views: {
+					'content-container': {
+						templateUrl: '/app/shared/views/content-container.view.html',
+						controller: 'reviewContentContainerController',
+					},
+					'toolbar@main.review': {
+						templateUrl: '/app/shared/templates/toolbar.template.html',
+					},
+					'left-sidenav@main.review': {
+						templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
+					},
+					'content@main.review':{
+						templateUrl: '/app/components/reviews/templates/content/review-content.template.html',
+					}
+				}
+			})
 		.state('main.reviews', {
 				url: 'reviews',
 				views: {

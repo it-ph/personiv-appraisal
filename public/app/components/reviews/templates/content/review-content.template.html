@@ -1,0 +1,40 @@
+<div layout="row" layout-align="center center">
+	<form name="form.reviewForm" layout="column" flex flex-gt-md="80">
+		<md-subheader class="md-no-sticky">Goals: {{review.appraisal_form.appraisal_period.goals_percentage * 100}}%</md-subheader>
+		<md-card>
+			<md-card-content>
+				<div ng-repeat="goal in appraisal_form.goals">				
+					<md-list>
+						<md-list-item class="md-2-line">
+							<h2 class="md-avatar md-headline primary-bg" layout="row" layout-align="center center">
+								<span class="white-text">{{goal.parameter.charAt(0).toUpperCase()}}</span>
+							</h2>
+							<div class="md-list-item-text">
+								<h3>{{goal.parameter}}</h3>
+								<p>Weight: {{goal.weight * 100}}%</p>
+							</div>
+						</md-list-item>
+					</md-list>
+					<div layout="row">
+						<!-- Self Assessment Rating -->
+						<md-input-container class="md-block" flex-gt-sm flex-xs="100" flex-sm="100">
+							<label>Self Assessment Rating</label>
+							<input type="number" name="SelfAssessment{{$index}}" ng-model="goal.self_assessment" min="1" max="5" ng-change="floorValue(goal.self_assessment)" required>
+							<div class="hint" ng-if="form.reviewForm['SelfAssessment' + $index].$untouched || form.reviewForm['SelfAssessment' + $index].$valid">1 being the lowest and 5 being the highest</div>
+							<div ng-messages="form.reviewForm['SelfAssessment' + $index].$error">
+								<div ng-message="required">Self assessment rating is required.</div>
+								<div ng-message="min">Self assessment rating cannot be lower than 1.</div>
+								<div ng-message="max">Self assessment rating cannot be higher than 5.</div>
+							</div>
+						</md-input-container>
+						<!-- Employee Remarks -->
+						<md-input-container class="md-block" flex-gt-sm flex-xs="100" flex-sm="100">
+							<label>Employee Remarks</label>
+							<textarea name="EmployeeRemarks{{$index}}" ng-model="goal.employee_remarks"></textarea>
+						</md-input-container>
+					</div>
+				</div>
+			</md-card-content>
+		</md-card>
+	</form>
+</div>	

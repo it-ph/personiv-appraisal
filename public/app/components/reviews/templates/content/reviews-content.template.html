@@ -7,7 +7,7 @@
 		            <span class="md-subhead">Goals: {{review.appraisal_form.appraisal_period.goals_percentage * 100}}% | Behavioral Competency: {{review.appraisal_form.appraisal_period.behavioral_competency_percentage * 100 }}%</span>
 		        </md-card-header-text>
 			</md-card-header>
-			<md-card-content>
+			<md-card-content ng-if="review.goals.length || review.behavioral_competencies.length">
 				<div ng-if="review.goals.length">
 					<md-subheader class="md-no-sticky">Goals</md-subheader>
 					<table class="table">
@@ -53,6 +53,9 @@
 					</table>
 				</div>
 			</md-card-content>
+			<md-card-actions layout="row" layout-align="start center" ng-if="!review.overall_rating">
+	          	<md-button ng-click="evaluate(review.id)">Evaluate</md-button>
+	        </md-card-actions>
 		</md-card>
 	</div>	
 </div>
