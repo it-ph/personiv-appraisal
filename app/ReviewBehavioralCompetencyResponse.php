@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class ReviewBehavioralCompetencyResponse extends Model
 {
+	protected $guarded = [];
+
     public function review()
     {
     	return $this->belongsTo('App\Review');
@@ -13,6 +15,6 @@ class ReviewBehavioralCompetencyResponse extends Model
 
     public function behavioral_competency()
     {
-    	return $this->belongsTo('App\BehavioralComptency');
+    	return $this->belongsTo('App\BehavioralCompetency');
     }
 }

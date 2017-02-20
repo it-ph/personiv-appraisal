@@ -5,7 +5,7 @@ shared
 
 		var error_dialog = {
 			'title': 'Aw Snap!',
-			'message': 'An error occured loading the resource.',
+			'message': 'An error occured on the server.',
 			'ok': 'Try Again'
 		}
 

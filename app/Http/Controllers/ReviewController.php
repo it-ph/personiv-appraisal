@@ -14,6 +14,76 @@ use Gate;
 class ReviewController extends Controller
 {
     /**
+     * Update self assessment.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function updateSelfAssessment(Request $request)
+    {
+        $this->validate($request, [
+            'id' => 'required',
+            'goals' => 'required',
+            'behavioral_competencies' => 'required',
+        ]);
+
+        for ($i=0; $i < count($request->goals); $i++) { 
+            $this->validate($request, [
+                'goals.'.$i.'.id' => 'required',
+                'goals.'.$i.'.self_assessment' => 'required',
+            ]);
+        }
+
+        for ($i=0; $i < count($request->behavioral_competencies); $i++) { 
+            $this->validate($request, [
+                'behavioral_competencies.'.$i.'.id' => 'required',
+                'behavioral_competencies.'.$i.'.self_appraisal_rating' => 'required',
+            ]);
+        }
+
+        DB::transaction(function() use($request){
+            $review = Review::find($request->id);
+
+            $review->updateGoalResponses($request->goals);
+
+            $review->updateBehavioralCompetencyResponses($request->behavioral_competencies);
+        });
+    }
+
+    /**
+     * Self assessment.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function selfAssessment(Request $request)
+    {
+        $this->validate($request, [
+            'id' => 'required',
+            'goals' => 'required',
+            'behavioral_competencies' => 'required',
+        ]);
+
+        for ($i=0; $i < count($request->goals); $i++) { 
+            $this->validate($request, [
+                'goals.'.$i.'.self_assessment' => 'required',
+            ]);
+        }
+
+        for ($i=0; $i < count($request->behavioral_competencies); $i++) { 
+            $this->validate($request, [
+                'behavioral_competencies.'.$i.'.self_appraisal_rating' => 'required',
+            ]);
+        }
+
+        DB::transaction(function() use($request){
+            $review = Review::find($request->id);
+
+            $review->createGoalResponses($request->goals);
+
+            $review->createBehavioralCompetencyResponses($request->behavioral_competencies);
+        });
+    }
+
+    /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
@@ -132,7 +202,14 @@ class ReviewController extends Controller
      */
     public function show($id)
     {
-        //
+        $review = Review::find($id);
+
+        if(Auth::user()->id != $review->user_id)
+        {
+            abort(403, 'Unauthorized access.');
+        }
+
+        return $review;
     }
 
     /**

@@ -44,7 +44,7 @@
 						</tr>
 						<tr ng-repeat="behavioral_competency in review.behavioral_competencies">
 							<td>{{behavioral_competency.behavioral_competency.parameter}}</td>
-							<td>{{behavioral_competency.behavioral_competency.description}}</td>
+							<td class="col-sm-3 col-md-3 col-lg-3 col-xl-3">{{behavioral_competency.behavioral_competency.description}}</td>
 							<td>{{behavioral_competency.self_appraisal_rating}}</td>
 							<td>{{behavioral_competency.employee_remarks}}</td>
 							<td>{{behavioral_competency.supervisor_rating}}</td>
@@ -54,7 +54,7 @@
 				</div>
 			</md-card-content>
 			<md-card-actions layout="row" layout-align="start center" ng-if="!review.overall_rating">
-	          	<md-button ng-click="evaluate(review.id)">Evaluate</md-button>
+	          	<md-button class="md-primary" ng-click="evaluate(review.id)">Evaluate</md-button>
 	        </md-card-actions>
 		</md-card>
 	</div>	

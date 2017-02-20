@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class ReviewGoalResponse extends Model
 {
+	protected $guarded = [];
+
     public function review()
     {
     	return $this->belongsTo('App\Review');
