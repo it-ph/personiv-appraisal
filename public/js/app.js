@@ -11,17 +11,17 @@ app
 					},
 					'content-container@main': {
 						templateUrl: '/app/shared/views/content-container.view.html',
-						// controller: 'postsContentContainerController',
+						controller: 'reviewsContentContainerController',
 					},
 					'toolbar@main': {
 						templateUrl: '/app/shared/templates/toolbar.template.html',
-						// controller: 'postsToolbarController',
+						controller: 'reviewsToolbarController',
 					},
 					'left-sidenav@main': {
 						templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
 					},
 					'content@main':{
-						// templateUrl: '/app/components/posts/templates/content/posts.template.html',
+						templateUrl: '/app/components/reviews/templates/content/reviews-content.template.html',
 					}
 				}
 			})
@@ -44,25 +44,25 @@ app
 					}
 				}
 			})
-		.state('main.reviews', {
-				url: 'reviews',
-				views: {
-					'content-container': {
-						templateUrl: '/app/shared/views/content-container.view.html',
-						controller: 'reviewsContentContainerController',
-					},
-					'toolbar@main.reviews': {
-						templateUrl: '/app/shared/templates/toolbar.template.html',
-						controller: 'reviewsToolbarController',
-					},
-					'left-sidenav@main.reviews': {
-						templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
-					},
-					'content@main.reviews':{
-						templateUrl: '/app/components/reviews/templates/content/reviews-content.template.html',
-					}
-				}
-			})
+		// .state('main.reviews', {
+		// 		url: 'reviews',
+		// 		views: {
+		// 			'content-container': {
+		// 				templateUrl: '/app/shared/views/content-container.view.html',
+		// 				controller: 'reviewsContentContainerController',
+		// 			},
+		// 			'toolbar@main.reviews': {
+		// 				templateUrl: '/app/shared/templates/toolbar.template.html',
+		// 				controller: 'reviewsToolbarController',
+		// 			},
+		// 			'left-sidenav@main.reviews': {
+		// 				templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
+		// 			},
+		// 			'content@main.reviews':{
+		// 				templateUrl: '/app/components/reviews/templates/content/reviews-content.template.html',
+		// 			}
+		// 		}
+		// 	})
 		.state('main.appraisal-forms', {
 				url: 'appraisal-forms',
 				resolve:{
@@ -259,11 +259,6 @@ app
 				'icon': 'mdi-home',
 				'label': 'Home',
 			},
-			{
-				'state': 'main.reviews',
-				'icon': 'mdi-file-document-box',
-				'label': 'Reviews',
-			},
 		];
 
 		$scope.menu.section = [];
@@ -358,6 +353,16 @@ app
 							'state': 'main.appraisal-forms',
 							'icon': 'mdi-playlist-check',
 							'label': 'Appraisal Forms',
+						}
+
+						$scope.menu.static.splice(2, 0, item);
+					}
+					else if(role.name == 'dashboard')
+					{
+						var item = {
+							'state': 'main.dashboard',
+							'icon': 'mdi-view-dashboard',
+							'label': 'Dashboard',
 						}
 
 						$scope.menu.static.splice(2, 0, item);
@@ -863,7 +868,7 @@ app
 
 						var exclude_users = [];
 
-						angular.forEach(data.reviews, function(item){
+						angular.forEach(data.reviews, function(item, idx){
 							var name = item.user.first_name + ' ' + item.user.last_name;
 
 							if(item.goals.length || item.behavioral_competencies.length)
@@ -1248,7 +1253,7 @@ app
 					Helper.post('/review/self-assessment', $scope.review)
 						.success(function(){
 							Helper.stop();
-							$state.go('main.reviews')
+							$state.go('main')
 						})
 						.error(function(){
 							Helper.failed()
@@ -1262,7 +1267,7 @@ app
 						.success(function(){
 							Helper.stop();
 							Helper.notify('Changes saved.')
-							$state.go('main.reviews');
+							$state.go('main');
 						})
 						.error(function(){
 							Helper.failed()
@@ -2337,7 +2342,7 @@ app
 	}]);
 app
 	.controller('reviewsToolbarController', ['$scope', '$filter', function($scope, $filter){
-		$scope.toolbar.childState = 'Reviews';
+		$scope.toolbar.childState = 'Home';
 
 		$scope.$on('close', function(){
 			$scope.hideSearchBar();

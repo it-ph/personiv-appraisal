@@ -45,7 +45,7 @@ app
 					Helper.post('/review/self-assessment', $scope.review)
 						.success(function(){
 							Helper.stop();
-							$state.go('main.reviews')
+							$state.go('main')
 						})
 						.error(function(){
 							Helper.failed()
@@ -59,7 +59,7 @@ app
 						.success(function(){
 							Helper.stop();
 							Helper.notify('Changes saved.')
-							$state.go('main.reviews');
+							$state.go('main');
 						})
 						.error(function(){
 							Helper.failed()

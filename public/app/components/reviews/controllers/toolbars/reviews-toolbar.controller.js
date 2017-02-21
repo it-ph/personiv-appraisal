@@ -1,6 +1,6 @@
 app
 	.controller('reviewsToolbarController', ['$scope', '$filter', function($scope, $filter){
-		$scope.toolbar.childState = 'Reviews';
+		$scope.toolbar.childState = 'Home';
 
 		$scope.$on('close', function(){
 			$scope.hideSearchBar();

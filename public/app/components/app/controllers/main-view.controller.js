@@ -13,11 +13,6 @@ app
 				'icon': 'mdi-home',
 				'label': 'Home',
 			},
-			{
-				'state': 'main.reviews',
-				'icon': 'mdi-file-document-box',
-				'label': 'Reviews',
-			},
 		];
 
 		$scope.menu.section = [];
@@ -112,6 +107,16 @@ app
 							'state': 'main.appraisal-forms',
 							'icon': 'mdi-playlist-check',
 							'label': 'Appraisal Forms',
+						}
+
+						$scope.menu.static.splice(2, 0, item);
+					}
+					else if(role.name == 'dashboard')
+					{
+						var item = {
+							'state': 'main.dashboard',
+							'icon': 'mdi-view-dashboard',
+							'label': 'Dashboard',
 						}
 
 						$scope.menu.static.splice(2, 0, item);

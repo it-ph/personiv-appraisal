@@ -124,7 +124,7 @@ app
 
 						var exclude_users = [];
 
-						angular.forEach(data.reviews, function(item){
+						angular.forEach(data.reviews, function(item, idx){
 							var name = item.user.first_name + ' ' + item.user.last_name;
 
 							if(item.goals.length || item.behavioral_competencies.length)

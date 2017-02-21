@@ -54,6 +54,13 @@ class RolesTableSeeder extends Seeder
                 'created_at' => Carbon\Carbon::now(),
                 'updated_at' => Carbon\Carbon::now(),
             ],
+            [
+                'name' => 'dashboard',
+                'description' => 'User can view overall results of the appraisal year.',
+                'super_admin_action' => 1,
+                'created_at' => Carbon\Carbon::now(),
+                'updated_at' => Carbon\Carbon::now(),
+            ],
             // [
             //     'name' => 'manage-accounts',
             //     'description' => 'user can manage department\'s accounts',

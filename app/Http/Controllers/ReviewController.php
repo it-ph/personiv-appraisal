@@ -20,6 +20,10 @@ class ReviewController extends Controller
      */
     public function updateSelfAssessment(Request $request)
     {
+        $review = Review::find($request->id);
+        
+        $this->authorize('update', $review);
+
         $this->validate($request, [
             'id' => 'required',
             'goals' => 'required',
@@ -40,9 +44,7 @@ class ReviewController extends Controller
             ]);
         }
 
-        DB::transaction(function() use($request){
-            $review = Review::find($request->id);
-
+        DB::transaction(function() use($request, $review){
             $review->updateGoalResponses($request->goals);
 
             $review->updateBehavioralCompetencyResponses($request->behavioral_competencies);
@@ -56,6 +58,10 @@ class ReviewController extends Controller
      */
     public function selfAssessment(Request $request)
     {
+        $review = Review::find($request->id);
+
+        $this->authorize('update', $review);
+
         $this->validate($request, [
             'id' => 'required',
             'goals' => 'required',
@@ -74,9 +80,7 @@ class ReviewController extends Controller
             ]);
         }
 
-        DB::transaction(function() use($request){
-            $review = Review::find($request->id);
-
+        DB::transaction(function() use($request, $review){
             $review->createGoalResponses($request->goals);
 
             $review->createBehavioralCompetencyResponses($request->behavioral_competencies);
