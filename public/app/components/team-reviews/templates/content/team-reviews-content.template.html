@@ -1,0 +1,42 @@
+<div layout="row" layout-align="center center" infinite-scroll='appraisal_form.paginateLoad()' infinite-scroll-distance="1" infinite-scroll-disabled="appraisal_form.busy" infinite-scroll-parent ng-if="appraisal_form.show">
+	<div layout="column" flex flex-gt-md="80" ng-if="appraisal_form.items.length">
+		<md-card ng-repeat="appraisal_form in appraisal_form.items | orderBy:sortType:sortReverse" ng-if="appraisal_form.reviews.length">
+			<md-card-header>
+		        <md-card-header-text>
+		            <span class="md-title">{{ appraisal_form.appraisal_period.start | date: 'MMM. dd, yyyy'}} to {{ appraisal_form.appraisal_period.end | date: 'MMM. dd, yyyy'}}</span>
+		            <span class="md-subhead">{{ appraisal_form.description }}</span>
+		        </md-card-header-text>
+			</md-card-header>
+			<md-card-content>
+				<md-subheader class="md-no-sticky" ng-if="appraisal_form.pending_reviews.length">Pending</md-subheader>
+				<md-list layout="row" layout-wrap>
+					<md-list-item class="md-2-line secondary-button-padding" ng-repeat="review in appraisal_form.pending_reviews | filter: toolbar.searchText" ng-if="!review.overall_rating" ng-click="view(review.id)" flex="30">
+						<img ng-if="!review.user.avatar_path" src="/img/2Color-Favicon_512x512-1.png" alt="" class="md-avatar">
+						<img ng-if="review.user.avatar_path" ng-src="/user/avatar/{{review.user.id}}" alt="" class="md-avatar">
+						<div class="md-list-item-text">
+							<h3>{{ review.user.last_name }}, {{ review.user.first_name }} {{ review.user.middle_name.charAt(0) + '.'}}</h3>
+							<p>{{ review.user.email }}</p>
+						</div>
+					</md-list-item>
+				</md-list>
+				<md-subheader class="md-no-sticky" ng-if="appraisal_form.done_reviews.length">Done</md-subheader>
+				<md-list layout="row" layout-wrap>
+					<md-list-item class="md-2-line secondary-button-padding" ng-repeat="review in appraisal_form.done_reviews | filter: toolbar.searchText" ng-if="review.overall_rating" ng-click="view(review.id)" flex="30">
+						<img ng-if="!review.user.avatar_path" src="/img/2Color-Favicon_512x512-1.png" alt="" class="md-avatar">
+						<img ng-if="review.user.avatar_path" ng-src="/user/avatar/{{review.user.id}}" alt="" class="md-avatar">
+						<div class="md-list-item-text">
+							<h3>{{ review.user.last_name }}, {{ review.user.first_name }} {{ review.user.middle_name.charAt(0) + '.'}}</h3>
+							<p>{{ review.user.email }}</p>
+						</div>
+					</md-list-item>
+				</md-list>
+			</md-card-content>
+		</md-card>
+	</div>	
+</div>
+<div layout="row" layout-align="center center" layout-padding layout-margin ng-if="isLoading">
+	<md-progress-circular class="md-primary" md-diameter="60"></md-progress-circular>
+</div>
+<div layout-padding layout-margin ng-if="!appraisal_form.items.length && appraisal_form.show">
+	Nothing to display.
+</div>

@@ -20,6 +20,16 @@ class UserRoleController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+    public function authorization($role_id)
+    {
+        return UserRole::where('role_id', $role_id)->where('user_id', Auth::user()->id)->firstOrFail();
+    }
+
+    /**
+     * Display a listing of the resource with parameters.
+     *
+     * @return \Illuminate\Http\Response
+     */
     public function enlist(Request $request)
     {
         $user_roles = UserRole::query();

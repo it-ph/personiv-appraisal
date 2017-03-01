@@ -24,9 +24,69 @@ app
 					}
 				}
 			})
-		.state('main.review', {
+			.state('main.team-reviews', {
+				url: 'team-reviews',
+				resolve:{
+					authorization: ['Helper', '$state', function(Helper, $state){
+						Helper.get('/user-role/3/' + 'authorization')
+							.success(function(data){
+								return;
+							})
+							.error(function(){
+								return $state.go('page-not-found');
+							});
+					}],
+				},
+				views: {
+					'content-container': {
+						templateUrl: '/app/shared/views/content-container.view.html',
+						controller: 'teamReviewsContentContainerController',
+					},
+					'toolbar@main.team-reviews': {
+						templateUrl: '/app/shared/templates/toolbar.template.html',
+						controller: 'teamReviewsToolbarController',
+					},
+					'left-sidenav@main.team-reviews': {
+						templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
+					},
+					'content@main.team-reviews':{
+						templateUrl: '/app/components/team-reviews/templates/content/team-reviews-content.template.html',
+					}
+				}
+			})
+			.state('main.self-assessment', {
+				url: 'self-assessment/{reviewID}',
+				params: {'reviewID':null},
+				views: {
+					'content-container': {
+						templateUrl: '/app/shared/views/content-container.view.html',
+						controller: 'selfAssessmentContentContainerController',
+					},
+					'toolbar@main.self-assessment': {
+						templateUrl: '/app/shared/templates/toolbar.template.html',
+					},
+					'left-sidenav@main.self-assessment': {
+						templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
+					},
+					'content@main.self-assessment':{
+						templateUrl: '/app/components/reviews/templates/content/self-assessment-content.template.html',
+					}
+				}
+			})
+			.state('main.review', {
 				url: 'review/{reviewID}',
 				params: {'reviewID':null},
+				resolve:{
+					authorization: ['Helper', '$state', function(Helper, $state){
+						Helper.get('/user-role/3/' + 'authorization')
+							.success(function(data){
+								return;
+							})
+							.error(function(){
+								return $state.go('page-not-found');
+							});
+					}],
+				},
 				views: {
 					'content-container': {
 						templateUrl: '/app/shared/views/content-container.view.html',
@@ -43,26 +103,45 @@ app
 					}
 				}
 			})
-		// .state('main.reviews', {
-		// 		url: 'reviews',
-		// 		views: {
-		// 			'content-container': {
-		// 				templateUrl: '/app/shared/views/content-container.view.html',
-		// 				controller: 'reviewsContentContainerController',
-		// 			},
-		// 			'toolbar@main.reviews': {
-		// 				templateUrl: '/app/shared/templates/toolbar.template.html',
-		// 				controller: 'reviewsToolbarController',
-		// 			},
-		// 			'left-sidenav@main.reviews': {
-		// 				templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
-		// 			},
-		// 			'content@main.reviews':{
-		// 				templateUrl: '/app/components/reviews/templates/content/reviews-content.template.html',
-		// 			}
-		// 		}
-		// 	})
-		.state('main.appraisal-forms', {
+			.state('main.supervisor-review', {
+				url: 'review/{reviewID}/supervisor',
+				params: {'reviewID':null},
+				views: {
+					'content-container': {
+						templateUrl: '/app/shared/views/content-container.view.html',
+						controller: 'supervisorReviewContentContainerController',
+					},
+					'toolbar@main.review': {
+						templateUrl: '/app/shared/templates/toolbar.template.html',
+					},
+					'left-sidenav@main.review': {
+						templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
+					},
+					'content@main.review':{
+						templateUrl: '/app/components/team-reviews/templates/content/supervisor-review-content.template.html',
+					}
+				}
+			})
+			// .state('main.reviews', {
+			// 		url: 'reviews',
+			// 		views: {
+			// 			'content-container': {
+			// 				templateUrl: '/app/shared/views/content-container.view.html',
+			// 				controller: 'reviewsContentContainerController',
+			// 			},
+			// 			'toolbar@main.reviews': {
+			// 				templateUrl: '/app/shared/templates/toolbar.template.html',
+			// 				controller: 'reviewsToolbarController',
+			// 			},
+			// 			'left-sidenav@main.reviews': {
+			// 				templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
+			// 			},
+			// 			'content@main.reviews':{
+			// 				templateUrl: '/app/components/reviews/templates/content/reviews-content.template.html',
+			// 			}
+			// 		}
+			// 	})
+			.state('main.appraisal-forms', {
 				url: 'appraisal-forms',
 				resolve:{
 					authorization: ['Helper', '$state', function(Helper, $state){
@@ -92,7 +171,7 @@ app
 					}
 				}
 			})
-		.state('main.manage-appraisal-forms', {
+			.state('main.manage-appraisal-forms', {
 				url: 'appraisal-forms/{appraisalFormID}',
 				params: {'appraisalFormID': null},
 				resolve:{
@@ -122,7 +201,7 @@ app
 					}
 				}
 			})
-		.state('main.manage-appraisal-form-employees', {
+			.state('main.manage-appraisal-form-employees', {
 				url: 'appraisal-forms/{appraisalFormID}/employees',
 				params: {'appraisalFormID': null},
 				resolve:{
@@ -152,7 +231,7 @@ app
 					}
 				}
 			})
-		.state('main.appraisal-periods', {
+			.state('main.appraisal-periods', {
 				url: 'settings/appraisal-periods',
 				resolve:{
 					authorization: ['Helper', '$state', function(Helper, $state){
@@ -182,7 +261,7 @@ app
 					}
 				}
 			})
-		.state('main.departments', {
+			.state('main.departments', {
 				url: 'settings/departments',
 				resolve:{
 					authorization: ['Helper', '$state', function(Helper, $state){
@@ -212,7 +291,7 @@ app
 					}
 				}
 			})
-		.state('main.users', {
+			.state('main.users', {
 				url: 'settings/users',
 				resolve:{
 					authorization: ['Helper', '$state', function(Helper, $state){

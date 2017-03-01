@@ -8,6 +8,8 @@ class ReviewGoalResponse extends Model
 {
 	protected $guarded = [];
 
+	protected $touches = ['review'];
+
     public function review()
     {
     	return $this->belongsTo('App\Review');

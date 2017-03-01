@@ -133,6 +133,13 @@ class ReviewController extends Controller
             }
         }
 
+        if($request->has('whereNotIn'))
+        {
+            for ($i=0; $i < count($request->whereNotIn); $i++) { 
+                $reviews->whereNotIn($request->input('whereNotIn')[$i]['label'], $request->input('whereNotIn')[$i]['value']);
+            }
+        }
+
         if($request->has('search'))
         {
             $reviews->whereHas('appraisal_period', function($query){
@@ -206,7 +213,7 @@ class ReviewController extends Controller
      */
     public function show($id)
     {
-        $review = Review::find($id);
+        $review = Review::findOrFail($id);
 
         if(Auth::user()->id != $review->user_id)
         {

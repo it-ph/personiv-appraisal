@@ -61,6 +61,7 @@ Route::group(['prefix' => 'role'], function(){
 
 /* User Role Routes */
 Route::group(['prefix' => 'user-role'], function(){
+	Route::get('{roleID}/authorization', 'UserRoleController@authorization');
 	Route::post('enlist', 'UserRoleController@enlist');
 });
 
@@ -93,4 +94,3 @@ Route::group(['prefix' => 'review'], function(){
 	Route::post('self-assessment', 'ReviewController@selfAssessment');
 	Route::post('update-self-assessment', 'ReviewController@updateSelfAssessment');
 });
-

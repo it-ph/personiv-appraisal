@@ -1,8 +1,8 @@
 app
-	.controller('reviewsContentContainerController', ['$scope', '$state', 'Helper', function($scope, $state, Helper){
+	.controller('teamReviewsContentContainerController', ['$scope', '$state', 'Helper', function($scope, $state, Helper){
 		$scope.$emit('closeSidenav');
 
-		var route = '/review';
+		var route = '/appraisal-form';
 
 		/*
 		 * Object for toolbar
@@ -19,10 +19,6 @@ app
 			$scope.sortReverse = filter.sortReverse;
 		}
 
-		$scope.selfAssessment = function(id){
-			$state.go('main.self-assessment', {'reviewID':id});
-		}
-
 		var setInit = function(){
 			Helper.post('/user/check')
 				.success(function(data){
@@ -32,23 +28,24 @@ app
 					$scope.request.paginate = 20;	
 					$scope.request.with = [
 						{
-							'relation':'appraisal_form.appraisal_period',
+							'relation': 'department',
 							'withTrashed': false,
 						},
 						{
-							'relation':'goals.goal',
+							'relation': 'appraisal_period',
 							'withTrashed': false,
 						},
 						{
-							'relation':'behavioral_competencies.behavioral_competency',
+							'relation':'reviews.user',
 							'withTrashed': false,
 						},
 					];
+					
 					$scope.request.where = [
 						{
-							'label': 'user_id',
+							'label': 'department_id',
 							'condition': '=',
-							'value': data.id,
+							'value': data.department_id,
 						},
 					];
 
@@ -67,30 +64,47 @@ app
 
 		/* Formats every data in the paginated call */
 		var pushItem = function(data){
-			data.appraisal_form.appraisal_period.start = new Date(data.appraisal_form.appraisal_period.start);
-			data.appraisal_form.appraisal_period.end = new Date(data.appraisal_form.appraisal_period.end);
+			data.appraisal_period.start = new Date(data.appraisal_period.start);
+			data.appraisal_period.end = new Date(data.appraisal_period.end);
+
+			data.pending_reviews = [];
+			data.done_reviews = [];
+
+			angular.forEach(data.reviews, function(review){
+				if(review.overall_rating)
+				{
+					data.done_reviews.push(review)
+				}
+				else{
+					data.pending_reviews.push(review)
+				}
+			});
 
 			var item = {};
 
-			item.display = data.appraisal_form.appraisal_period.appraisal_year;
+			item.display = data.appraisal_period.appraisal_year;
 
 			$scope.toolbar.items.push(item);
 		}
 
+		$scope.view = function(id){
+			$state.go('main.review', {'reviewID':id});
+		}
+
 		$scope.init = function(query){
-			$scope.review = {};
-			$scope.review.items = [];
+			$scope.appraisal_form = {};
+			$scope.appraisal_form.items = [];
 			$scope.toolbar.items = [];
 
 			// 2 is default so the next page to be loaded will be page 2 
-			$scope.review.page = 2;
+			$scope.appraisal_form.page = 2;
 
-			var reviews = function(query){				
+			var fetch = function(query){				
 				Helper.post(route + '/enlist', query)
 					.success(function(data){
-						$scope.review.details = data;
-						$scope.review.items = data.data;
-						$scope.review.show = true;
+						$scope.appraisal_form.details = data;
+						$scope.appraisal_form.items = data.data;
+						$scope.appraisal_form.show = true;
 
 						if(data.data.length){
 							// iterate over each record and set the format
@@ -99,9 +113,9 @@ app
 							});
 						}
 
-						$scope.review.paginateLoad = function(){
+						$scope.appraisal_form.paginateLoad = function(){
 							// kills the function if ajax is busy or pagination reaches last page
-							if($scope.review.busy || ($scope.review.page > $scope.review.details.last_page)){
+							if($scope.appraisal_form.busy || ($scope.appraisal_form.page > $scope.appraisal_form.details.last_page)){
 								$scope.isLoading = false;
 								return;
 							}
@@ -110,28 +124,28 @@ app
 							 *
 							*/
 							// sets to true to disable pagination call if still busy.
-							$scope.review.busy = true;
+							$scope.appraisal_form.busy = true;
 							$scope.isLoading = true;
 							// Calls the next page of pagination.
-							Helper.post(route + '/enlist' + '?page=' + $scope.review.page, query)
+							Helper.post(route + '/enlist' + '?page=' + $scope.appraisal_form.page, query)
 								.success(function(data){
 									// increment the page to set up next page for next AJAX Call
-									$scope.review.page++;
+									$scope.appraisal_form.page++;
 
 									// iterate over each data then splice it to the data array
 									angular.forEach(data.data, function(item, key){
 										pushItem(item);
-										$scope.review.items.push(item);
+										$scope.appraisal_form.items.push(item);
 									});
 
 									// Enables again the pagination call for next call.
-									$scope.review.busy = false;
+									$scope.appraisal_form.busy = false;
 									$scope.isLoading = false;
 								})
 								.error(function(){
 									Helper.failed()
 										.then(function(){
-											$scope.review.paginateLoad();
+											$scope.appraisal_form.paginateLoad();
 										});
 								});
 						}
@@ -139,17 +153,17 @@ app
 					.error(function(){
 						Helper.failed()
 							.then(function(){
-								reviews(query);
+								fetch(query);
 							});
 					});
 			}
 
-			reviews(query);
+			fetch(query);
 		}
 
 		$scope.refresh = function(){
 			$scope.isLoading = true;
-  			$scope.review.show = false;
+  			$scope.appraisal_form.show = false;
 
   			$scope.init($scope.request);
 		};
