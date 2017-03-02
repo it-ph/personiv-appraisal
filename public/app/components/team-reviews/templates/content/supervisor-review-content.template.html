@@ -1,0 +1,129 @@
+<div layout="row" layout-align="center center">
+	<form name="form.reviewForm" layout="column" flex flex-gt-md="80">
+		<!-- Goals -->
+		<md-card>
+			<md-toolbar>
+				<div class="md-toolbar-tools">
+					<h2>Goals - 80%</h2>
+				</div>
+			</md-toolbar>
+			<md-card-content>
+				<div ng-repeat="goal in review.goals">				
+					<md-list>
+						<md-list-item class="md-2-line">
+							<h2 class="md-avatar md-headline primary-bg" layout="row" layout-align="center center">
+								<span class="white-text">{{goal.goal.parameter.charAt(0).toUpperCase()}}</span>
+							</h2>
+							<div class="md-list-item-text">
+								<h3>{{goal.goal.parameter}}</h3>
+								<p>Weight: {{goal.goal.weight * 100}}%</p>
+							</div>
+						</md-list-item>
+					</md-list>
+					<md-list layout="row" layout-wrap flex>
+						<!-- Self assessment -->
+						<md-list-item class="md-2-line" flex-xs="100" flex-sm="100" flex-gt-sm="30">
+							<img ng-if="!review.user.avatar_path" src="/img/2Color-Favicon_512x512-1.png" alt="" class="md-avatar">
+							<img ng-if="review.user.avatar_path" ng-src="/user/avatar/{{review.user.id}}" alt="" class="md-avatar">
+							<div class="md-list-item-text">
+								<h3>{{review.user.first_name}}'s Rating: {{goal.self_assessment}}</h3>
+								<p>Remarks: {{goal.employee_remarks}}</p>
+							</div>
+						</md-list-item>
+						<!-- Supervisors -->
+						<md-list-item class="md-3-line" flex-xs="100" flex-sm="100" flex-gt-sm="30" ng-repeat="supervisor in goal.supervisor_goal_responses">
+							<img ng-if="!supervisor.user.avatar_path" src="/img/2Color-Favicon_512x512-1.png" alt="" class="md-avatar">
+							<img ng-if="supervisor.user.avatar_path" ng-src="/user/avatar/{{review.user.id}}" alt="" class="md-avatar">
+							<div class="md-list-item-text">
+								<h3>{{supervisor.user.first_name}}'s Raw Score: {{supervisor.raw_score}}</h3>
+								<h4>{{supervisor.user.first_name}}'s Rating: {{supervisor.supervisor_rating}}</h4>
+								<p>Remarks: {{supervisor.supervisor_remarks}}</p>
+							</div>
+						</md-list-item>
+					</md-list>
+					<div layout="row" layout-wrap flex>
+						<md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
+							<label>Raw Score</label>
+							<input type="number" name="RawScore{{$index}}" min="0" max="100" ng-model="goal.raw_score" ng-change="setRating(goal)" required>
+							<div class="hint" ng-if="goal.supervisor_rating && form.reviewForm['RawScore' + $index].$valid">Rating: {{goal.supervisor_rating}}</div>
+							<div ng-messages="form.reviewForm['RawScore' + $index].$error">
+								<div ng-message="required">Raw score is required.</div>
+								<div ng-message="min">Raw score cannot be lower than 0.</div>
+								<div ng-message="max">Raw score cannot be more than 100.</div>
+							</div>
+						</md-input-container>
+					</div>
+					<div layout="row">
+						<!-- Supervisor Remarks -->
+						<md-input-container class="md-block" flex-gt-sm flex-xs="100" flex-sm="100">
+							<label>Supervisor Remarks</label>
+							<textarea name="SupervisorRemarks{{$index}}" ng-model="goal.supervisor_remarks"></textarea>
+						</md-input-container>
+					</div>
+				</div>
+			</md-card-content>
+		</md-card>
+		<!-- Behavioral Competency -->
+		<md-card>
+			<md-toolbar>
+				<div class="md-toolbar-tools">
+					<h2>Behavioral Competency - 20%</h2>
+				</div>
+			</md-toolbar>
+			<md-card-content>
+				<div ng-repeat="behavioral_competency in review.behavioral_competencies">				
+					<md-list>
+						<md-list-item class="md-2-line">
+							<h2 class="md-avatar md-headline primary-bg" layout="row" layout-align="center center">
+								<span class="white-text">{{behavioral_competency.behavioral_competency.parameter.charAt(0).toUpperCase()}}</span>
+							</h2>
+							<div class="md-list-item-text">
+								<h3>{{behavioral_competency.behavioral_competency.parameter}}</h3>
+								<p>{{behavioral_competency.behavioral_competency.description}}</p>
+							</div>
+						</md-list-item>
+					</md-list>
+					<md-list layout="row" layout-wrap flex>
+						<!-- Self assessment -->
+						<md-list-item class="md-2-line" flex-xs="100" flex-sm="100" flex-gt-sm="30">
+							<img ng-if="!review.user.avatar_path" src="/img/2Color-Favicon_512x512-1.png" alt="" class="md-avatar">
+							<img ng-if="review.user.avatar_path" ng-src="/user/avatar/{{review.user.id}}" alt="" class="md-avatar">
+							<div class="md-list-item-text">
+								<h3>{{review.user.first_name}}'s Rating: {{behavioral_competency.self_appraisal_rating}}</h3>
+								<p>Remarks: {{behavioral_competency.employee_remarks}}</p>
+							</div>
+						</md-list-item>
+						<!-- Supervisors -->
+						<md-list-item class="md-2-line" flex-xs="100" flex-sm="100" flex-gt-sm="30" ng-repeat="supervisor in behavioral_competency.supervisor_behavioral_competency_responses">
+							<img ng-if="!supervisor.user.avatar_path" src="/img/2Color-Favicon_512x512-1.png" alt="" class="md-avatar">
+							<img ng-if="supervisor.user.avatar_path" ng-src="/user/avatar/{{review.user.id}}" alt="" class="md-avatar">
+							<div class="md-list-item-text">
+								<h4>{{supervisor.user.first_name}}'s Rating: {{supervisor.supervisor_rating}}</h4>
+								<p>Remarks: {{supervisor.supervisor_remarks}}</p>
+							</div>
+						</md-list-item>
+					</md-list>
+					<div layout="column">
+						<h4 class="md-subhead">Immediate Supervisor Rating</h4>
+						<md-input-container>
+							<md-radio-group name="SelfAssessment{{$index}}" ng-model="behavioral_competency.supervisor_rating" layout="row" required>
+								<md-radio-button value="1" class="md-primary" flex>1 - Unsatisfactory</md-radio-button>
+								<md-radio-button value="2" class="md-primary" flex>2 - Improvement Needed</md-radio-button>
+								<md-radio-button value="3" class="md-primary" flex>3 - Meet Expectations</md-radio-button>
+								<md-radio-button value="4" class="md-primary" flex>4 - Exceeds Expectations</md-radio-button>
+								<md-radio-button value="5" class="md-primary" flex>5 - Excellent</md-radio-button>
+							</md-radio-group>
+						</md-input-container>
+					</div>
+					<div layout="row">
+						<!-- Supervisor Remarks -->
+						<md-input-container class="md-block" flex-gt-sm flex-xs="100" flex-sm="100">
+							<label>Supervisor Remarks</label>
+							<textarea name="SupervisorRemarks{{$index}}" ng-model="behavioral_competency.supervisor_remarks"></textarea>
+						</md-input-container>
+					</div>
+				</div>
+			</md-card-content>
+		</md-card>
+	</form>
+</div>

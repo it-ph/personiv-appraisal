@@ -15,7 +15,7 @@ app
 		$scope.toolbar.parentState = 'Team Reviews';
 
 		$scope.toolbar.hideSearchIcon = true;
-
+		
 		/*
 		 * Object for request
 		 *
@@ -53,7 +53,7 @@ app
 		$scope.init = function(query){		
 			Helper.post(route + '/enlist', query)
 				.success(function(data){
-					if(!data)
+					if(!data || (!data.goals.length && !data.behavioral_competencies.length))
 					{
 						$state.go('page-not-found');
 					}
@@ -80,6 +80,10 @@ app
 
   			$scope.init($scope.request);
 		};
+
+		$scope.evaluate = function(id){
+			$state.go('main.supervisor-review', {'reviewID':id});
+		}
 
 		$scope.isLoading = true;
 		$scope.init($scope.request);

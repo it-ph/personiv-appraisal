@@ -19,4 +19,9 @@ class ReviewGoalResponse extends Model
     {
     	return $this->belongsTo('App\Goal');
     }
+
+    public function supervisor_goal_responses()
+    {
+        return $this->hasMany('App\SupervisorGoalResponse');
+    }
 }

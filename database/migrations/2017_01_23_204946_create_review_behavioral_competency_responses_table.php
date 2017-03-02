@@ -19,8 +19,6 @@ class CreateReviewBehavioralCompetencyResponsesTable extends Migration
             $table->integer('behavioral_competency_id')->unsigned();
             $table->float('self_appraisal_rating')->nullable();
             $table->text('employee_remarks')->nullable();
-            $table->text('supervisor_rating')->nullable();
-            $table->text('supervisor_remarks')->nullable();
             $table->timestamps();
         });
     }

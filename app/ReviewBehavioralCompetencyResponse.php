@@ -19,4 +19,9 @@ class ReviewBehavioralCompetencyResponse extends Model
     {
     	return $this->belongsTo('App\BehavioralCompetency');
     }
+
+     public function supervisor_behavioral_competency_responses()
+    {
+        return $this->hasMany('App\SupervisorBehavioralCompetencyResponse');
+    }
 }

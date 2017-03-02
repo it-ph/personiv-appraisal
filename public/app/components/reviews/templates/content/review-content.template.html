@@ -53,7 +53,7 @@
 					</table>
 				</div>
 			</md-card-content>
-			<md-card-actions layout="row" layout-align="start center" ng-if="!review.overall_rating">
+			<md-card-actions layout="row" layout-align="start center" ng-if="!review.overall_rating && review.goals.length && review.behavioral_competencies.length">
 	          	<md-button class="md-primary" ng-click="evaluate(review.id)">Evaluate</md-button>
 	        </md-card-actions>
 		</md-card>

@@ -111,13 +111,13 @@ app
 						templateUrl: '/app/shared/views/content-container.view.html',
 						controller: 'supervisorReviewContentContainerController',
 					},
-					'toolbar@main.review': {
+					'toolbar@main.supervisor-review': {
 						templateUrl: '/app/shared/templates/toolbar.template.html',
 					},
-					'left-sidenav@main.review': {
+					'left-sidenav@main.supervisor-review': {
 						templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
 					},
-					'content@main.review':{
+					'content@main.supervisor-review':{
 						templateUrl: '/app/components/team-reviews/templates/content/supervisor-review-content.template.html',
 					}
 				}
