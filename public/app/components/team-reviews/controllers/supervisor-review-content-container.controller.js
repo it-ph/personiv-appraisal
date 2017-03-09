@@ -167,22 +167,28 @@ app
 									angular.forEach(data.behavioral_competencies, function(item){
 										var response = $filter('filter')(item.supervisor_behavioral_competency_responses, {'user_id':user.id}, true)[0];
 
-										item.supervisor_rating = response ? response.supervisor_rating : 3;
-										item.supervisor_behavioral_competency_response_id = response.id;
-
 										if(response)
 										{
+											item.supervisor_rating = response.supervisor_rating;
+											item.supervisor_behavioral_competency_response_id = response.id;
 											$scope.create = false;
+										}
+										else{
+											item.supervisor_rating = 3;
 										}
 									});
 									
 									angular.forEach(data.goals, function(item){
 										var response = $filter('filter')(item.supervisor_goal_responses, {'user_id':user.id}, true)[0];
 
-										item.supervisor_goal_response_id = response.id;
-										item.raw_score = response ? response.raw_score : null;
-										item.supervisor_rating = response ? response.supervisor_rating : null;
-										item.supervisor_remarks = response ? response.supervisor_remarks : null;
+										if(response)
+										{
+											item.supervisor_goal_response_id = response.id;
+											item.raw_score = response.raw_score;
+											item.supervisor_rating = response.supervisor_rating;
+											item.supervisor_remarks = response.supervisor_remarks;
+										}
+
 									});
 
 									$scope.review = data;

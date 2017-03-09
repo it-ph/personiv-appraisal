@@ -2545,22 +2545,28 @@ app
 									angular.forEach(data.behavioral_competencies, function(item){
 										var response = $filter('filter')(item.supervisor_behavioral_competency_responses, {'user_id':user.id}, true)[0];
 
-										item.supervisor_rating = response ? response.supervisor_rating : 3;
-										item.supervisor_behavioral_competency_response_id = response.id;
-
 										if(response)
 										{
+											item.supervisor_rating = response.supervisor_rating;
+											item.supervisor_behavioral_competency_response_id = response.id;
 											$scope.create = false;
+										}
+										else{
+											item.supervisor_rating = 3;
 										}
 									});
 									
 									angular.forEach(data.goals, function(item){
 										var response = $filter('filter')(item.supervisor_goal_responses, {'user_id':user.id}, true)[0];
 
-										item.supervisor_goal_response_id = response.id;
-										item.raw_score = response ? response.raw_score : null;
-										item.supervisor_rating = response ? response.supervisor_rating : null;
-										item.supervisor_remarks = response ? response.supervisor_remarks : null;
+										if(response)
+										{
+											item.supervisor_goal_response_id = response.id;
+											item.raw_score = response.raw_score;
+											item.supervisor_rating = response.supervisor_rating;
+											item.supervisor_remarks = response.supervisor_remarks;
+										}
+
 									});
 
 									$scope.review = data;
@@ -2890,81 +2896,6 @@ app
 			{
 				'label': 'Department',
 				'type': 'department',
-				'sortReverse': false,
-			},
-			{
-				'label': 'Recently added',
-				'type': 'created_at',
-				'sortReverse': false,
-			},
-		];
-
-		$scope.toolbar.refresh = function(){
-			$scope.$emit('refresh');
-		}
-	}]);
-app
-	.controller('reviewsToolbarController', ['$scope', '$filter', function($scope, $filter){
-		$scope.toolbar.childState = 'Home';
-
-		$scope.$on('close', function(){
-			$scope.hideSearchBar();
-		});
-
-		$scope.toolbar.getItems = function(query){
-			var results = query ? $filter('filter')($scope.toolbar.items, query) : $scope.toolbar.items;
-			return results;
-		}
-
-		$scope.toolbar.searchAll = true;
-		/**
-		 * Reveals the search bar.
-		 *
-		*/
-		$scope.showSearchBar = function(){
-			$scope.model.busy = true;
-			$scope.searchBar = true;
-		};
-
-		/**
-		 * Hides the search bar.
-		 *
-		*/
-		$scope.hideSearchBar = function(){
-			$scope.searchBar = false;
-			$scope.toolbar.searchText = '';
-			$scope.toolbar.searchItem = '';
-			/* Cancels the paginate when the user sent a query */
-			if($scope.searched){
-				$scope.model.page = 1;
-				$scope.model.items = [];
-				$scope.searched = false;
-				$scope.$emit('refresh');
-			}
-		};
-
-		$scope.searchUserInput = function(){
-			$scope.$emit('search');
-			$scope.searched = true;
-		};
-
-		$scope.toolbar.options = true;
-		$scope.toolbar.showInactive = true;
-
-		$scope.toolbar.sort = [
-			{
-				'label': 'Start',
-				'type': 'start',
-				'sortReverse': false,
-			},
-			{
-				'label': 'End',
-				'type': 'end',
-				'sortReverse': false,
-			},
-			{
-				'label': 'Appraisal Year',
-				'type': 'appraisal_year',
 				'sortReverse': false,
 			},
 			{
@@ -3651,6 +3582,81 @@ app
 			{
 				'label': 'Email',
 				'type': 'email',
+				'sortReverse': false,
+			},
+			{
+				'label': 'Recently added',
+				'type': 'created_at',
+				'sortReverse': false,
+			},
+		];
+
+		$scope.toolbar.refresh = function(){
+			$scope.$emit('refresh');
+		}
+	}]);
+app
+	.controller('reviewsToolbarController', ['$scope', '$filter', function($scope, $filter){
+		$scope.toolbar.childState = 'Home';
+
+		$scope.$on('close', function(){
+			$scope.hideSearchBar();
+		});
+
+		$scope.toolbar.getItems = function(query){
+			var results = query ? $filter('filter')($scope.toolbar.items, query) : $scope.toolbar.items;
+			return results;
+		}
+
+		$scope.toolbar.searchAll = true;
+		/**
+		 * Reveals the search bar.
+		 *
+		*/
+		$scope.showSearchBar = function(){
+			$scope.model.busy = true;
+			$scope.searchBar = true;
+		};
+
+		/**
+		 * Hides the search bar.
+		 *
+		*/
+		$scope.hideSearchBar = function(){
+			$scope.searchBar = false;
+			$scope.toolbar.searchText = '';
+			$scope.toolbar.searchItem = '';
+			/* Cancels the paginate when the user sent a query */
+			if($scope.searched){
+				$scope.model.page = 1;
+				$scope.model.items = [];
+				$scope.searched = false;
+				$scope.$emit('refresh');
+			}
+		};
+
+		$scope.searchUserInput = function(){
+			$scope.$emit('search');
+			$scope.searched = true;
+		};
+
+		$scope.toolbar.options = true;
+		$scope.toolbar.showInactive = true;
+
+		$scope.toolbar.sort = [
+			{
+				'label': 'Start',
+				'type': 'start',
+				'sortReverse': false,
+			},
+			{
+				'label': 'End',
+				'type': 'end',
+				'sortReverse': false,
+			},
+			{
+				'label': 'Appraisal Year',
+				'type': 'appraisal_year',
 				'sortReverse': false,
 			},
 			{
