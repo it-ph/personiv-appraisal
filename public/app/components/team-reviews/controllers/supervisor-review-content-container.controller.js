@@ -6,6 +6,8 @@ app
 
 		var reviewID = $stateParams.reviewID;
 
+		$scope.form = {}
+
 		/*
 		 * Object for toolbar
 		 *
@@ -45,7 +47,7 @@ app
 					Helper.post('/review/supervisor-response', $scope.review)
 						.success(function(){
 							Helper.stop();
-							$state.go('main')
+							$state.go('main.team-reviews');
 						})
 						.error(function(){
 							Helper.failed()
@@ -59,7 +61,7 @@ app
 						.success(function(){
 							Helper.stop();
 							Helper.notify('Changes saved.')
-							$state.go('main');
+							$state.go('main.team-reviews');
 						})
 						.error(function(){
 							Helper.failed()
@@ -160,9 +162,28 @@ app
 
 									$scope.toolbar.childState = data.user.last_name + ', ' + data.user.first_name + ' ' + data.user.middle_name.charAt(0).toUpperCase() +'.';
 									
+									$scope.create = true;
+
 									angular.forEach(data.behavioral_competencies, function(item){
-										item.supervisor_rating = 3;
-									})
+										var response = $filter('filter')(item.supervisor_behavioral_competency_responses, {'user_id':user.id}, true)[0];
+
+										item.supervisor_rating = response ? response.supervisor_rating : 3;
+										item.supervisor_behavioral_competency_response_id = response.id;
+
+										if(response)
+										{
+											$scope.create = false;
+										}
+									});
+									
+									angular.forEach(data.goals, function(item){
+										var response = $filter('filter')(item.supervisor_goal_responses, {'user_id':user.id}, true)[0];
+
+										item.supervisor_goal_response_id = response.id;
+										item.raw_score = response ? response.raw_score : null;
+										item.supervisor_rating = response ? response.supervisor_rating : null;
+										item.supervisor_remarks = response ? response.supervisor_remarks : null;
+									});
 
 									$scope.review = data;
 
@@ -177,6 +198,7 @@ app
 						}
 
 						review(query);
+
 					})
 					.error(function(){
 						Helper.failed()

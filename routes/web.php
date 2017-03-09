@@ -93,4 +93,6 @@ Route::group(['prefix' => 'review'], function(){
 	Route::post('enlist', 'ReviewController@enlist');
 	Route::post('self-assessment', 'ReviewController@selfAssessment');
 	Route::post('update-self-assessment', 'ReviewController@updateSelfAssessment');
+	Route::post('supervisor-response', 'ReviewController@supervisorResponse');
+	Route::post('update-supervisor-response', 'ReviewController@updateSupervisorResponse');
 });

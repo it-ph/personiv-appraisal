@@ -26,8 +26,8 @@
 							<img ng-if="!review.user.avatar_path" src="/img/2Color-Favicon_512x512-1.png" alt="" class="md-avatar">
 							<img ng-if="review.user.avatar_path" ng-src="/user/avatar/{{review.user.id}}" alt="" class="md-avatar">
 							<div class="md-list-item-text">
-								<h3>{{review.user.first_name}}'s Rating: {{goal.self_assessment}}</h3>
-								<p>Remarks: {{goal.employee_remarks}}</p>
+								<h3>{{review.user.first_name}} {{review.user.last_name}}</h3>
+								<p>Self Assessment: {{goal.self_assessment}}</p>
 							</div>
 						</md-list-item>
 						<!-- Supervisors -->
@@ -35,9 +35,9 @@
 							<img ng-if="!supervisor.user.avatar_path" src="/img/2Color-Favicon_512x512-1.png" alt="" class="md-avatar">
 							<img ng-if="supervisor.user.avatar_path" ng-src="/user/avatar/{{review.user.id}}" alt="" class="md-avatar">
 							<div class="md-list-item-text">
-								<h3>{{supervisor.user.first_name}}'s Raw Score: {{supervisor.raw_score}}</h3>
-								<h4>{{supervisor.user.first_name}}'s Rating: {{supervisor.supervisor_rating}}</h4>
-								<p>Remarks: {{supervisor.supervisor_remarks}}</p>
+								<h3>{{supervisor.user.first_name}} {{supervisor.user.last_name}}</h3>
+								<h4>Raw Score: {{supervisor.raw_score}}</h4>
+								<p>Rating: {{supervisor.supervisor_rating}}</p>
 							</div>
 						</md-list-item>
 					</md-list>
@@ -89,8 +89,8 @@
 							<img ng-if="!review.user.avatar_path" src="/img/2Color-Favicon_512x512-1.png" alt="" class="md-avatar">
 							<img ng-if="review.user.avatar_path" ng-src="/user/avatar/{{review.user.id}}" alt="" class="md-avatar">
 							<div class="md-list-item-text">
-								<h3>{{review.user.first_name}}'s Rating: {{behavioral_competency.self_appraisal_rating}}</h3>
-								<p>Remarks: {{behavioral_competency.employee_remarks}}</p>
+								<h3>{{review.user.first_name}} {{review.user.last_name}}</h3>
+								<p>Self Appraisal Rating: {{behavioral_competency.self_appraisal_rating}}</p>
 							</div>
 						</md-list-item>
 						<!-- Supervisors -->
@@ -98,8 +98,8 @@
 							<img ng-if="!supervisor.user.avatar_path" src="/img/2Color-Favicon_512x512-1.png" alt="" class="md-avatar">
 							<img ng-if="supervisor.user.avatar_path" ng-src="/user/avatar/{{review.user.id}}" alt="" class="md-avatar">
 							<div class="md-list-item-text">
-								<h4>{{supervisor.user.first_name}}'s Rating: {{supervisor.supervisor_rating}}</h4>
-								<p>Remarks: {{supervisor.supervisor_remarks}}</p>
+								<h4>{{supervisor.user.first_name}} {{supervisor.user.last_name}}</h4>
+								<p>Rating: {{supervisor.supervisor_rating}}</p>
 							</div>
 						</md-list-item>
 					</md-list>

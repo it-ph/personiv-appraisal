@@ -8,8 +8,6 @@ class SupervisorGoalResponse extends Model
 {
     protected $guarded = [];
 
-    protected $touches = ['review'];
-
     public function review_goal_response()
     {
     	return $this->belongsTo('App\ReviewGoalResponse');

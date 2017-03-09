@@ -156,7 +156,7 @@ class AccountController extends Controller
 
         if($account->users_count)
         {
-            abort(403, 'Unable to delete account with users associated with it.');
+            abort(403, 'Unable to delete account with associated users .');
         }
 
         $account->delete();

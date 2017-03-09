@@ -8,8 +8,6 @@ class SupervisorBehavioralCompetencyResponse extends Model
 {
     protected $guarded = [];
 
-    protected $touches = ['review'];
-
     public function review_behavioral_competency_response()
     {
     	return $this->belongsTo('App\ReviewBehavioralCompetencyResponse');

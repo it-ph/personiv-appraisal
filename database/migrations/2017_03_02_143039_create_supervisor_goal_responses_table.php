@@ -19,7 +19,7 @@ class CreateSupervisorGoalResponsesTable extends Migration
             $table->integer('user_id')->unsigned();
             $table->float('raw_score');
             $table->text('supervisor_rating');
-            $table->text('supervisor_remarks');
+            $table->text('supervisor_remarks')->nullable();
             $table->timestamps();
         });
     }

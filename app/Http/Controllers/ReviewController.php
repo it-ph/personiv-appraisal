@@ -14,6 +14,88 @@ use Gate;
 class ReviewController extends Controller
 {
     /**
+     * Update supervisor assessment.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function updateSupervisorResponse(Request $request)
+    {
+        if((Gate::forUser($request->user())->denies('supervisor') && $request->user()->department_id == $request->user->department_id) && Gate::forUser($request->user())->denies('director'))
+        {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $this->validate($request, [
+            'behavioral_competencies' => 'required',
+            'goals' => 'required',
+        ]);
+
+        for ($i=0; $i < count($request->goals); $i++) { 
+            $this->validate($request, [
+                'goals.'.$i.'.id' => 'required',
+                'goals.'.$i.'.supervisor_goal_response_id' => 'required',
+                'goals.'.$i.'.supervisor_rating' => 'required',
+            ]);
+        }
+
+        for ($i=0; $i < count($request->behavioral_competencies); $i++) { 
+            $this->validate($request, [
+                'behavioral_competencies.'.$i.'.id' => 'required',
+                'behavioral_competencies.'.$i.'.supervisor_behavioral_competency_response_id' => 'required',
+                'behavioral_competencies.'.$i.'.supervisor_rating' => 'required',
+            ]);
+        }
+
+        $review = Review::find($request->id);
+
+        DB::transaction(function() use($request, $review){
+            $review->updateSupervisorGoalResponses($request->goals, $request->user()->id);
+
+            $review->updateSupervisorBehavioralCompetencyResponses($request->behavioral_competencies, $request->user()->id);
+        });
+    }
+
+    /**
+     * Supervisor assessment.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function supervisorResponse(Request $request)
+    {
+        if((Gate::forUser($request->user())->denies('supervisor') && $request->user()->department_id == $request->user->department_id) && Gate::forUser($request->user())->denies('director'))
+        {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $this->validate($request, [
+            'behavioral_competencies' => 'required',
+            'goals' => 'required',
+        ]);
+
+        for ($i=0; $i < count($request->goals); $i++) { 
+            $this->validate($request, [
+                'goals.'.$i.'.id' => 'required',
+                'goals.'.$i.'.supervisor_rating' => 'required',
+            ]);
+        }
+
+        for ($i=0; $i < count($request->behavioral_competencies); $i++) { 
+            $this->validate($request, [
+                'behavioral_competencies.'.$i.'.id' => 'required',
+                'behavioral_competencies.'.$i.'.supervisor_rating' => 'required',
+            ]);
+        }
+
+        $review = Review::find($request->id);
+
+        DB::transaction(function() use($request, $review){
+            $review->createSupervisorGoalResponses($request->goals, $request->user()->id);
+
+            $review->createSupervisorBehavioralCompetencyResponses($request->behavioral_competencies, $request->user()->id);
+        });
+    }
+
+    /**
      * Update self assessment.
      *
      * @return \Illuminate\Http\Response
