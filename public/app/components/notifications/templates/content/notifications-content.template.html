@@ -1,0 +1,20 @@
+<div infinite-scroll='notification.paginateLoad()' infinite-scroll-distance="1" infinite-scroll-disabled="notification.busy" infinite-scroll-parent ng-if="notification.show">
+	<md-list>
+		<md-list-item class="md-3-line md-long-text" ng-repeat="notification in notification.items | filter: toolbar.searchText" ng-click="readNotification(notification)">
+			<img ng-if="notification.data.sender.avatar_path" ng-src="/user/avatar/{{notification.data.sender.id}}?={{currentTime}}" class="md-avatar" alt="notification.data.sender.name photo" />
+	        <img ng-if="!notification.data.sender.avatar_path" src="/img/2Color-Favicon_512x512-1.png" class="md-avatar" alt="notification.data.sender.name photo" />
+	        <div class="md-list-item-text">
+	            <h3>{{ notification.data.sender.name }}</h3>
+	            <h4>{{ notification.data.message }}</h4>
+	            <p><span am-time-ago="notification.created_at"></span></p>
+	        </div>
+		</md-list-item>
+	</md-list>
+</div>
+<div layout="row" layout-align="center center" layout-padding layout-margin ng-if="isLoading">
+	<md-progress-circular class="md-primary" md-diameter="60"></md-progress-circular>
+</div>
+<div layout-padding layout-margin ng-if="!notification.items.length && notification.show">
+	Nothing to display.
+</div>
+

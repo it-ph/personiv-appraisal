@@ -18,6 +18,7 @@ class CreateAppraisalFormsTable extends Migration
             $table->text('description')->nullable();
             $table->integer('appraisal_period_id')->unsigned();
             $table->integer('department_id')->unsigned();
+            $table->integer('account_id')->nullable()->unsigned();
             $table->timestamps();
         });
     }

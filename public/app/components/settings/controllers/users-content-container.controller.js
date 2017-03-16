@@ -209,7 +209,7 @@ app
 				'withTrashed':false,
 			},
 			{
-				'relation':'departments',
+				'relation':'head_of',
 				'withTrashed':false,
 			},
 			{

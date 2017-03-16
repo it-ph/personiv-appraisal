@@ -1,7 +1,7 @@
 <md-dialog aria-label="Model Form"  flex flex-gt-sm="50" ng-cloak>
 	<md-toolbar>
         <div class="md-toolbar-tools">
-            <h2 class="white-text">Appraisal Form</h2>
+            <h2 class="white-text">{{ appraisal_form.department.name }} <span ng-if="appraisal_form.account">-</span> <span ng-bind="appraisal_form.account.name"></span></h2>
             <span flex></span>
             <md-button class="md-icon-button" ng-click="cancel()">
                 <md-icon class="mdi mdi-close mdi-24px" aria-label="Close dialog"></md-icon>
@@ -58,7 +58,7 @@
 	            Manage Employees
 	        </md-button>
 	    	<span flex></span>
-	        <md-button aria-label="Update" ng-click="update()">
+	        <md-button aria-label="Update" ng-click="update()" ng-if="!hideUpdate">
 	            Update
 	        </md-button>
 	        <md-button aria-label="Delete" ng-if="!appraisal_form.reviews.length" ng-click="delete(appraisal_form.id)">

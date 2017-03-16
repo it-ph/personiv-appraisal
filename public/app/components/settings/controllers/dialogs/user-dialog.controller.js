@@ -32,7 +32,7 @@ app
 					var user_query = {
 						'with': [
 							{
-								'relation': 'departments',
+								'relation': 'head_of.department',
 								'withTrashed': false,
 							},
 						],
@@ -50,6 +50,11 @@ app
 						.success(function(data){
 							$scope.model = data;
 							$scope.model.roles = [];
+
+							if(data.head_of)
+							{
+								$scope.model.department_head = true;
+							}
 
 							angular.forEach($scope.roles, function(item, key){
 								$scope.model.roles.push(null);

@@ -190,7 +190,7 @@ class UserController extends Controller
 
         $user->unread_notifications = $user->unreadNotifications;
 
-        $user->load('department', 'account', 'immediate_supervisor', 'departments', 'roles');
+        $user->load('department', 'account', 'immediate_supervisor', 'head_of.department', 'roles');
 
         return $user;
     }

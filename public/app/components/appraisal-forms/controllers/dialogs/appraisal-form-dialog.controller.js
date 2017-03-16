@@ -26,6 +26,10 @@ app
 
 		query.with = [
 			{
+				'relation': 'account',
+				'withTrashed': false,
+			},
+			{
 				'relation': 'department',
 				'withTrashed': false,
 			},
@@ -39,6 +43,14 @@ app
 			},
 			{
 				'relation': 'reviews.user',
+				'withTrashed': false,
+			},
+			{
+				'relation': 'reviews.goals',
+				'withTrashed': false,
+			},
+			{
+				'relation': 'reviews.behavioral_competencies',
 				'withTrashed': false,
 			},
 		];
@@ -55,7 +67,15 @@ app
 
 		Helper.post('/appraisal-form/enlist', query)
 			.success(function(data){
+				angular.forEach(data.reviews, function(review){
+					if(review.behavioral_competencies.length || review.goals.length)
+					{
+						$scope.hideUpdate = true;
+					}
+				})
+
 				$scope.appraisal_form = data;
+
 			})
 			.error(function(){
 				Helper.error();

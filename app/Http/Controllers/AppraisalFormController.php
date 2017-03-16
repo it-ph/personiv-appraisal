@@ -27,6 +27,17 @@ class AppraisalFormController extends Controller
         if($request->has('with'))
         {
             for ($i=0; $i < count($request->with); $i++) { 
+                if(isset($request->input('with')[$i]['has']))
+                {
+                    $appraisal_forms->with([$request->input('with')[$i]['relation'] => function($query) use($request, $i){
+                        foreach ($request->input('with')[$i]['has'] as $has) {
+                            $query->has($has)->with('user');
+                        }
+                    }]);
+
+                    continue;
+                }
+
                 if(!$request->input('with')[$i]['withTrashed'])
                 {
                     $appraisal_forms->with($request->input('with')[$i]['relation']);
@@ -53,6 +64,14 @@ class AppraisalFormController extends Controller
                 }
             }
         }
+
+        if($request->has('has'))
+        {
+            foreach ($request->has as $has) {
+                $appraisal_forms->has($has);
+            }
+        }
+
 
         if($request->has('where'))
         {
@@ -118,6 +137,7 @@ class AppraisalFormController extends Controller
         }
 
         $this->validate($request, [
+            'department_id' => 'required',
             'appraisal_period_id' => 'required',
             'goals' => 'required',
             'behavioral_competencies' => 'required',
@@ -193,6 +213,7 @@ class AppraisalFormController extends Controller
         }
 
         $this->validate($request, [
+            'department_id' => 'required',
             'appraisal_period' => 'required',
             'goals' => 'required',
             'behavioral_competencies' => 'required',
@@ -203,6 +224,7 @@ class AppraisalFormController extends Controller
 
             $appraisal_form->appraisal_period_id = $request->input('appraisal_period_id');
             $appraisal_form->department_id = $request->department_id;
+            $appraisal_form->account_id = $request->account_id;
             $appraisal_form->description = $request->description;
 
             $appraisal_form->save();

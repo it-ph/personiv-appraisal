@@ -15,12 +15,19 @@
 				<!-- Department -->
                 <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm ng-if="super_admin">
                 	<label>Department</label>
-                	<md-select name="Department" required ng-model="appraisal_form.department_id" ng-disabled="busy">
+                	<md-select name="Department" required ng-model="appraisal_form.department_id" ng-disabled="busy" ng-change="setAccounts(appraisal_form.department_id, true)">
                         <md-option ng-repeat="department in departments" value="{{department.id}}">{{department.name}}</md-option>
                     </md-select>
                     <div ng-messages="form.appraisalForm.Department.$error" ng-if="form.appraisalForm.Department.$touched">
                         <div ng-message="required">Department is required.</div>
                     </div>
+                </md-input-container>
+                <!-- Account -->
+                <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
+                    <label>Account</label>
+                    <md-select name="Account" ng-model="appraisal_form.account_id" ng-disabled="busy || !accounts.length">
+                        <md-option ng-repeat="account in accounts" value="{{account.id}}">{{account.name}}</md-option>
+                    </md-select>
                 </md-input-container>
             </div>
             <div layout="row" layout-wrap flex>

@@ -16,6 +16,11 @@ class AppraisalForm extends Model
     	return $this->belongsTo('App\Department');
     }
 
+    public function account()
+    {
+        return $this->belongsTo('App\Account');
+    }
+
     public function reviews()
     {
     	return $this->hasMany('App\Review');

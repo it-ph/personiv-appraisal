@@ -41,17 +41,79 @@ app
 				});
 		}
 
-		var departments = function(){		
-			Helper.get('/department')
-				.success(function(data){
-					$scope.departments = data;
-				})
-				.error(function(){
-					Helper.confirm(error_dialog)
-						.then(function(){
-							departments();
-						});
-				});
+		var departments = function(department_id){
+			var request = {
+				'with': [
+					{
+						'relation': 'accounts',
+						'withTrashed': false,
+					},
+				]
+			}
+
+			if(department_id){
+				request.where = [
+					{
+						'label':'id',
+						'condition': '=',
+						'value': department_id,
+					},
+				]
+
+				request.first = true;
+			}
+
+			var fetch = function(){
+				Helper.post('/department/enlist', request)
+					.success(function(data){
+						if(department_id){
+							$scope.appraisal_form.department = data;
+						}
+						else{
+							$scope.departments = data;
+						}
+					})
+					.error(function(){
+						Helper.confirm(error_dialog)
+							.then(function(){
+								fetch();
+							});
+					});
+			}
+
+			fetch();
+		}
+
+		$scope.setAccounts = function(department_id, reset){
+			if(reset)
+			{	
+				$scope.appraisal_form.account_id = null;
+			}
+			
+			var request = {
+				'where': [
+					{
+						'label': 'department_id',
+						'condition': '=',
+						'value': department_id,
+					},
+				],
+			}
+
+			var accounts = function(){
+				Helper.post('/account/enlist', request)
+					.success(function(data){
+						$scope.accounts = data;
+					})
+					.error(function(){
+						Helper.failed()
+							.then(function(){
+								accounts();
+							})
+					})
+			}
+
+			accounts();
 		}
 
 		/*
@@ -201,6 +263,10 @@ app
 					if($scope.super_admin){
 						departments();
 					}
+					else{
+						departments(data.department_id);
+					}
+
 					
 					if(!appraisalFormID)
 					{
@@ -218,6 +284,10 @@ app
 								'withTrashed': false,
 							},
 							{
+								'relation': 'department.accounts',
+								'withTrashed': false,
+							},
+							{
 								'relation': 'goals',
 								'withTrashed': false,
 							},
@@ -225,6 +295,14 @@ app
 								'relation': 'behavioral_competencies',
 								'withTrashed': false,
 							},
+							{
+								'relation': 'reviews.behavioral_competencies',
+								'withTrashed': false,		
+							},
+							{
+								'relation': 'reviews.goals',
+								'withTrashed': false,		
+							}
 						];
 
 						query.where = [
@@ -240,6 +318,13 @@ app
 						var appraisalForm = function(){
 							Helper.post('/appraisal-form/enlist', query)
 								.success(function(data){
+									angular.forEach(data.reviews, function(review){
+										if(review.behavioral_competencies.length || review.goals.length)
+										{
+											$state.go('page-not-found');
+										}
+									})
+
 									angular.forEach(data.goals, function(item){
 										item.weight = item.weight * 100;
 									});
@@ -247,6 +332,7 @@ app
 									$scope.appraisal_form = data;
 
 									$scope.setGoal();
+									$scope.setAccounts(data.department_id);
 								})
 								.error(function(){
 									Helper.confirm(error_dialog)

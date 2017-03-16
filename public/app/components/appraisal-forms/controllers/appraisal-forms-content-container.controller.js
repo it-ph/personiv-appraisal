@@ -100,6 +100,15 @@ app
 			data.appraisal_period.start = new Date(data.appraisal_period.start);
 			data.appraisal_period.end = new Date(data.appraisal_period.end);
 
+			angular.forEach(data.reviews, function(review){
+				if(review.behavioral_competencies.length || review.goals.length)
+				{
+					data.hideMenu = true;
+				}
+			})
+
+			console.log(data.hideMenu)
+
 			var item = {};
 
 			item.display = data.name;
@@ -184,8 +193,20 @@ app
 						'withTrashed':false,
 					},
 					{
+						'relation':'account',
+						'withTrashed':false,
+					},
+					{
 						'relation':'department',
 						'withTrashed':false,
+					},
+					{
+						'relation':'reviews.behavioral_competencies',
+						'withTrashed': false,
+					},
+					{
+						'relation':'reviews.goals',
+						'withTrashed': false,
 					},
 				];
 				$scope.request.withCount = [

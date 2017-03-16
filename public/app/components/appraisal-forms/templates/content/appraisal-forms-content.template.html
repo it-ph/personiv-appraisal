@@ -6,11 +6,11 @@
 					<span class="md-headline white-text">{{ appraisal_form.department.name.charAt(0).toUpperCase() }}</span>
 				</h2>
 				<div class="md-list-item-text">
-					<h3>{{ appraisal_form.department.name }}</h3>
+					<h3>{{ appraisal_form.department.name }} <span ng-if="appraisal_form.account">-</span> <span ng-bind="appraisal_form.account.name"></span></h3>
 					<h4>{{ appraisal_form.appraisal_period.start | date: 'MMM. dd, yyyy'}} to {{ appraisal_form.appraisal_period.end | date: 'MMM. dd, yyyy'}}</h4>
 					<p>{{ appraisal_form.description }}</p>
 				</div>
-				<md-menu class="md-secondary" ng-show="!appraisal_form.deleted_at">
+				<md-menu class="md-secondary" ng-show="!appraisal_form.deleted_at" ng-if="!appraisal_form.hideMenu">
 					<md-button aria-label="Menu" class="md-icon-button" ng-click="$mdOpenMenu($event)">
 			            <md-icon class="mdi mdi-dots-vertical grey"></md-icon>
 			            <md-tooltip></md-tooltip>

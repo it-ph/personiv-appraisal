@@ -135,7 +135,7 @@ app
 
 							item.user_id = item.user.id;
 							item.name = name;
-							item.image = item.user.avatar_path ? '/user/avatar/' + user.id : '/img/2Color-Favicon_512x512-1.png';
+							item.image = item.user.avatar_path ? '/user/avatar/' + item.user_id : '/img/2Color-Favicon_512x512-1.png';
 						});
 						
 						data.appraisal_period.start = new Date(data.appraisal_period.start);

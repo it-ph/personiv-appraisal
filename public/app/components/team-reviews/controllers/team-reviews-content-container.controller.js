@@ -1,5 +1,5 @@
 app
-	.controller('teamReviewsContentContainerController', ['$scope', '$state', 'Helper', function($scope, $state, Helper){
+	.controller('teamReviewsContentContainerController', ['$scope', '$state', '$filter', 'Helper', function($scope, $state, $filter, Helper){
 		$scope.$emit('closeSidenav');
 
 		var route = '/appraisal-form';
@@ -35,11 +35,18 @@ app
 							'relation': 'appraisal_period',
 							'withTrashed': false,
 						},
-						{
-							'relation':'reviews.user',
-							'withTrashed': false,
-						},
 					];
+
+					var supervisor = $filter('filter')(data.roles, {'name': 'supervisor'}, true);
+
+					if(supervisor.length)
+					{
+						$scope.request.with.push({
+							'relation': 'reviews',
+							'withTrashed': false,
+							'has': ['behavioral_competencies', 'goals'],
+						});
+					}
 					
 					$scope.request.where = [
 						{
@@ -48,6 +55,8 @@ app
 							'value': data.department_id,
 						},
 					];
+
+					// if(!data.)
 
 					$scope.isLoading = true;
 					$scope.$broadcast('close');

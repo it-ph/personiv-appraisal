@@ -44,9 +44,9 @@ class User extends Authenticatable
         return $this->belongsTo('App\Department');
     }
 
-    public function departments()
+    public function head_of()
     {
-        return $this->belongsToMany('App\Department', 'department_heads');
+        return $this->hasOne('App\DepartmentHead');
     }
 
     public function account()
