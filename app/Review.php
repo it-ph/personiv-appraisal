@@ -121,14 +121,14 @@ class Review extends Model
         }
     }
 
-    public function createSupervisorGoalResponses($goals, $user_id)
+    public function createSupervisorGoalResponses($goals, $user)
     {
         foreach ($goals as $goal) {
 
             $review_goal_response = ReviewGoalResponse::find($goal['id']);
 
             $supervisor_goal_response = new SupervisorGoalResponse([
-                'user_id' => $user_id, 
+                'user_id' => $user->id, 
                 'raw_score' => $goal['raw_score'],
                 'supervisor_rating' => $this->raw_score_rating($goal['raw_score']),
                 'supervisor_remarks' => isset($goal['supervisor_remarks']) ? $goal['supervisor_remarks'] : null,
@@ -139,13 +139,13 @@ class Review extends Model
         }
     }
 
-    public function createSupervisorBehavioralCompetencyResponses($behavioral_competencies, $user_id)
+    public function createSupervisorBehavioralCompetencyResponses($behavioral_competencies, $user)
     {
         foreach ($behavioral_competencies as $behavioral_competency) {
             $review_behavioral_competency_response = ReviewBehavioralCompetencyResponse::find($behavioral_competency['id']);
 
             $supervisor_behavioral_competency_response = new SupervisorBehavioralCompetencyResponse([
-                'user_id' => $user_id, 
+                'user_id' => $user->id, 
                 'supervisor_rating' => $behavioral_competency['supervisor_rating'],
                 'supervisor_remarks' => isset($behavioral_competency['supervisor_remarks']) ? $behavioral_competency['supervisor_remarks'] : null,
             ]);
@@ -154,10 +154,9 @@ class Review extends Model
         }   
     }
 
-    public function updateSupervisorGoalResponses($goals, $user_id)
+    public function updateSupervisorGoalResponses($goals)
     {
         foreach ($goals as $goal) {
-            // $supervisor_goal_response = SupervisorGoalResponse::where('review_goal_response_id', $goal['id'])->where('user_id', $user_id)->first();
             $supervisor_goal_response = SupervisorGoalResponse::find($goal['supervisor_goal_response_id']);
 
             $supervisor_goal_response->raw_score = $goal['raw_score'];            
@@ -168,7 +167,7 @@ class Review extends Model
         }
     }
 
-    public function updateSupervisorBehavioralCompetencyResponses($behavioral_competencies, $user_id)
+    public function updateSupervisorBehavioralCompetencyResponses($behavioral_competencies)
     {
         foreach ($behavioral_competencies as $behavioral_competency) {
             $supervisor_behavioral_competency_response = SupervisorBehavioralCompetencyResponse::find($behavioral_competency['supervisor_behavioral_competency_response_id']);

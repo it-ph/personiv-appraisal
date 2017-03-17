@@ -27,11 +27,22 @@ class AppraisalFormController extends Controller
         if($request->has('with'))
         {
             for ($i=0; $i < count($request->with); $i++) { 
-                if(isset($request->input('with')[$i]['has']))
+                if(isset($request->input('with')[$i]['has']) || isset($request->input('with')[$i]['whereHas']))
                 {
                     $appraisal_forms->with([$request->input('with')[$i]['relation'] => function($query) use($request, $i){
                         foreach ($request->input('with')[$i]['has'] as $has) {
                             $query->has($has)->with('user');
+                        }
+
+                        if(isset($request->input('with')[$i]['whereHas']))
+                        {
+                            foreach ($request->input('with')[$i]['whereHas'] as $whereHas) {
+                                $query->whereHas($whereHas['relation'], function($query) use($whereHas){
+                                    foreach ($whereHas['where'] as $where) {
+                                        $query->where($where['label'], $where['condition'], $where['value']);
+                                    }
+                                });
+                            }
                         }
                     }]);
 

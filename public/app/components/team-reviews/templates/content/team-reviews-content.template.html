@@ -1,6 +1,6 @@
 <div layout="row" layout-align="center center" infinite-scroll='appraisal_form.paginateLoad()' infinite-scroll-distance="1" infinite-scroll-disabled="appraisal_form.busy" infinite-scroll-parent ng-if="appraisal_form.show">
 	<div layout="column" flex flex-gt-md="80" ng-if="appraisal_form.items.length">
-		<md-card ng-repeat="appraisal_form in appraisal_form.items | orderBy:sortType:sortReverse" ng-if="appraisal_form.reviews.length">
+		<md-card ng-repeat="appraisal_form in appraisal_form.items | orderBy:sortType:sortReverse">
 			<md-card-header>
 		        <md-card-header-text>
 		            <span class="md-title">{{ appraisal_form.appraisal_period.start | date: 'MMM. dd, yyyy'}} to {{ appraisal_form.appraisal_period.end | date: 'MMM. dd, yyyy'}}</span>
@@ -8,6 +8,7 @@
 		        </md-card-header-text>
 			</md-card-header>
 			<md-card-content>
+				<p ng-if="!appraisal_form.reviews.length">Nothing to display.</p>
 				<md-subheader class="md-no-sticky" ng-if="appraisal_form.pending_reviews.length">Pending</md-subheader>
 				<md-list layout="row" layout-wrap>
 					<md-list-item class="md-2-line secondary-button-padding" ng-repeat="review in appraisal_form.pending_reviews | filter: toolbar.searchText" ng-if="!review.overall_rating" ng-click="view(review.id)" flex="30">

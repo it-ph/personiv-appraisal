@@ -149,6 +149,18 @@ class UserController extends Controller
             }
         }
 
+        if($request->has('whereHas'))
+        {
+            foreach ($request->whereHas as $whereHas) {
+                $users->whereHas($whereHas['relation'], function($query) use($whereHas){
+                    foreach ($whereHas['where'] as $where) {
+                        $query->where($where['relation'], $where['condition'], $where['value']);
+                    }
+                });
+            }
+        }
+        
+
         if($request->has('whereNotIn'))
         {
             for ($i=0; $i < count($request->whereNotIn); $i++) { 
@@ -318,6 +330,7 @@ class UserController extends Controller
             $user->employee_number = $request->employee_number;
             $user->email = $request->email;
             $user->password = bcrypt($request->password);
+            $user->immediate_supervisor_id = $request->immediate_supervisor_id;
             $user->department_id = $request->department_id;
             $user->account_id = $request->account_id;
             $user->super_admin = false;
@@ -410,6 +423,7 @@ class UserController extends Controller
             $user->employee_number = $request->employee_number;
             $user->email = $request->email;
             $user->password = bcrypt($request->password);
+            $user->immediate_supervisor_id = $request->immediate_supervisor_id;
             $user->department_id = $request->department_id;
             $user->account_id = $request->account_id;
             $user->super_admin = false;

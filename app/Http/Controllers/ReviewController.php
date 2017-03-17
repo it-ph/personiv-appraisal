@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 
 use App\Review;
+use App\User;
 
 use Auth;
 use Carbon\Carbon;
@@ -49,9 +50,9 @@ class ReviewController extends Controller
         $review = Review::find($request->id);
 
         DB::transaction(function() use($request, $review){
-            $review->updateSupervisorGoalResponses($request->goals, $request->user()->id);
+            $review->updateSupervisorGoalResponses($request->goals);
 
-            $review->updateSupervisorBehavioralCompetencyResponses($request->behavioral_competencies, $request->user()->id);
+            $review->updateSupervisorBehavioralCompetencyResponses($request->behavioral_competencies);
         });
     }
 
@@ -89,9 +90,11 @@ class ReviewController extends Controller
         $review = Review::find($request->id);
 
         DB::transaction(function() use($request, $review){
-            $review->createSupervisorGoalResponses($request->goals, $request->user()->id);
+            $user = User::with('roles')->where('id', $request->user()->id);
 
-            $review->createSupervisorBehavioralCompetencyResponses($request->behavioral_competencies, $request->user()->id);
+            $review->createSupervisorGoalResponses($request->goals, $user);
+
+            $review->createSupervisorBehavioralCompetencyResponses($request->behavioral_competencies, $user);
         });
     }
 

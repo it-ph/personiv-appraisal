@@ -17,6 +17,7 @@ class CreateSupervisorBehavioralCompetencyResponsesTable extends Migration
             $table->increments('id');
             $table->integer('review_behavioral_competency_response_id')->unsigned();
             $table->integer('user_id')->unsigned();
+            $table->string('rank');
             $table->text('supervisor_rating');
             $table->text('supervisor_remarks')->nullable();
             $table->timestamps();

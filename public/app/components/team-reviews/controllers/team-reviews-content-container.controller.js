@@ -45,6 +45,18 @@ app
 							'relation': 'reviews',
 							'withTrashed': false,
 							'has': ['behavioral_competencies', 'goals'],
+							'whereHas': [
+								{
+									'relation': 'user',
+									'where': [
+										{
+											'label': 'immediate_supervisor_id',
+											'condition': '=',
+											'value': data.id
+										},
+									]
+								}
+							]
 						});
 					}
 					

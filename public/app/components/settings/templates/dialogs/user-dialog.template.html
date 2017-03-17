@@ -87,7 +87,7 @@
                 <!-- Department -->
                 <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
                     <label>Department</label>
-                    <md-select name="Department" required ng-model="model.department_id" ng-disabled="busy">
+                    <md-select name="Department" required ng-model="model.department_id" ng-disabled="busy" ng-change="setAccounts(model.department_id, true)">
                         <md-option ng-repeat="department in departments | orderBy:'name'" value="{{department.id}}">{{department.name}}</md-option>
                     </md-select>
                     <div ng-messages="modelForm.Department.$error" ng-if="modelForm.Department.$touched">
@@ -97,8 +97,15 @@
                 <!-- Account -->
                 <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
                     <label>Account</label>
-                    <md-select name="Account" ng-model="model.account_id" ng-disabled="busy">
+                    <md-select name="Account" ng-model="model.account_id" ng-disabled="busy || !accounts.length" ng-change="getSupervisors()">
                         <md-option ng-repeat="account in accounts | orderBy:'name'" value="{{account.id}}">{{account.name}}</md-option>
+                    </md-select>
+                </md-input-container>
+                <!-- Immediate Supervisor -->
+                <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
+                    <label>Immediate Supervisor</label>
+                    <md-select name="ImmediateSupervisor" ng-model="model.immediate_supervisor_id" ng-disabled="busy || !supervisors.length">
+                        <md-option ng-repeat="supervisor in supervisors | orderBy:'last_name'" value="{{supervisor.id}}">{{supervisor.last_name}}, {{supervisor.first_name}}</md-option>
                     </md-select>
                 </md-input-container>
             </div>

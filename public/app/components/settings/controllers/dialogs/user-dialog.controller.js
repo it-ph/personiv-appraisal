@@ -2,21 +2,6 @@ app
 	.controller('userDialogController', ['$scope', 'Helper', function($scope, Helper){
 		$scope.config = Helper.fetch();
 
-		Helper.get('/department')
-			.success(function(data){
-				$scope.departments = data;
-			});
-
-		Helper.get('/account')
-			.success(function(data){
-				$scope.accounts = data;
-			});		
-
-		Helper.post('/role/enlist')
-			.success(function(data){
-				$scope.roles = data;
-			})
-
 		if($scope.config.action == 'create')
 		{
 			$scope.model = {};
@@ -50,6 +35,8 @@ app
 						.success(function(data){
 							$scope.model = data;
 							$scope.model.roles = [];
+
+							$scope.setAccounts(data.department_id);
 
 							if(data.head_of)
 							{
@@ -97,7 +84,117 @@ app
 							Helper.error();
 						});
 				})
+				.error(function(){
+					Helper.error();
+				})
 		}
+
+		var departments = function(){
+			var request = {
+				'with': [
+					{
+						'relation': 'accounts',
+						'withTrashed': false,
+					},
+				]
+			}
+
+			var fetch = function(){
+				Helper.post('/department/enlist', request)
+					.success(function(data){
+						$scope.departments = data;
+					})
+					.error(function(){
+						Helper.confirm(error_dialog)
+							.then(function(){
+								fetch();
+							});
+					});
+			}
+
+			fetch();
+		}
+
+		$scope.setAccounts = function(department_id, reset){
+			$scope.getSupervisors();
+
+			if(reset)
+			{	
+				$scope.model.account_id = null;
+			}
+			
+			var request = {
+				'where': [
+					{
+						'label': 'department_id',
+						'condition': '=',
+						'value': department_id,
+					},
+				],
+			}
+
+			var accounts = function(){
+				Helper.post('/account/enlist', request)
+					.success(function(data){
+						$scope.accounts = data;
+					})
+					.error(function(){
+						accounts();
+					})
+			}
+
+			accounts();
+		}
+
+		var roles = function(){
+			Helper.post('/role/enlist')
+				.success(function(data){
+					$scope.roles = data;
+				})
+				.error(function(){
+					roles();	
+				})
+		}
+
+		$scope.getSupervisors = function(){
+			var request = {
+				'where': [
+					{
+						'label': 'department_id',
+						'condition': '=',
+						'value': $scope.model.department_id ? $scope.model.department_id : null,
+					},
+					{
+						'label': 'account_id',
+						'condition': '=',
+						'value': $scope.model.account_id ? $scope.model.account_id : null,
+					},
+				],
+				'whereHas': [
+					{
+						'relation': 'roles',
+						'where': [
+							{
+								'relation': 'name',
+								'condition': '=',
+								'value': 'supervisor',
+							},
+						]
+					}
+				],
+			}
+
+			Helper.post('/user/enlist', request)
+				.success(function(data){
+					$scope.supervisors = data;
+				})
+				.error(function(){
+					$scope.supervisors();
+				})
+		}
+
+		departments();
+		roles();
 
 		$scope.duplicate = false;
 
