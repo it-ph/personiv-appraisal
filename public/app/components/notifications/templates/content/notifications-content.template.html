@@ -4,7 +4,7 @@
 			<img ng-if="notification.data.sender.avatar_path" ng-src="/user/avatar/{{notification.data.sender.id}}?={{currentTime}}" class="md-avatar" alt="notification.data.sender.name photo" />
 	        <img ng-if="!notification.data.sender.avatar_path" src="/img/2Color-Favicon_512x512-1.png" class="md-avatar" alt="notification.data.sender.name photo" />
 	        <div class="md-list-item-text">
-	            <h3>{{ notification.data.sender.name }}</h3>
+	            <h3>{{ notification.data.sender.first_name }} {{ notification.data.sender.last_name }}</h3>
 	            <h4>{{ notification.data.message }}</h4>
 	            <p><span am-time-ago="notification.created_at"></span></p>
 	        </div>
