@@ -25,11 +25,49 @@ app
 					}
 				}
 			})
+			.state('main.self-assessment', {
+				url: 'self-assessment/{reviewID}',
+				params: {'reviewID':null},
+				views: {
+					'content-container': {
+						templateUrl: '/app/shared/views/content-container.view.html',
+						controller: 'selfAssessmentContentContainerController',
+					},
+					'toolbar@main.self-assessment': {
+						templateUrl: '/app/shared/templates/toolbar.template.html',
+					},
+					'left-sidenav@main.self-assessment': {
+						templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
+					},
+					'content@main.self-assessment':{
+						templateUrl: '/app/components/reviews/templates/content/self-assessment-content.template.html',
+					}
+				}
+			})
+			.state('main.supervisor-assessment', {
+				url: 'review/{reviewID}/supervisor/{supervisorID}',
+				params: {'reviewID':null, 'supervisorID':null},
+				views: {
+					'content-container': {
+						templateUrl: '/app/shared/views/content-container.view.html',
+						controller: 'supervisorAssessmentContentContainerController',
+					},
+					'toolbar@main.supervisor-assessment': {
+						templateUrl: '/app/shared/templates/toolbar.template.html',
+					},
+					'left-sidenav@main.supervisor-assessment': {
+						templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
+					},
+					'content@main.supervisor-assessment':{
+						templateUrl: '/app/components/reviews/templates/content/supervisor-assessment-content.template.html',
+					}
+				}
+			})
 			.state('main.team-reviews', {
 				url: 'team-reviews',
 				resolve:{
 					authorization: ['Helper', '$state', function(Helper, $state){
-						Helper.get('/user-role/3/' + 'authorization')
+						Helper.post('/user-role/review-authorization')
 							.success(function(data){
 								return;
 							})
@@ -55,50 +93,12 @@ app
 					}
 				}
 			})
-			.state('main.notifications', {
-				url: 'notifications',
-				views: {
-					'content-container':{
-						templateUrl: '/app/shared/views/content-container.view.html',
-						controller: 'notificationsContentContainerController',
-					},
-					'toolbar@main.notifications': {
-						templateUrl: '/app/shared/templates/toolbar.template.html',
-						controller: 'notificationsToolbarController',
-					},
-					'left-sidenav@main.notifications': {
-						templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
-					},
-					'content@main.notifications':{
-						templateUrl: '/app/components/notifications/templates/content/notifications-content.template.html',
-					},
-				}
-			})
-			.state('main.self-assessment', {
-				url: 'self-assessment/{reviewID}',
-				params: {'reviewID':null},
-				views: {
-					'content-container': {
-						templateUrl: '/app/shared/views/content-container.view.html',
-						controller: 'selfAssessmentContentContainerController',
-					},
-					'toolbar@main.self-assessment': {
-						templateUrl: '/app/shared/templates/toolbar.template.html',
-					},
-					'left-sidenav@main.self-assessment': {
-						templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
-					},
-					'content@main.self-assessment':{
-						templateUrl: '/app/components/reviews/templates/content/self-assessment-content.template.html',
-					}
-				}
-			})
 			.state('main.review', {
-				url: 'review/{reviewID}',
+				url: 'team-review/{reviewID}',
 				params: {'reviewID':null},
 				resolve:{
 					authorization: ['Helper', '$state', function(Helper, $state){
-						Helper.get('/user-role/3/' + 'authorization')
+						Helper.post('/user-role/review-authorization')
 							.success(function(data){
 								return;
 							})
@@ -124,8 +124,19 @@ app
 				}
 			})
 			.state('main.supervisor-review', {
-				url: 'review/{reviewID}/supervisor',
+				url: 'team-review/{reviewID}/supervisor',
 				params: {'reviewID':null},
+				resolve:{
+					authorization: ['Helper', '$state', function(Helper, $state){
+						Helper.post('/user-role/review-authorization')
+							.success(function(data){
+								return;
+							})
+							.error(function(){
+								return $state.go('page-not-found');
+							});
+					}],
+				},
 				views: {
 					'content-container': {
 						templateUrl: '/app/shared/views/content-container.view.html',
@@ -140,6 +151,25 @@ app
 					'content@main.supervisor-review':{
 						templateUrl: '/app/components/team-reviews/templates/content/supervisor-review-content.template.html',
 					}
+				}
+			})
+			.state('main.notifications', {
+				url: 'notifications',
+				views: {
+					'content-container':{
+						templateUrl: '/app/shared/views/content-container.view.html',
+						controller: 'notificationsContentContainerController',
+					},
+					'toolbar@main.notifications': {
+						templateUrl: '/app/shared/templates/toolbar.template.html',
+						controller: 'notificationsToolbarController',
+					},
+					'left-sidenav@main.notifications': {
+						templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
+					},
+					'content@main.notifications':{
+						templateUrl: '/app/components/notifications/templates/content/notifications-content.template.html',
+					},
 				}
 			})
 			// .state('main.reviews', {
@@ -356,10 +386,52 @@ app
 				'state': 'main',
 				'icon': 'mdi-home',
 				'label': 'Home',
+				'show': true,
+			},
+			{
+				'state': 'main.appraisal-forms',
+				'icon': 'mdi-playlist-check',
+				'label': 'Appraisal Forms',
+			},
+			{
+				'state': 'main.dashboard',
+				'icon': 'mdi-view-dashboard',
+				'label': 'Dashboard',
+			},
+			{
+				'state': 'main.team-reviews',
+				'icon': 'mdi-account-multiple',
+				'label': 'Team Reviews',
 			},
 		];
 
 		$scope.menu.section = [];
+
+		$scope.menu.section[0] = {
+			'name':'Settings',
+			'icon':'mdi-settings',
+		}
+
+		$scope.menu.pages[0] = [
+			{
+				'label': 'Appraisal Periods',
+				action: function(){
+					$state.go('main.appraisal-periods');
+				},
+			},
+			{
+				'label': 'Departments',
+				action: function(){
+					$state.go('main.departments');
+				},
+			},
+			{
+				'label': 'Users',
+				action: function(){
+					$state.go('main.users');
+				},
+			},
+		]
 
 		// set section as active
 		$scope.setActive = function(index){
@@ -434,92 +506,23 @@ app
 				var settings = false;
 				var settings_menu = [];
 
-				angular.forEach(data.roles, function(role){
-					if(role.name == 'supervisor')
-					{
-						var item = {
-							'state': 'main.team-reviews',
-							'icon': 'mdi-account-multiple',
-							'label': 'Team Reviews',
-						}
+				$scope.menu.static[1].show = $filter('filter')(data.roles, {'name':'parameters'}, true) ? true : false;
+				$scope.menu.static[2].show = $filter('filter')(data.roles, {'name':'dashboard'}, true) ? true : false;
 
-						$scope.menu.static.splice(2, 0, item);
-					}
-					else if(role.name == 'parameters')
-					{
-						var item = {
-							'state': 'main.appraisal-forms',
-							'icon': 'mdi-playlist-check',
-							'label': 'Appraisal Forms',
-						}
-
-						$scope.menu.static.splice(2, 0, item);
-					}
-					else if(role.name == 'dashboard')
-					{
-						var item = {
-							'state': 'main.dashboard',
-							'icon': 'mdi-view-dashboard',
-							'label': 'Dashboard',
-						}
-
-						$scope.menu.static.splice(2, 0, item);
-					}
-					else if(role.name == 'appraisal-periods')
-					{
-						settings = true;
-
-						var item = {
-							'label': 'Appraisal Periods',
-							action: function(){
-								$state.go('main.appraisal-periods');
-							},
-						}
-
-						settings_menu.push(item);
-					}
-					else if(role.name == 'manage-departments')
-					{
-						settings = true;
-
-						var item = {
-							'label': 'Departments',
-							action: function(){
-								$state.go('main.departments');
-							},
-						}
-
-						settings_menu.push(item); 
-					}
-					else if(role.name == 'manage-users')
-					{
-						settings = true;
-
-						var item = {
-							'label': 'Users',
-							action: function(){
-								$state.go('main.users');
-							},
-						}
-
-						settings_menu.push(item); 
-					}
-				});
-
-				if(settings)
+				if($filter('filter')(data.roles, {'name':'supervisor'}, true) || $filter('filter')(data.roles, {'name':'director'}, true) || data.head_of)
 				{
-					$scope.menu.section[0] = {
-						'name':'Settings',
-						'icon':'mdi-settings',
-					}
-
-					$scope.menu.pages[0] = settings_menu;
+					$scope.menu.static[3].show = true					
 				}
+
+				$scope.menu.pages[0][0].show = $filter('filter')(data.roles, {'name':'appraisal-periods'}, true) ? true : false;
+				$scope.menu.pages[0][1].show = $filter('filter')(data.roles, {'name':'manage-departments'}, true) ? true : false;
+				$scope.menu.pages[0][2].show = $filter('filter')(data.roles, {'name':'manage-users'}, true) ? true : false;
 
 				var notifications = {
 					'state': 'main.notifications',
 					'icon': 'mdi-bell',
 					'label': 'Notifications',
+					'show': true,
 				}
 
 				$scope.menu.static.push(notifications);
@@ -561,7 +564,7 @@ app
 					}
 				}
 
-				var pusher = new Pusher('73a46f761ea4637481b5', {
+				var pusher = new Pusher('ade8d83d4ed5455e3e18', {
 			      	encrypted: true,
 			      	auth: {
 					    headers: {
@@ -1425,7 +1428,7 @@ app
 		*/
 		$scope.toolbar = {};
 
-		$scope.toolbar.parentState = 'Team Reviews';
+		$scope.toolbar.parentState = 'Team Review';
 
 		$scope.toolbar.hideSearchIcon = true;
 		
@@ -1464,28 +1467,47 @@ app
 		];
 
 		$scope.init = function(query){		
-			Helper.post(route + '/enlist', query)
-				.success(function(data){
-					if(!data || (!data.goals.length && !data.behavioral_competencies.length))
-					{
-						$state.go('page-not-found');
-					}
+			var fetchUser = function(){
+				Helper.post('/user/check')
+					.success(function(data){
+						var user = data;
 
-					data.appraisal_form.appraisal_period.start = new Date(data.appraisal_form.appraisal_period.start);
-					data.appraisal_form.appraisal_period.end = new Date(data.appraisal_form.appraisal_period.end);
+						var review = function(){
+							Helper.post(route + '/enlist', query)
+								.success(function(data){
+									if(!data || (!data.goals.length && !data.behavioral_competencies.length) || user.id == data.user_id || user.department_id != data.user.department_id)
+									{
+										$state.go('page-not-found');
+									}
 
-					$scope.toolbar.childState = data.user.last_name + ', ' + data.user.first_name + ' ' + data.user.middle_name.charAt(0).toUpperCase() +'.';
-					
-					$scope.review = data;
+									data.appraisal_form.appraisal_period.start = new Date(data.appraisal_form.appraisal_period.start);
+									data.appraisal_form.appraisal_period.end = new Date(data.appraisal_form.appraisal_period.end);
 
-					$scope.isLoading = false;
-				})
-				.error(function(){
-					Helper.failed()
-						.then(function(){
-							$scope.init(query);
-						});
-				});
+									$scope.toolbar.childState = data.user.last_name + ', ' + data.user.first_name + ' ' + data.user.middle_name.charAt(0).toUpperCase() +'.';
+									
+									$scope.review = data;
+
+									$scope.isLoading = false;
+								})
+								.error(function(){
+									Helper.failed()
+										.then(function(){
+											review();
+										});
+								});
+						}
+
+						review();
+					})
+					.error(function(){
+						Helper.failed()
+							.then(function(){
+								fetchUser();
+							})
+					});
+			}
+
+			fetchUser();
 		}
 
 		$scope.refresh = function(){
@@ -1526,6 +1548,10 @@ app
 			$state.go('main.self-assessment', {'reviewID':id});
 		}
 
+		$scope.supervisorAssessment = function(review_id, supervisor_id){
+			$state.go('main.supervisor-assessment', {'reviewID':review_id, 'supervisorID':supervisor_id});
+		}
+
 		var setInit = function(){
 			Helper.post('/user/check')
 				.success(function(data){
@@ -1543,7 +1569,15 @@ app
 							'withTrashed': false,
 						},
 						{
+							'relation':'goals.supervisor_goal_responses.user',
+							'withTrashed': false,
+						},
+						{
 							'relation':'behavioral_competencies.behavioral_competency',
+							'withTrashed': false,
+						},
+						{
+							'relation':'behavioral_competencies.supervisor_behavioral_competency_responses.user',
 							'withTrashed': false,
 						},
 					];
@@ -1857,6 +1891,111 @@ app
 			.error(function(){
 				$state.go('page-not-found');
 			})
+	}]);
+app
+	.controller('supervisorAssessmentContentContainerController', ['$scope', '$filter', '$state', '$stateParams', 'Helper', function($scope, $filter, $state, $stateParams, Helper){
+		$scope.$emit('closeSidenav');
+
+		var route = '/review';
+
+		var reviewID = $stateParams.reviewID;
+
+		/*
+		 * Object for toolbar
+		 *
+		*/
+		$scope.toolbar = {};
+
+		$scope.toolbar.parentState = 'Supervisor Assessment';
+
+		$scope.toolbar.hideSearchIcon = true;
+		
+		/*
+		 * Object for request
+		 *
+		*/
+		$scope.request = {};
+
+		$scope.request.withTrashed = false;
+		$scope.request.first = true;	
+		$scope.request.with = [
+			{
+				'relation':'appraisal_form.appraisal_period',
+				'withTrashed': false,
+			},
+			{
+				'relation':'goals.goal',
+				'withTrashed': false,
+			},
+			{
+				'relation':'behavioral_competencies.behavioral_competency',
+				'withTrashed': false,
+			},
+			{
+				'relation':'user',
+				'withTrashed': false,	
+			},
+		];
+		$scope.request.where = [
+			{
+				'label': 'id',
+				'condition': '=',
+				'value': reviewID,
+			},
+		];
+
+		$scope.init = function(query){		
+			var fetchUser = function(){
+				Helper.post('/user/check')
+					.success(function(data){
+						var user = data;
+
+						var review = function(){
+							Helper.post(route + '/enlist', query)
+								.success(function(data){
+									if(!data || (!data.goals.length && !data.behavioral_competencies.length) || user.id != data.user_id)
+									{
+										$state.go('page-not-found');
+									}
+
+									data.appraisal_form.appraisal_period.start = new Date(data.appraisal_form.appraisal_period.start);
+									data.appraisal_form.appraisal_period.end = new Date(data.appraisal_form.appraisal_period.end);
+
+									$scope.toolbar.childState = data.user.last_name + ', ' + data.user.first_name + ' ' + data.user.middle_name.charAt(0).toUpperCase() +'.';
+									
+									$scope.review = data;
+
+									$scope.isLoading = false;
+								})
+								.error(function(){
+									Helper.failed()
+										.then(function(){
+											review();
+										});
+								});
+						}
+
+						review();
+					})
+					.error(function(){
+						Helper.failed()
+							.then(function(){
+								fetchUser();
+							})
+					});
+			}
+
+			fetchUser();
+		}
+
+		$scope.refresh = function(){
+			$scope.isLoading = true;
+
+  			$scope.init($scope.request);
+		};
+
+		$scope.isLoading = true;
+		$scope.init($scope.request);
 	}]);
 app
 	.controller('appraisalPeriodsContentContainerController', ['$scope', '$state', 'Helper', function($scope, $state, Helper){
@@ -2653,10 +2792,14 @@ app
 					.success(function(data){
 						var user = data;
 
+						var supervisor = $filter('filter')(data.roles, {'name': 'supervisor'}, true) ? true : false;
+						var manager = data.head_of ? true : false;
+						var director = $filter('filter')(data.roles, {'name': 'director'}, true) ? true : false;
+
 						var review = function(){
 							Helper.post(route + '/enlist', query)
 								.success(function(data){
-									if(!data || (!data.goals.length && !data.behavioral_competencies.length))
+									if(!data || (!data.goals.length && !data.behavioral_competencies.length) || user.id == data.user_id)
 									{
 										$state.go('page-not-found');
 									}
@@ -2669,28 +2812,78 @@ app
 									$scope.create = true;
 
 									angular.forEach(data.behavioral_competencies, function(item){
-										var response = $filter('filter')(item.supervisor_behavioral_competency_responses, {'user_id':user.id}, true)[0];
+										var response = $filter('filter')(item.supervisor_behavioral_competency_responses, {'user_id':user.id}, true);
+										var supervisor_response = $filter('filter')(item.supervisor_behavioral_competency_responses, {'rank':'supervisor'}, true);
+										var manager_response = $filter('filter')(item.supervisor_behavioral_competency_responses, {'rank':'manager'}, true);
 
-										if(response)
+										if(response.length)
 										{
-											item.supervisor_rating = response.supervisor_rating;
-											item.supervisor_behavioral_competency_response_id = response.id;
+											item.supervisor_rating = response[0].supervisor_rating;
+											item.supervisor_behavioral_competency_response_id = response[0].id;
 											$scope.create = false;
 										}
 										else{
 											item.supervisor_rating = 3;
+
+											if(!supervisor_response.length && supervisor)
+											{
+												if(user.department_id != data.user.department_id)
+												{
+													$state.go('page-not-found');
+												}
+
+												item.rank =  'supervisor'; 
+											}
+											else if(supervisor_response.length && manager){
+												if(user.department_id != data.user.department_id)
+												{
+													$state.go('page-not-found');
+												}
+
+												item.rank = 'manager';
+											}
+											else if(supervisor_response.length && manager_response.length && director){
+												item.rank = 'director';
+											}
+											else{
+												$state.go('page-not-found');
+											}
 										}
 									});
 									
 									angular.forEach(data.goals, function(item){
-										var response = $filter('filter')(item.supervisor_goal_responses, {'user_id':user.id}, true)[0];
+										var response = $filter('filter')(item.supervisor_goal_responses, {'user_id':user.id}, true);
+										var supervisor_response = $filter('filter')(item.supervisor_goal_responses, {'rank':'supervisor'}, true);
+										var manager_response = $filter('filter')(item.supervisor_goal_responses, {'rank':'manager'}, true);
 
-										if(response)
+
+										if(response.length)
 										{
-											item.supervisor_goal_response_id = response.id;
-											item.raw_score = response.raw_score;
-											item.supervisor_rating = response.supervisor_rating;
-											item.supervisor_remarks = response.supervisor_remarks;
+											item.supervisor_goal_response_id = response[0].id;
+											item.raw_score = response[0].raw_score;
+											item.supervisor_rating = response[0].supervisor_rating;
+											item.supervisor_remarks = response[0].supervisor_remarks;
+										}
+										else{
+
+											if(!supervisor_response.length && supervisor)
+											{
+												item.rank =  'supervisor'; 
+											}
+											else if(supervisor_response.length && manager){
+												if(user.department_id != data.user.department_id)
+												{
+													$state.go('page-not-found');
+												}
+
+												item.rank = 'manager';
+											}
+											else if(supervisor_response.length && manager_response.length && director){
+												item.rank = 'director';
+											}
+											else{
+												$state.go('page-not-found');
+											}
 										}
 
 									});

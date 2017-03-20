@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Review;
 use App\User;
 
+use App\Notifications\SupervisorReviewCreated;
+
 use Auth;
 use Carbon\Carbon;
 use DB;
@@ -36,6 +38,7 @@ class ReviewController extends Controller
                 'goals.'.$i.'.id' => 'required',
                 'goals.'.$i.'.supervisor_goal_response_id' => 'required',
                 'goals.'.$i.'.supervisor_rating' => 'required',
+                'goals.'.$i.'.rank' => 'required',
             ]);
         }
 
@@ -44,6 +47,7 @@ class ReviewController extends Controller
                 'behavioral_competencies.'.$i.'.id' => 'required',
                 'behavioral_competencies.'.$i.'.supervisor_behavioral_competency_response_id' => 'required',
                 'behavioral_competencies.'.$i.'.supervisor_rating' => 'required',
+                'behavioral_competencies.'.$i.'.rank' => 'required',
             ]);
         }
 
@@ -77,6 +81,7 @@ class ReviewController extends Controller
             $this->validate($request, [
                 'goals.'.$i.'.id' => 'required',
                 'goals.'.$i.'.supervisor_rating' => 'required',
+                'goals.'.$i.'.rank' => 'required',
             ]);
         }
 
@@ -84,17 +89,20 @@ class ReviewController extends Controller
             $this->validate($request, [
                 'behavioral_competencies.'.$i.'.id' => 'required',
                 'behavioral_competencies.'.$i.'.supervisor_rating' => 'required',
+                'behavioral_competencies.'.$i.'.rank' => 'required',
             ]);
         }
 
-        $review = Review::find($request->id);
+        $review = Review::with('appraisal_form.appraisal_period')->where('id', $request->id)->first();
 
         DB::transaction(function() use($request, $review){
-            $user = User::with('roles')->where('id', $request->user()->id);
+            $user = User::with('roles')->where('id', $request->user()->id)->first();
 
             $review->createSupervisorGoalResponses($request->goals, $user);
 
             $review->createSupervisorBehavioralCompetencyResponses($request->behavioral_competencies, $user);
+
+            $review->user->notify(new SupervisorReviewCreated($review, $request->user()));
         });
     }
 

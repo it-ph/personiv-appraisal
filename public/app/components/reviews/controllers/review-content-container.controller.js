@@ -12,7 +12,7 @@ app
 		*/
 		$scope.toolbar = {};
 
-		$scope.toolbar.parentState = 'Team Reviews';
+		$scope.toolbar.parentState = 'Team Review';
 
 		$scope.toolbar.hideSearchIcon = true;
 		
@@ -51,28 +51,47 @@ app
 		];
 
 		$scope.init = function(query){		
-			Helper.post(route + '/enlist', query)
-				.success(function(data){
-					if(!data || (!data.goals.length && !data.behavioral_competencies.length))
-					{
-						$state.go('page-not-found');
-					}
+			var fetchUser = function(){
+				Helper.post('/user/check')
+					.success(function(data){
+						var user = data;
 
-					data.appraisal_form.appraisal_period.start = new Date(data.appraisal_form.appraisal_period.start);
-					data.appraisal_form.appraisal_period.end = new Date(data.appraisal_form.appraisal_period.end);
+						var review = function(){
+							Helper.post(route + '/enlist', query)
+								.success(function(data){
+									if(!data || (!data.goals.length && !data.behavioral_competencies.length) || user.id == data.user_id || user.department_id != data.user.department_id)
+									{
+										$state.go('page-not-found');
+									}
 
-					$scope.toolbar.childState = data.user.last_name + ', ' + data.user.first_name + ' ' + data.user.middle_name.charAt(0).toUpperCase() +'.';
-					
-					$scope.review = data;
+									data.appraisal_form.appraisal_period.start = new Date(data.appraisal_form.appraisal_period.start);
+									data.appraisal_form.appraisal_period.end = new Date(data.appraisal_form.appraisal_period.end);
 
-					$scope.isLoading = false;
-				})
-				.error(function(){
-					Helper.failed()
-						.then(function(){
-							$scope.init(query);
-						});
-				});
+									$scope.toolbar.childState = data.user.last_name + ', ' + data.user.first_name + ' ' + data.user.middle_name.charAt(0).toUpperCase() +'.';
+									
+									$scope.review = data;
+
+									$scope.isLoading = false;
+								})
+								.error(function(){
+									Helper.failed()
+										.then(function(){
+											review();
+										});
+								});
+						}
+
+						review();
+					})
+					.error(function(){
+						Helper.failed()
+							.then(function(){
+								fetchUser();
+							})
+					});
+			}
+
+			fetchUser();
 		}
 
 		$scope.refresh = function(){

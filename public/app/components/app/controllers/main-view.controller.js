@@ -12,10 +12,52 @@ app
 				'state': 'main',
 				'icon': 'mdi-home',
 				'label': 'Home',
+				'show': true,
+			},
+			{
+				'state': 'main.appraisal-forms',
+				'icon': 'mdi-playlist-check',
+				'label': 'Appraisal Forms',
+			},
+			{
+				'state': 'main.dashboard',
+				'icon': 'mdi-view-dashboard',
+				'label': 'Dashboard',
+			},
+			{
+				'state': 'main.team-reviews',
+				'icon': 'mdi-account-multiple',
+				'label': 'Team Reviews',
 			},
 		];
 
 		$scope.menu.section = [];
+
+		$scope.menu.section[0] = {
+			'name':'Settings',
+			'icon':'mdi-settings',
+		}
+
+		$scope.menu.pages[0] = [
+			{
+				'label': 'Appraisal Periods',
+				action: function(){
+					$state.go('main.appraisal-periods');
+				},
+			},
+			{
+				'label': 'Departments',
+				action: function(){
+					$state.go('main.departments');
+				},
+			},
+			{
+				'label': 'Users',
+				action: function(){
+					$state.go('main.users');
+				},
+			},
+		]
 
 		// set section as active
 		$scope.setActive = function(index){
@@ -90,92 +132,23 @@ app
 				var settings = false;
 				var settings_menu = [];
 
-				angular.forEach(data.roles, function(role){
-					if(role.name == 'supervisor')
-					{
-						var item = {
-							'state': 'main.team-reviews',
-							'icon': 'mdi-account-multiple',
-							'label': 'Team Reviews',
-						}
+				$scope.menu.static[1].show = $filter('filter')(data.roles, {'name':'parameters'}, true) ? true : false;
+				$scope.menu.static[2].show = $filter('filter')(data.roles, {'name':'dashboard'}, true) ? true : false;
 
-						$scope.menu.static.splice(2, 0, item);
-					}
-					else if(role.name == 'parameters')
-					{
-						var item = {
-							'state': 'main.appraisal-forms',
-							'icon': 'mdi-playlist-check',
-							'label': 'Appraisal Forms',
-						}
-
-						$scope.menu.static.splice(2, 0, item);
-					}
-					else if(role.name == 'dashboard')
-					{
-						var item = {
-							'state': 'main.dashboard',
-							'icon': 'mdi-view-dashboard',
-							'label': 'Dashboard',
-						}
-
-						$scope.menu.static.splice(2, 0, item);
-					}
-					else if(role.name == 'appraisal-periods')
-					{
-						settings = true;
-
-						var item = {
-							'label': 'Appraisal Periods',
-							action: function(){
-								$state.go('main.appraisal-periods');
-							},
-						}
-
-						settings_menu.push(item);
-					}
-					else if(role.name == 'manage-departments')
-					{
-						settings = true;
-
-						var item = {
-							'label': 'Departments',
-							action: function(){
-								$state.go('main.departments');
-							},
-						}
-
-						settings_menu.push(item); 
-					}
-					else if(role.name == 'manage-users')
-					{
-						settings = true;
-
-						var item = {
-							'label': 'Users',
-							action: function(){
-								$state.go('main.users');
-							},
-						}
-
-						settings_menu.push(item); 
-					}
-				});
-
-				if(settings)
+				if($filter('filter')(data.roles, {'name':'supervisor'}, true) || $filter('filter')(data.roles, {'name':'director'}, true) || data.head_of)
 				{
-					$scope.menu.section[0] = {
-						'name':'Settings',
-						'icon':'mdi-settings',
-					}
-
-					$scope.menu.pages[0] = settings_menu;
+					$scope.menu.static[3].show = true					
 				}
+
+				$scope.menu.pages[0][0].show = $filter('filter')(data.roles, {'name':'appraisal-periods'}, true) ? true : false;
+				$scope.menu.pages[0][1].show = $filter('filter')(data.roles, {'name':'manage-departments'}, true) ? true : false;
+				$scope.menu.pages[0][2].show = $filter('filter')(data.roles, {'name':'manage-users'}, true) ? true : false;
 
 				var notifications = {
 					'state': 'main.notifications',
 					'icon': 'mdi-bell',
 					'label': 'Notifications',
+					'show': true,
 				}
 
 				$scope.menu.static.push(notifications);
@@ -217,7 +190,7 @@ app
 					}
 				}
 
-				var pusher = new Pusher('73a46f761ea4637481b5', {
+				var pusher = new Pusher('ade8d83d4ed5455e3e18', {
 			      	encrypted: true,
 			      	auth: {
 					    headers: {

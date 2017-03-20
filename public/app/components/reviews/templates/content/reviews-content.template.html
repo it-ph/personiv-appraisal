@@ -52,9 +52,21 @@
 						</tr>
 					</table>
 				</div>
+				<div ng-if="review.goals[0].supervisor_goal_responses">				
+					<md-subheader class="md-no-sticky">Supervisors Assessment</md-subheader>
+					<md-list layout="row" layout-wrap flex>
+						<md-list-item class="md-2-line" ng-repeat="supervisor in review.goals[0].supervisor_goal_responses" ng-click="supervisorAssessment(review.id, supervisor.user.id)" flex-xs="100" flex-sm="100" flex-gt-sm>
+							<img ng-if="!supervisor.user.avatar_path" src="/img/2Color-Favicon_512x512-1.png" alt="" class="md-avatar">
+							<img ng-if="supervisor.user.avatar_path" ng-src="/user/avatar/{{supervisor.user.id}}" alt="" class="md-avatar">
+							<div class="md-list-item-text">
+								<h3>{{supervisor.user.first_name}} {{supervisor.user.last_name}}</h3>
+							</div>
+						</md-list-item>
+					</md-list>
+				</div>
 			</md-card-content>
-			<md-card-actions layout="row" layout-align="start center" ng-if="!review.overall_rating">
-	          	<md-button class="md-primary" ng-click="selfAssessment(review.id)">Self Assessment</md-button>
+			<md-card-actions layout="row" layout-align="start center">
+	          	<md-button class="md-primary" ng-click="selfAssessment(review.id)" ng-if="!review.overall_rating">Self Assessment</md-button>
 	        </md-card-actions>
 		</md-card>
 	</div>	

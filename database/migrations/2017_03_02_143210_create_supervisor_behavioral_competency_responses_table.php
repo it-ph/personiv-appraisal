@@ -20,6 +20,7 @@ class CreateSupervisorBehavioralCompetencyResponsesTable extends Migration
             $table->string('rank');
             $table->text('supervisor_rating');
             $table->text('supervisor_remarks')->nullable();
+            $table->boolean('confirmed')->default(false);
             $table->timestamps();
         });
     }

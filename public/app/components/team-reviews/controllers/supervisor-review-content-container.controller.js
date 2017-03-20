@@ -149,10 +149,14 @@ app
 					.success(function(data){
 						var user = data;
 
+						var supervisor = $filter('filter')(data.roles, {'name': 'supervisor'}, true) ? true : false;
+						var manager = data.head_of ? true : false;
+						var director = $filter('filter')(data.roles, {'name': 'director'}, true) ? true : false;
+
 						var review = function(){
 							Helper.post(route + '/enlist', query)
 								.success(function(data){
-									if(!data || (!data.goals.length && !data.behavioral_competencies.length))
+									if(!data || (!data.goals.length && !data.behavioral_competencies.length) || user.id == data.user_id)
 									{
 										$state.go('page-not-found');
 									}
@@ -165,28 +169,78 @@ app
 									$scope.create = true;
 
 									angular.forEach(data.behavioral_competencies, function(item){
-										var response = $filter('filter')(item.supervisor_behavioral_competency_responses, {'user_id':user.id}, true)[0];
+										var response = $filter('filter')(item.supervisor_behavioral_competency_responses, {'user_id':user.id}, true);
+										var supervisor_response = $filter('filter')(item.supervisor_behavioral_competency_responses, {'rank':'supervisor'}, true);
+										var manager_response = $filter('filter')(item.supervisor_behavioral_competency_responses, {'rank':'manager'}, true);
 
-										if(response)
+										if(response.length)
 										{
-											item.supervisor_rating = response.supervisor_rating;
-											item.supervisor_behavioral_competency_response_id = response.id;
+											item.supervisor_rating = response[0].supervisor_rating;
+											item.supervisor_behavioral_competency_response_id = response[0].id;
 											$scope.create = false;
 										}
 										else{
 											item.supervisor_rating = 3;
+
+											if(!supervisor_response.length && supervisor)
+											{
+												if(user.department_id != data.user.department_id)
+												{
+													$state.go('page-not-found');
+												}
+
+												item.rank =  'supervisor'; 
+											}
+											else if(supervisor_response.length && manager){
+												if(user.department_id != data.user.department_id)
+												{
+													$state.go('page-not-found');
+												}
+
+												item.rank = 'manager';
+											}
+											else if(supervisor_response.length && manager_response.length && director){
+												item.rank = 'director';
+											}
+											else{
+												$state.go('page-not-found');
+											}
 										}
 									});
 									
 									angular.forEach(data.goals, function(item){
-										var response = $filter('filter')(item.supervisor_goal_responses, {'user_id':user.id}, true)[0];
+										var response = $filter('filter')(item.supervisor_goal_responses, {'user_id':user.id}, true);
+										var supervisor_response = $filter('filter')(item.supervisor_goal_responses, {'rank':'supervisor'}, true);
+										var manager_response = $filter('filter')(item.supervisor_goal_responses, {'rank':'manager'}, true);
 
-										if(response)
+
+										if(response.length)
 										{
-											item.supervisor_goal_response_id = response.id;
-											item.raw_score = response.raw_score;
-											item.supervisor_rating = response.supervisor_rating;
-											item.supervisor_remarks = response.supervisor_remarks;
+											item.supervisor_goal_response_id = response[0].id;
+											item.raw_score = response[0].raw_score;
+											item.supervisor_rating = response[0].supervisor_rating;
+											item.supervisor_remarks = response[0].supervisor_remarks;
+										}
+										else{
+
+											if(!supervisor_response.length && supervisor)
+											{
+												item.rank =  'supervisor'; 
+											}
+											else if(supervisor_response.length && manager){
+												if(user.department_id != data.user.department_id)
+												{
+													$state.go('page-not-found');
+												}
+
+												item.rank = 'manager';
+											}
+											else if(supervisor_response.length && manager_response.length && director){
+												item.rank = 'director';
+											}
+											else{
+												$state.go('page-not-found');
+											}
 										}
 
 									});

@@ -21,6 +21,7 @@ class CreateSupervisorGoalResponsesTable extends Migration
             $table->float('raw_score');
             $table->text('supervisor_rating');
             $table->text('supervisor_remarks')->nullable();
+            $table->boolean('confirmed')->default(false);
             $table->timestamps();
         });
     }

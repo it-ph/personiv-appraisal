@@ -121,7 +121,7 @@ class Review extends Model
         }
     }
 
-    public function createSupervisorGoalResponses($goals, $user)
+    public function createSupervisorGoalResponses($goals, User $user)
     {
         foreach ($goals as $goal) {
 
@@ -132,6 +132,7 @@ class Review extends Model
                 'raw_score' => $goal['raw_score'],
                 'supervisor_rating' => $this->raw_score_rating($goal['raw_score']),
                 'supervisor_remarks' => isset($goal['supervisor_remarks']) ? $goal['supervisor_remarks'] : null,
+                'rank' => $goal['rank'],
             ]);
 
             $review_goal_response->supervisor_goal_responses()->save($supervisor_goal_response);
@@ -139,7 +140,7 @@ class Review extends Model
         }
     }
 
-    public function createSupervisorBehavioralCompetencyResponses($behavioral_competencies, $user)
+    public function createSupervisorBehavioralCompetencyResponses($behavioral_competencies, User $user)
     {
         foreach ($behavioral_competencies as $behavioral_competency) {
             $review_behavioral_competency_response = ReviewBehavioralCompetencyResponse::find($behavioral_competency['id']);
@@ -148,6 +149,7 @@ class Review extends Model
                 'user_id' => $user->id, 
                 'supervisor_rating' => $behavioral_competency['supervisor_rating'],
                 'supervisor_remarks' => isset($behavioral_competency['supervisor_remarks']) ? $behavioral_competency['supervisor_remarks'] : null,
+                'rank' => $behavioral_competency['rank'],
             ]);
 
             $review_behavioral_competency_response->supervisor_behavioral_competency_responses()->save($supervisor_behavioral_competency_response);            
@@ -162,6 +164,7 @@ class Review extends Model
             $supervisor_goal_response->raw_score = $goal['raw_score'];            
             $supervisor_goal_response->supervisor_rating = $this->raw_score_rating($goal['raw_score']);
             $supervisor_goal_response->supervisor_remarks = isset($goal['supervisor_remarks']) ? $goal['supervisor_remarks'] : null;            
+            $supervisor_goal_response->rank = $goal['rank'];            
 
             $supervisor_goal_response->save();                        
         }

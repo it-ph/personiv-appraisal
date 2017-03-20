@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 
 use App\Http\Requests;
 
+use App\User;
 use App\UserRole;
 
 use Auth;
@@ -16,13 +17,20 @@ use Gate;
 class UserRoleController extends Controller
 {
     /**
-     * Display a listing of the resource with parameters.
+     * Check if user is a supervisor and up.
      *
      * @return \Illuminate\Http\Response
      */
-    public function authorization($role_id)
+    public function authorization(Request $request)
     {
-        return UserRole::where('role_id', $role_id)->where('user_id', Auth::user()->id)->firstOrFail();
+        $user = User::with('head_of')->where('id', $request->user()->id)->first();
+
+        if($user->head_of)
+        {
+            return $user;
+        }
+
+        return UserRole::where('user_id', $user->id)->where('role_id', 3)->orWhere('role_id', 4)->firstOrFail();
     }
 
     /**

@@ -24,11 +24,49 @@ app
 					}
 				}
 			})
+			.state('main.self-assessment', {
+				url: 'self-assessment/{reviewID}',
+				params: {'reviewID':null},
+				views: {
+					'content-container': {
+						templateUrl: '/app/shared/views/content-container.view.html',
+						controller: 'selfAssessmentContentContainerController',
+					},
+					'toolbar@main.self-assessment': {
+						templateUrl: '/app/shared/templates/toolbar.template.html',
+					},
+					'left-sidenav@main.self-assessment': {
+						templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
+					},
+					'content@main.self-assessment':{
+						templateUrl: '/app/components/reviews/templates/content/self-assessment-content.template.html',
+					}
+				}
+			})
+			.state('main.supervisor-assessment', {
+				url: 'review/{reviewID}/supervisor/{supervisorID}',
+				params: {'reviewID':null, 'supervisorID':null},
+				views: {
+					'content-container': {
+						templateUrl: '/app/shared/views/content-container.view.html',
+						controller: 'supervisorAssessmentContentContainerController',
+					},
+					'toolbar@main.supervisor-assessment': {
+						templateUrl: '/app/shared/templates/toolbar.template.html',
+					},
+					'left-sidenav@main.supervisor-assessment': {
+						templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
+					},
+					'content@main.supervisor-assessment':{
+						templateUrl: '/app/components/reviews/templates/content/supervisor-assessment-content.template.html',
+					}
+				}
+			})
 			.state('main.team-reviews', {
 				url: 'team-reviews',
 				resolve:{
 					authorization: ['Helper', '$state', function(Helper, $state){
-						Helper.get('/user-role/3/' + 'authorization')
+						Helper.post('/user-role/review-authorization')
 							.success(function(data){
 								return;
 							})
@@ -54,50 +92,12 @@ app
 					}
 				}
 			})
-			.state('main.notifications', {
-				url: 'notifications',
-				views: {
-					'content-container':{
-						templateUrl: '/app/shared/views/content-container.view.html',
-						controller: 'notificationsContentContainerController',
-					},
-					'toolbar@main.notifications': {
-						templateUrl: '/app/shared/templates/toolbar.template.html',
-						controller: 'notificationsToolbarController',
-					},
-					'left-sidenav@main.notifications': {
-						templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
-					},
-					'content@main.notifications':{
-						templateUrl: '/app/components/notifications/templates/content/notifications-content.template.html',
-					},
-				}
-			})
-			.state('main.self-assessment', {
-				url: 'self-assessment/{reviewID}',
-				params: {'reviewID':null},
-				views: {
-					'content-container': {
-						templateUrl: '/app/shared/views/content-container.view.html',
-						controller: 'selfAssessmentContentContainerController',
-					},
-					'toolbar@main.self-assessment': {
-						templateUrl: '/app/shared/templates/toolbar.template.html',
-					},
-					'left-sidenav@main.self-assessment': {
-						templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
-					},
-					'content@main.self-assessment':{
-						templateUrl: '/app/components/reviews/templates/content/self-assessment-content.template.html',
-					}
-				}
-			})
 			.state('main.review', {
-				url: 'review/{reviewID}',
+				url: 'team-review/{reviewID}',
 				params: {'reviewID':null},
 				resolve:{
 					authorization: ['Helper', '$state', function(Helper, $state){
-						Helper.get('/user-role/3/' + 'authorization')
+						Helper.post('/user-role/review-authorization')
 							.success(function(data){
 								return;
 							})
@@ -123,8 +123,19 @@ app
 				}
 			})
 			.state('main.supervisor-review', {
-				url: 'review/{reviewID}/supervisor',
+				url: 'team-review/{reviewID}/supervisor',
 				params: {'reviewID':null},
+				resolve:{
+					authorization: ['Helper', '$state', function(Helper, $state){
+						Helper.post('/user-role/review-authorization')
+							.success(function(data){
+								return;
+							})
+							.error(function(){
+								return $state.go('page-not-found');
+							});
+					}],
+				},
 				views: {
 					'content-container': {
 						templateUrl: '/app/shared/views/content-container.view.html',
@@ -139,6 +150,25 @@ app
 					'content@main.supervisor-review':{
 						templateUrl: '/app/components/team-reviews/templates/content/supervisor-review-content.template.html',
 					}
+				}
+			})
+			.state('main.notifications', {
+				url: 'notifications',
+				views: {
+					'content-container':{
+						templateUrl: '/app/shared/views/content-container.view.html',
+						controller: 'notificationsContentContainerController',
+					},
+					'toolbar@main.notifications': {
+						templateUrl: '/app/shared/templates/toolbar.template.html',
+						controller: 'notificationsToolbarController',
+					},
+					'left-sidenav@main.notifications': {
+						templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
+					},
+					'content@main.notifications':{
+						templateUrl: '/app/components/notifications/templates/content/notifications-content.template.html',
+					},
 				}
 			})
 			// .state('main.reviews', {

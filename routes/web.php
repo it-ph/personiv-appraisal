@@ -61,7 +61,7 @@ Route::group(['prefix' => 'role'], function(){
 
 /* User Role Routes */
 Route::group(['prefix' => 'user-role'], function(){
-	Route::get('{roleID}/authorization', 'UserRoleController@authorization');
+	Route::post('/review-authorization', 'UserRoleController@authorization');
 	Route::post('enlist', 'UserRoleController@enlist');
 });
 

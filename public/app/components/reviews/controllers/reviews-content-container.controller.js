@@ -23,6 +23,10 @@ app
 			$state.go('main.self-assessment', {'reviewID':id});
 		}
 
+		$scope.supervisorAssessment = function(review_id, supervisor_id){
+			$state.go('main.supervisor-assessment', {'reviewID':review_id, 'supervisorID':supervisor_id});
+		}
+
 		var setInit = function(){
 			Helper.post('/user/check')
 				.success(function(data){
@@ -40,7 +44,15 @@ app
 							'withTrashed': false,
 						},
 						{
+							'relation':'goals.supervisor_goal_responses.user',
+							'withTrashed': false,
+						},
+						{
 							'relation':'behavioral_competencies.behavioral_competency',
+							'withTrashed': false,
+						},
+						{
+							'relation':'behavioral_competencies.supervisor_behavioral_competency_responses.user',
 							'withTrashed': false,
 						},
 					];
