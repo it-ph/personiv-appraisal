@@ -46,6 +46,17 @@ app
 			.state('main.supervisor-assessment', {
 				url: 'review/{reviewID}/supervisor/{supervisorID}',
 				params: {'reviewID':null, 'supervisorID':null},
+				resolve: {
+					authorization: ['Helper', '$state', '$stateParams', function(Helper, $state, $stateParams){
+						Helper.get('/review/' + $stateParams.reviewID)
+							.success(function(data){
+								return;
+							})
+							.error(function(){
+								return $state.go('page-not-found');
+							});
+					}],
+				},
 				views: {
 					'content-container': {
 						templateUrl: '/app/shared/views/content-container.view.html',

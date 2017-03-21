@@ -91,6 +91,7 @@ Route::group(['prefix' => 'appraisal-form'], function(){
 /* Review Routes*/
 Route::group(['prefix' => 'review'], function(){
 	Route::post('enlist', 'ReviewController@enlist');
+	Route::post('confirm', 'ReviewController@confirm');
 	Route::post('self-assessment', 'ReviewController@selfAssessment');
 	Route::post('update-self-assessment', 'ReviewController@updateSelfAssessment');
 	Route::post('supervisor-response', 'ReviewController@supervisorResponse');

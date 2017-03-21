@@ -194,6 +194,19 @@ class ReviewController extends Controller
             for ($i=0; $i < count($request->with); $i++) { 
                 if(!$request->input('with')[$i]['withTrashed'])
                 {
+                    if(isset($request->input('with')[$i]['where']))
+                    {
+                        $reviews->with([$request->input('with')[$i]['relation'] => function($query) use($request, $i){
+                            foreach ($request->input('with')[$i]['where'] as $where) {
+                                $query->where($where['label'], $where['condition'], $where['value']);
+                            }
+                            
+                            $query->with('user');
+                        }]);
+                        
+                        continue;
+                    }
+
                     $reviews->with($request->input('with')[$i]['relation']);
                 }
                 else{

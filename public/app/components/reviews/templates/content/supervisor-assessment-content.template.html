@@ -1,0 +1,95 @@
+<div layout="row" layout-align="center center" ng-if="review">
+	<div layout="column" flex flex-gt-md="80">
+		<md-card>
+			<md-card-header>
+		        <md-card-header-text>
+		            <span class="md-title">{{review.appraisal_form.appraisal_period.start | date: 'MMM. dd, yyyy'}} to {{review.appraisal_form.appraisal_period.end | date: 'MMM. dd, yyyy'}}</span>
+		            <span class="md-subhead">Goals: {{review.appraisal_form.appraisal_period.goals_percentage * 100}}% | Behavioral Competency: {{review.appraisal_form.appraisal_period.behavioral_competency_percentage * 100 }}%</span>
+		        </md-card-header-text>
+			</md-card-header>
+			<md-card-content ng-if="review.goals.length || review.behavioral_competencies.length">
+				<div ng-if="review.goals.length">
+					<md-subheader class="md-no-sticky">Goals</md-subheader>
+					<table class="table">
+						<tr>
+							<th>Parameter</th>
+							<th>Raw Score</th>
+							<th>Weight %</th>
+							<th>Self Assessment Rating</th>
+							<th>Employee Remarks</th>
+							<th>Supervisors Rating</th>
+							<th>Remarks</th>
+						</tr>
+						<tr ng-repeat="goal in review.goals">
+							<td>{{goal.goal.parameter}}</td>
+							<td>{{goal.supervisor_goal_responses[0].raw_score}}</td>
+							<td>{{goal.goal.weight * 100}}</td>
+							<td>{{goal.self_assessment}}</td>
+							<td>{{goal.employee_remarks}}</td>
+							<td>{{goal.supervisor_goal_responses[0].supervisor_rating}}</td>
+							<td>{{goal.supervisor_goal_responses[0].supervisor_remarks}}</td>
+						</tr>
+						<tr>
+							<th>Total</th>
+							<th></th>
+							<th>100%</th>
+							<th>{{goals_self_assessment_rating_average}}</th>
+							<th></th>
+							<th>{{goals_supervisor_rating_average}}</th>
+							<th></th>
+						</tr>
+					</table>
+				</div>
+				<div ng-if="review.behavioral_competencies.length">
+					<md-subheader class="md-no-sticky">Behavioral Competency</md-subheader>
+					<table class="table">
+						<tr>
+							<th>Parameter</th>
+							<th>Description</th>
+							<th>Self Appraisal Rating</th>
+							<th>Employee Remarks</th>
+							<th>Supervisors Rating</th>
+							<th>Remarks</th>
+						</tr>
+						<tr ng-repeat="behavioral_competency in review.behavioral_competencies">
+							<td>{{behavioral_competency.behavioral_competency.parameter}}</td>
+							<td class="col-sm-3 col-md-3 col-lg-3 col-xl-3">{{behavioral_competency.behavioral_competency.description}}</td>
+							<td>{{behavioral_competency.self_appraisal_rating}}</td>
+							<td>{{behavioral_competency.employee_remarks}}</td>
+							<td>{{behavioral_competency.supervisor_behavioral_competency_responses[0].supervisor_rating}}</td>
+							<td>{{behavioral_competency.supervisor_behavioral_competency_responses[0].supervisor_remarks}}</td>
+						</tr>
+					</table>
+				</div>
+				<div>
+					<md-subheader>Average Score</md-subheader>
+					
+				</div>
+				<div ng-if="review.commitment_remarks">
+					<md-subheader>Commitment Remarks</md-subheader>
+					<div layout-padding>
+						<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Nobis quia vitae impedit delectus, voluptatem recusandae deleniti laudantium quis aliquid ad dicta eaque. Fugit aspernatur, voluptate ut ad, qui similique a!</p>
+					</div>
+				</div>
+				<md-subheader ng-if="review.trainings_needed_self_assessment || review.trainings_needed_supervisor_assessment">Trainings Needed</md-subheader>
+				<div layout="row" flex>
+					<div layout-padding flex ng-if="review.trainings_needed_self_assessment">
+						<md-subheader>Self Assessment</md-subheader>
+						<p>{{review.trainings_needed_self_assessment}}</p>
+					</div>
+					<div layout-padding flex ng-if="review.trainings_needed_supervisor_assessment">
+						<md-subheader>Supervisor Assessment</md-subheader>
+						<p>{{review.trainings_needed_supervisor_assessment}}</p>
+					</div>
+				</div>
+				
+			</md-card-content>
+			<md-card-actions layout="row" layout-align="start center" ng-if="!confirmed">
+	          	<md-button class="md-primary" ng-click="confirm()">Confirm</md-button>
+	        </md-card-actions>
+		</md-card>
+	</div>	
+</div>
+<div layout="row" layout-align="center center" layout-padding layout-margin ng-if="isLoading">
+	<md-progress-circular class="md-primary" md-diameter="60"></md-progress-circular>
+</div>
