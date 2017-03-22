@@ -13,9 +13,52 @@ use Auth;
 use Carbon\Carbon;
 use DB;
 use Gate;
+use Hash;
 
 class ReviewController extends Controller
 {
+    /**
+     * Confirm review results.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function confirm(Request $request)
+    {
+        $this->validate($request, [
+            'id' => 'required',
+            'supervisor_id' => 'required',
+            'password' => 'required',
+        ]);
+
+        if(!Hash::check($request->password, $request->user()->password))
+        {
+            return response()->json(true);
+        }
+
+        $review = Review::with('goals.goal')
+            ->with('appraisal_form.appraisal_period')
+            ->with('behavioral_competencies.behavioral_competency')
+            ->with(['behavioral_competencies.supervisor_behavioral_competency_responses' => function($query) use($request){
+                $query->where('user_id', $request->supervisor_id);
+            }])
+            ->with(['goals.supervisor_goal_responses' => function($query) use($request){
+                $query->where('user_id', $request->supervisor_id);
+            }])
+            ->where('id', $request->id)->first();
+
+        if($review->user_id != $request->user()->id || !count($review->behavioral_competencies[0]->supervisor_behavioral_competency_responses) || !count($review->goals[0]->supervisor_goal_responses))
+        {
+            abort(403, 'Unauthorized access.');
+        }
+
+        $review->commitment_remarks = $request->commitment_remarks;
+        $review->trainings_needed_self_assessment = $request->trainings_needed_self_assessment;
+
+        DB::transaction(function() use($review){
+            $review->confirmSupervisorResponse();
+        });
+    }
+
     /**
      * Update supervisor assessment.
      *
@@ -194,6 +237,11 @@ class ReviewController extends Controller
             for ($i=0; $i < count($request->with); $i++) { 
                 if(!$request->input('with')[$i]['withTrashed'])
                 {
+                    if(isset($request->input('with')[$i]['orderBy']))
+                    {
+                        $reviews->orderBy($request->input('with')[$i]['orderBy']['label'], $request->input('with')[$i]['orderBy']['sort']);
+                    }
+
                     if(isset($request->input('with')[$i]['where']))
                     {
                         $reviews->with([$request->input('with')[$i]['relation'] => function($query) use($request, $i){

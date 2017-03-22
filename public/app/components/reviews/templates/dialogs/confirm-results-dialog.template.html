@@ -1,0 +1,51 @@
+<md-dialog aria-label="Confirmation Form"  flex flex-gt-sm="40" ng-cloak>
+    <form name="confirmationForm">
+    	<md-toolbar >
+            <div class="md-toolbar-tools">
+                <h2 class="white-text">Confirm Results</h2>
+                <span flex></span>
+                <md-button class="md-icon-button" ng-click="cancel()">
+                    <md-icon class="mdi mdi-close mdi-24px" aria-label="Close dialog"></md-icon>
+                </md-button>
+            </div>
+        </md-toolbar>
+        <md-dialog-content flex layout-padding layout-wrap>
+            <md-subheader class="red-text" ng-if="error">Oops! Something went wrong! An error occured. Please try again.</md-subheader>
+            <md-subheader class="red-text" ng-if="incorrect">The password you have entered is incorrect.</md-subheader>
+			<div layout="row" layout-wrap flex>
+				<div flex-xs="100" flex-sm="100" flex-gt-sm>
+					<!-- Commitment Remarks -->
+					<md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
+						<label>Commitment Remarks</label>
+						<textarea name="CommitmentRemarks" ng-model="review.commitment_remarks"></textarea>
+					</md-input-container>
+				</div>
+			</div>
+			<div layout="row" layout-wrap flex>
+				<div flex-xs="100" flex-sm="100" flex-gt-sm>
+					<md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
+						<label>Training Needed</label>
+						<textarea name="CommitmentRemarks" ng-model="review.trainings_needed_self_assessment"></textarea>
+					</md-input-container>
+				</div>
+			</div>
+			<div layout="row" layout-wrap flex>
+				<div flex-xs="100" flex-sm="100" flex-gt-sm>
+					<md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
+						<label>Password</label>
+						<input type="password" name="Password" ng-model="review.password" required/>
+						<div ng-messages="confirmationForm.Password.$error">
+							<div ng-message="required">Password is required.</div>
+						</div>
+					</md-input-container>
+				</div>
+			</div>
+        </md-dialog-content>
+    </form>
+    <div layout="row" layout-align="end center">   
+        <md-button ng-if="!busy" class="md-primary" aria-label="Submit" ng-click="submit()">
+            Save
+        </md-button>
+        <md-progress-circular ng-if="busy" md-mode="indeterminate" class="md-primary" md-diameter="60"></md-progress-circular>
+    </div>
+</md-dialog>

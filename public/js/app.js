@@ -384,1048 +384,6 @@ app
 			})
 	}]);
 app
-	.controller('mainViewController', ['$scope', '$filter', '$state', '$mdDialog', '$mdSidenav', '$mdToast', 'Helper', 'FileUploader', function($scope, $filter, $state, $mdDialog, $mdSidenav, $mdToast, Helper, FileUploader){
-		$scope.toggleSidenav = function(menuID){
-			$mdSidenav(menuID).toggle();
-		}
-
-		$scope.menu = {};
-		$scope.menu.pages = [];
-
-		$scope.menu.static = [
-			{
-				'state': 'main',
-				'icon': 'mdi-home',
-				'label': 'Home',
-				'show': true,
-			},
-			{
-				'state': 'main.appraisal-forms',
-				'icon': 'mdi-playlist-check',
-				'label': 'Appraisal Forms',
-			},
-			{
-				'state': 'main.dashboard',
-				'icon': 'mdi-view-dashboard',
-				'label': 'Dashboard',
-			},
-			{
-				'state': 'main.team-reviews',
-				'icon': 'mdi-account-multiple',
-				'label': 'Team Reviews',
-			},
-		];
-
-		$scope.menu.section = [];
-
-		$scope.menu.section[0] = {
-			'name':'Settings',
-			'icon':'mdi-settings',
-		}
-
-		$scope.menu.pages[0] = [
-			{
-				'label': 'Appraisal Periods',
-				action: function(){
-					$state.go('main.appraisal-periods');
-				},
-			},
-			{
-				'label': 'Departments',
-				action: function(){
-					$state.go('main.departments');
-				},
-			},
-			{
-				'label': 'Users',
-				action: function(){
-					$state.go('main.users');
-				},
-			},
-		]
-
-		// set section as active
-		$scope.setActive = function(index){
-		 	angular.element($('[aria-label="'+ 'section-' + index + '"]').closest('li').toggleClass('active'));
-		 	angular.element($('[aria-label="'+ 'section-' + index + '"]').closest('li').siblings().removeClass('active'));
-		};
-		
-		$scope.logout = function(){
-			Helper.post('/user/logout')
-				.success(function(){
-					window.location.href = '/';
-				});
-		}
-
-		$scope.changePassword = function()
-		{
-			$mdDialog.show({
-		      controller: 'changePasswordDialogController',
-		      templateUrl: '/app/shared/templates/dialogs/change-password-dialog.template.html',
-		      parent: angular.element(document.body),
-		      fullscreen: true,
-		    })
-		    .then(function(){
-		    	Helper.notify('Password changed.')
-		    });
-		}
-
-		var uploader = {};
-
-		uploader.filter = {
-            name: 'photoFilter',
-            fn: function(item /*{File|FileLikeObject}*/, options) {
-                var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
-                return '|jpg|png|jpeg|bmp|gif|'.indexOf(type) !== -1;
-            }
-        };
-
-        uploader.sizeFilter = {
-		    'name': 'enforceMaxFileSize',
-		    'fn': function (item) {
-		        return item.size <= 2000000;
-		    }
-        }
-
-        uploader.error = function(item /*{File|FileLikeObject}*/, filter, options) {
-            $scope.fileError = true;
-            $scope.photoUploader.queue = [];
-        };
-
-        uploader.headers = { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')};
-
-		$scope.clickUpload = function(){
-		    angular.element('#upload').trigger('click');
-		};
-
-		$scope.markAllAsRead = function(){
-			Helper.post('/user/mark-all-as-read')
-				.success(function(){
-					$scope.user.unread_notifications = [];
-				})
-		}
-
-		var fetchUnreadNotifications = function(){
-			Helper.post('/user/check')
-	    		.success(function(data){
-	    			$scope.user = data;
-	    		});
-		}
-
-		Helper.post('/user/check')
-			.success(function(data){
-				var settings = false;
-				var settings_menu = [];
-
-				$scope.menu.static[1].show = $filter('filter')(data.roles, {'name':'parameters'}, true) ? true : false;
-				$scope.menu.static[2].show = $filter('filter')(data.roles, {'name':'dashboard'}, true) ? true : false;
-
-				if($filter('filter')(data.roles, {'name':'supervisor'}, true) || $filter('filter')(data.roles, {'name':'director'}, true) || data.head_of)
-				{
-					$scope.menu.static[3].show = true					
-				}
-
-				$scope.menu.pages[0][0].show = $filter('filter')(data.roles, {'name':'appraisal-periods'}, true) ? true : false;
-				$scope.menu.pages[0][1].show = $filter('filter')(data.roles, {'name':'manage-departments'}, true) ? true : false;
-				$scope.menu.pages[0][2].show = $filter('filter')(data.roles, {'name':'manage-users'}, true) ? true : false;
-
-				var notifications = {
-					'state': 'main.notifications',
-					'icon': 'mdi-bell',
-					'label': 'Notifications',
-					'show': true,
-				}
-
-				$scope.menu.static.push(notifications);
-
-				$scope.user = data;
-
-				$scope.currentTime = Date.now();
-
-				Helper.setAuthUser(data);
-
-				/* Photo Uploader */
-				$scope.photoUploader = new FileUploader({
-					url: '/user/upload-avatar/' + $scope.user.id,
-					headers: uploader.headers,
-					queueLimit : 1
-				})
-
-				// FILTERS
-		        $scope.photoUploader.filters.push(uploader.filter);
-		        $scope.photoUploader.filters.push(uploader.sizeFilter);
-		        
-				$scope.photoUploader.onWhenAddingFileFailed = uploader.error;
-				$scope.photoUploader.onAfterAddingFile  = function(){
-					$scope.fileError = false;
-					if($scope.photoUploader.queue.length)
-					{	
-						$scope.photoUploader.uploadAll()
-					}
-				};
-
-				$scope.photoUploader.onCompleteItem  = function(data, response){
-					if($scope.user.avatar_path)
-					{
-						$scope.currentTime = Date.now();
-						$scope.photoUploader.queue = [];
-					}
-					else{
-						$state.go($state.current, {}, {reload:true});
-					}
-				}
-
-				var pusher = new Pusher('ade8d83d4ed5455e3e18', {
-			      	encrypted: true,
-			      	auth: {
-					    headers: {
-					      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-					    }
-				  	}
-			    });
-
-				var channel = {};
-
-				channel.user = pusher.subscribe('private-App.User.' + $scope.user.id);
-
-				channel.user.bindings = [
-				 	channel.user.bind('Illuminate\\Notifications\\Events\\BroadcastNotificationCreated', function(data) {
-				 		// formating the notification
-				 		data.created_at = data.attachment.created_at;
-
-				 		data.data = {};
-				 		data.data.attachment = data.attachment;
-				 		data.data.url = data.url;
-				 		data.data.withParams = data.withParams;
-				 		data.data.sender = data.sender;
-				 		data.data.message = data.message;
-
-				 		// pushes the new notification in the unread_notifications array
-				 		$scope.$apply(function(){
-					    	$scope.user.unread_notifications.unshift(data);
-				 		});
-
-				 		// notify the user with a toast message
-				 		Helper.notify(data.sender.name + ' ' + data.message);
-
-				 		if($state.current.name == data.data.url)
-						{
-							$state.go($state.current, {}, {reload:true});
-						}
-				    }),
-				];
-			})
-
-		$scope.markAsRead = function(notification){
-			Helper.post('/user/mark-as-read', notification)
-				.success(function(){
-					var index = $scope.user.unread_notifications.indexOf(notification);
-
-					$scope.user.unread_notifications.splice(index, 1);
-				})
-				.error(function(){
-					Helper.error();
-				});
-		}
-
-		$scope.read = function(notification){			
-			$state.go(notification.data.url);
-
-			$scope.markAsRead(notification);
-		}
-
-		$scope.$on('closeSidenav', function(){
-			$mdSidenav('left').close();
-		});
-	}]);
-app
-	.controller('appraisalFormsContentContainerController', ['$scope', '$state', 'Helper', function($scope, $state, Helper){
-		$scope.$emit('closeSidenav');
-
-		$scope.state = $state.current.name;
-		/*
-		 * Object for toolbar
-		 *
-		*/
-		$scope.toolbar = {};
-
-		$scope.toolbar.toggleActive = function(){
-			$scope.showInactive = !$scope.showInactive;
-		}
-		$scope.toolbar.sortBy = function(filter){
-			filter.sortReverse = !filter.sortReverse;			
-			$scope.sortType = filter.type;
-			$scope.sortReverse = filter.sortReverse;
-		}
-
-		/*
-		 * Object for fab
-		 *
-		*/
-		$scope.fab = {};
-		$scope.fab.icon = 'mdi-plus';
-
-		$scope.fab.label = 'Users';
-
-		$scope.fab.action = function(){
-			$state.go('main.manage-appraisal-forms');
-		}
-
-
-		/* Action originates from toolbar */
-		$scope.$on('search', function(){
-			$scope.showInactive = true;
-			$scope.request.search = $scope.toolbar.searchText;
-			$scope.refresh();
-		});
-
-		/* Listens for any request for refresh */
-		$scope.$on('refresh', function(){
-			$scope.showInactive = false;
-			$scope.request.search = null;
-			$scope.$broadcast('close');
-			$scope.refresh();
-		});
-
-		$scope.view = function(id){
-			Helper.set(id);
-
-			var dialog = {
-				'controller': 'appraisalFormDialogController',
-				'template': '/app/components/appraisal-forms/templates/dialogs/appraisal-form-dialog.template.html',
-				'fullscreen': true,
-			}
-
-			Helper.customDialog(dialog)
-				.then(function(data){
-					if(data){
-						$scope.delete(data);
-					}
-				}, function(){
-					return;
-				})
-		}
-
-		$scope.update = function(data){
-			$state.go('main.manage-appraisal-forms', {'appraisalFormID':data.id});
-		}
-
-		$scope.delete = function(data){
-			var dialog = {};
-			dialog.title = 'Delete';
-			dialog.message = 'Delete ' + data.department.name + ' appraisal form?'
-			dialog.ok = 'Delete';
-			dialog.cancel = 'Cancel';
-
-			Helper.confirm(dialog)
-				.then(function(){
-					Helper.delete('/appraisal-form/' + data.id)
-						.success(function(){
-							$scope.refresh();
-							Helper.notify('Appraisal form deleted.');
-						})
-						.error(function(){
-							Helper.error();
-						});
-				}, function(){
-					return;
-				})
-		}
-
-		/* Formats every data in the paginated call */
-		var pushItem = function(data){
-			data.deleted_at =  data.deleted_at ? new Date(data.deleted_at) : null;
-			data.hideDelete = data.reviews_count ? true : false;
-
-			data.appraisal_period.start = new Date(data.appraisal_period.start);
-			data.appraisal_period.end = new Date(data.appraisal_period.end);
-
-			angular.forEach(data.reviews, function(review){
-				if(review.behavioral_competencies.length || review.goals.length)
-				{
-					data.hideMenu = true;
-				}
-			})
-
-			console.log(data.hideMenu)
-
-			var item = {};
-
-			item.display = data.name;
-
-			$scope.toolbar.items.push(item);
-		}
-
-		$scope.init = function(query){
-			$scope.appraisal_form = {};
-			$scope.appraisal_form.items = [];
-			$scope.toolbar.items = [];
-
-			// 2 is default so the next page to be loaded will be page 2 
-			$scope.appraisal_form.page = 2;
-
-			Helper.post('/appraisal-form/enlist', query)
-				.success(function(data){
-					$scope.appraisal_form.details = data;
-					$scope.appraisal_form.items = data.data;
-					$scope.appraisal_form.show = true;
-
-					$scope.fab.show = true;
-
-					if(data.data.length){
-						// iterate over each record and set the format
-						angular.forEach(data.data, function(item){
-							pushItem(item);
-						});
-					}
-
-					$scope.appraisal_form.paginateLoad = function(){
-						// kills the function if ajax is busy or pagination reaches last page
-						if($scope.appraisal_form.busy || ($scope.appraisal_form.page > $scope.appraisal_form.details.last_page)){
-							$scope.isLoading = false;
-							return;
-						}
-						/**
-						 * Executes pagination call
-						 *
-						*/
-						// sets to true to disable pagination call if still busy.
-						$scope.appraisal_form.busy = true;
-						$scope.isLoading = true;
-						// Calls the next page of pagination.
-						Helper.post('/appraisal-form/enlist' + '?page=' + $scope.appraisal_form.page, query)
-							.success(function(data){
-								// increment the page to set up next page for next AJAX Call
-								$scope.appraisal_form.page++;
-
-								// iterate over each data then splice it to the data array
-								angular.forEach(data.data, function(item, key){
-									pushItem(item);
-									$scope.appraisal_form.items.push(item);
-								});
-
-								// Enables again the pagination call for next call.
-								$scope.appraisal_form.busy = false;
-								$scope.isLoading = false;
-							});
-					}
-				});
-		}
-
-		$scope.refresh = function(){
-			$scope.isLoading = true;
-  			$scope.appraisal_form.show = false;
-
-  			$scope.init($scope.request);
-		};
-
-		Helper.post('/user/check')
-    		.success(function(data){
-    			var user = data;
-				
-				$scope.request = {};
-
-				$scope.request.withTrashed = true;
-				$scope.request.paginate = 20;	
-				$scope.request.with = [
-					{
-						'relation':'appraisal_period',
-						'withTrashed':false,
-					},
-					{
-						'relation':'account',
-						'withTrashed':false,
-					},
-					{
-						'relation':'department',
-						'withTrashed':false,
-					},
-					{
-						'relation':'reviews.behavioral_competencies',
-						'withTrashed': false,
-					},
-					{
-						'relation':'reviews.goals',
-						'withTrashed': false,
-					},
-				];
-				$scope.request.withCount = [
-					{
-						'relation':'reviews',
-						'withTrashed': false,
-					},
-				];
-				$scope.request.where = [];
-
-				if(!user.super_admin)
-				{
-					$scope.request.where.push(
-						{
-							'label': 'department_id',
-							'condition': '=',
-							'value': user.department_id,
-						}
-					);
-				}
-
-				$scope.isLoading = true;
-				$scope.$broadcast('close');
-
-				$scope.init($scope.request);
-    		});
-
-	}]);
-app
-	.controller('manageAppraisalFormEmployeesContentContainerController', ['$scope', '$filter', '$state', '$stateParams', 'Helper', function($scope, $filter, $state, $stateParams, Helper){
-		$scope.$emit('closeSidenav');
-
-		$scope.form = {};
-		$scope.form.include_all = false;
-
-		var appraisalFormID = $stateParams.appraisalFormID;
-
-		/*
-		 * Object for toolbar
-		 *
-		*/
-		$scope.toolbar = {};
-
-		$scope.toolbar.hideSearchIcon = true;
-
-		$scope.toolbar.parentState = 'Appraisal Form';
-		$scope.toolbar.childState =  'Employees';
-
-		var error_dialog = {
-			'title': 'Aw Snap!',
-			'message': 'An error occured loading the resource.',
-			'ok': 'Try Again'
-		}
-
-		$scope.items = [];
-
-		$scope.querySearch = function(query){
-			var results = query ? $filter('filter')($scope.items, query) : $scope.items;
-			return results;
-		}
-
-		$scope.checkAll = function(){
-			if($scope.form.include_all)
-			{
-				$scope.appraisal_form.reviews = $scope.items;
-			}
-			else{
-				$scope.appraisal_form.reviews = [];
-			}
-		}
-
-		/*
-		 * Object for fab
-		 *
-		*/
-		$scope.fab = {};
-		$scope.fab.icon = 'mdi-check';
-		$scope.fab.label = 'Submit';
-		$scope.fab.show = true;
-
-		$scope.fab.action = function(){
-			$scope.busy = true;
-
-			Helper.preload();
-
-			if(!appraisalFormID)
-			{
-				Helper.post('/review', $scope.appraisal_form.reviews)
-					.success(function(data){
-						Helper.stop();
-						$state.go('main.appraisal-forms');
-					})
-					.error(function(){
-						$scope.busy = false;
-						Helper.error();
-					})
-			}
-			else
-			{
-				Helper.put('/review/' + appraisalFormID, $scope.appraisal_form.reviews)
-					.success(function(data){
-						Helper.stop();
-						$state.go('main.appraisal-forms');
-					})
-					.error(function(){
-						$scope.busy = false;
-						Helper.error();
-					})	
-			}
-		}
-
-		$scope.init = function(){		
-			var appraisal_form_query = {}
-
-			appraisal_form_query.with = [
-				{
-					'relation': 'appraisal_period',
-					'withTrashed': false,
-				},
-				{
-					'relation': 'department',
-					'withTrashed': false,
-				},
-				{
-					'relation': 'reviews.user',
-					'withTrashed': false,
-				},
-				{
-					'relation': 'reviews.goals',
-					'withTrashed': false,
-				},
-				{
-					'relation': 'reviews.behavioral_competencies',
-					'withTrashed': false,
-				},
-			];
-
-			appraisal_form_query.where = [
-				{
-					'label': 'id',
-					'condition': '=',
-					'value': appraisalFormID,
-				},
-			];
-
-			appraisal_form_query.first = true;
-
-			var appraisalForm = function(){
-				Helper.post('/appraisal-form/enlist', appraisal_form_query)
-					.success(function(data){
-						$scope.locked_reviews = [];
-
-						var exclude_users = [];
-
-						angular.forEach(data.reviews, function(item, idx){
-							var name = item.user.first_name + ' ' + item.user.last_name;
-
-							if(item.goals.length || item.behavioral_competencies.length)
-							{
-								$scope.locked_reviews.push(name);
-								exclude_users.push(item.user_id);
-							}
-
-							item.user_id = item.user.id;
-							item.name = name;
-							item.image = item.user.avatar_path ? '/user/avatar/' + item.user_id : '/img/2Color-Favicon_512x512-1.png';
-						});
-						
-						data.appraisal_period.start = new Date(data.appraisal_period.start);
-						data.appraisal_period.end = new Date(data.appraisal_period.end);
-
-						$scope.appraisal_form = data;
-						// $scope.appraisal_form.reviews = [];
-
-						var users_query = {}
-
-						users_query.where = [
-							{
-								'label': 'department_id',
-								'condition': '=',
-								'value': $scope.appraisal_form.department_id,
-							},
-						];
-
-						users_query.whereNotIn = [
-							{
-								'label': 'id',
-								'values': exclude_users,
-							},
-						];
-
-						var users = function(){
-							Helper.post('/user/enlist', users_query)
-								.success(function(data){
-									angular.forEach(data, function(user){
-										var item = {};
-
-										item.user_id = user.id;
-										item.appraisal_form_id = appraisalFormID;
-										item.name = user.last_name + ', ' + user.first_name;
-										item.email = user.email;
-										item.image = user.avatar_path ? '/user/avatar/' + user.id : '/img/2Color-Favicon_512x512-1.png';
-										
-										$scope.items.push(item);
-									});
-
-									$scope.users = data;
-								})
-								.error(function(){
-									Helper.confirm(error_dialog)
-										.then(function(){
-											users();
-										});
-								});
-						}
-
-						users();
-					})
-					.error(function(){
-						Helper.confirm(error_dialog)
-							.then(function(){
-								appraisalForm();
-							});
-					});
-			}
-
-			appraisalForm();
-		}();
-	}]);
-app
-	.controller('manageAppraisalFormsContentContainerController', ['$scope', '$state', '$stateParams', 'Helper', function($scope, $state, $stateParams, Helper){
-		$scope.$emit('closeSidenav');
-
-		$scope.form = {};
-
-		var appraisalFormID = $stateParams.appraisalFormID;
-
-		/*
-		 * Object for toolbar
-		 *
-		*/
-		$scope.toolbar = {};
-
-		$scope.toolbar.hideSearchIcon = true;
-
-		$scope.toolbar.parentState = 'Appraisal Forms';
-		$scope.toolbar.childState =  appraisalFormID ? 'Edit' : 'New';
-
-		var error_dialog = {
-			'title': 'Aw Snap!',
-			'message': 'An error occured loading the resource.',
-			'ok': 'Try Again'
-		}
-
-		var appraisalPeriods = function(){		
-			Helper.get('/appraisal-period')
-				.success(function(data){
-					angular.forEach(data, function(item){
-						item.start = new Date(item.start);
-						item.end = new Date(item.end);
-					});
-
-					$scope.appraisal_periods = data;
-				})
-				.error(function(){
-					Helper.confirm(error_dialog)
-						.then(function(){
-							appraisalPeriods();
-						});
-				});
-		}
-
-		var departments = function(department_id){
-			var request = {
-				'with': [
-					{
-						'relation': 'accounts',
-						'withTrashed': false,
-					},
-				]
-			}
-
-			if(department_id){
-				request.where = [
-					{
-						'label':'id',
-						'condition': '=',
-						'value': department_id,
-					},
-				]
-
-				request.first = true;
-			}
-
-			var fetch = function(){
-				Helper.post('/department/enlist', request)
-					.success(function(data){
-						if(department_id){
-							$scope.appraisal_form.department = data;
-						}
-						else{
-							$scope.departments = data;
-						}
-					})
-					.error(function(){
-						Helper.confirm(error_dialog)
-							.then(function(){
-								fetch();
-							});
-					});
-			}
-
-			fetch();
-		}
-
-		$scope.setAccounts = function(department_id, reset){
-			if(reset)
-			{	
-				$scope.appraisal_form.account_id = null;
-			}
-			
-			var request = {
-				'where': [
-					{
-						'label': 'department_id',
-						'condition': '=',
-						'value': department_id,
-					},
-				],
-			}
-
-			var accounts = function(){
-				Helper.post('/account/enlist', request)
-					.success(function(data){
-						$scope.accounts = data;
-					})
-					.error(function(){
-						Helper.failed()
-							.then(function(){
-								accounts();
-							})
-					})
-			}
-
-			accounts();
-		}
-
-		/*
-		 * Object for fab
-		 *
-		*/
-		$scope.fab = {};
-		$scope.fab.icon = 'mdi-check';
-		$scope.fab.label = 'Submit';
-		$scope.fab.show = true;
-
-		$scope.fab.action = function(){
-			if($scope.form.appraisalForm.$invalid){
-				angular.forEach($scope.form.appraisalForm.$error, function(field){
-					angular.forEach(field, function(errorField){
-						errorField.$setTouched();
-					});
-				});
-
-				return;
-			}
-
-			if($scope.total_weight == 100)
-			{
-				$scope.busy = true;
-
-				Helper.preload();
-
-				if(!appraisalFormID)
-				{
-					Helper.post('/appraisal-form', $scope.appraisal_form)
-						.success(function(data){
-							Helper.stop();
-							$state.go('main.appraisal-forms');
-						})
-						.error(function(){
-							$scope.busy = false;
-							Helper.error();
-						})
-				}
-				else{
-					Helper.put('/appraisal-form/' + appraisalFormID, $scope.appraisal_form)
-						.success(function(data){
-							Helper.stop();
-							$state.go('main.appraisal-forms');
-						})
-						.error(function(){
-							$scope.busy = false;
-							Helper.error();
-						})
-				}
-			}
-			else{
-				$scope.incomplete_goals = true;
-			}
-		}
-
-		$scope.addGoal = function(){
-			$scope.appraisal_form.goals.push({});
-		}
-		
-		$scope.setGoal = function(){
-			$scope.total_weight = 0;
-
-			angular.forEach($scope.appraisal_form.goals, function(item){
-				if(item.weight)
-				{
-					$scope.total_weight += item.weight;		
-				}
-			});
-
-			if($scope.total_weight == 100)
-			{
-				$scope.incomplete_goals = false;
-			}
-		}
-
-		$scope.removeGoal = function(idx){
-			if(appraisalFormID)
-			{
-				var dialog = {
-					'title': 'Remove Goal',
-					'message': 'This goal will be removed permanently.',
-					'ok': 'Delete',
-					'cancel': 'cancel',
-				}
-
-				Helper.confirm(dialog)
-					.then(function(){
-						Helper.delete('/goal/' + $scope.appraisal_form.goals[idx].id)
-							.success(function(){
-								$scope.appraisal_form.goals.splice(idx, 1);
-								$scope.setGoal();
-							})
-							.error(function(){
-								Helper.error();
-							});
-					}, function(){
-						return;
-					});
-			}
-			else{				
-				$scope.appraisal_form.goals.splice(idx, 1);
-				$scope.setGoal();
-			}
-		}
-
-		$scope.addBehavioralCompetency = function(){
-			$scope.appraisal_form.behavioral_competencies.push({});
-		}
-
-		$scope.removeBehavioralCompetency = function(idx){
-			if(appraisalFormID)
-			{
-				var dialog = {
-					'title': 'Remove Behavioral Competency',
-					'message': 'This item will be removed permanently.',
-					'ok': 'Delete',
-					'cancel': 'Cancel',
-				}
-
-				Helper.confirm(dialog)
-					.then(function(){
-						Helper.delete('/behavioral-competency/' + $scope.appraisal_form.behavioral_competencies[idx].id)
-							.success(function(){
-								$scope.appraisal_form.behavioral_competencies.splice(idx, 1);
-							})
-							.error(function(){
-								Helper.error();
-							});
-					}, function(){
-						return;
-					});
-			}
-			else{				
-				$scope.appraisal_form.behavioral_competencies.splice(idx, 1);
-			}
-		}
-
-		$scope.init = function(){
-			Helper.post('/user/check')
-				.success(function(data){
-					$scope.super_admin = data.super_admin;
-					
-					appraisalPeriods();
-
-					if($scope.super_admin){
-						departments();
-					}
-					else{
-						departments(data.department_id);
-					}
-
-					
-					if(!appraisalFormID)
-					{
-						$scope.appraisal_form = {};
-						
-						$scope.appraisal_form.goals = [{}];
-						$scope.appraisal_form.behavioral_competencies = [{}];
-					}
-					else{
-						var query = {}
-
-						query.with = [
-							{
-								'relation': 'appraisal_period',
-								'withTrashed': false,
-							},
-							{
-								'relation': 'department.accounts',
-								'withTrashed': false,
-							},
-							{
-								'relation': 'goals',
-								'withTrashed': false,
-							},
-							{
-								'relation': 'behavioral_competencies',
-								'withTrashed': false,
-							},
-							{
-								'relation': 'reviews.behavioral_competencies',
-								'withTrashed': false,		
-							},
-							{
-								'relation': 'reviews.goals',
-								'withTrashed': false,		
-							}
-						];
-
-						query.where = [
-							{
-								'label': 'id',
-								'condition': '=',
-								'value': appraisalFormID,
-							},
-						];
-
-						query.first = true;
-
-						var appraisalForm = function(){
-							Helper.post('/appraisal-form/enlist', query)
-								.success(function(data){
-									angular.forEach(data.reviews, function(review){
-										if(review.behavioral_competencies.length || review.goals.length)
-										{
-											$state.go('page-not-found');
-										}
-									})
-
-									angular.forEach(data.goals, function(item){
-										item.weight = item.weight * 100;
-									});
-
-									$scope.appraisal_form = data;
-
-									$scope.setGoal();
-									$scope.setAccounts(data.department_id);
-								})
-								.error(function(){
-									Helper.confirm(error_dialog)
-										.then(function(){
-											appraisalForm();
-										});
-								});
-						}
-
-						appraisalForm();
-					}
-				})
-		}();
-	}]);
-app
 	.controller('reviewContentContainerController', ['$scope', '$filter', '$state', '$stateParams', 'Helper', function($scope, $filter, $state, $stateParams, Helper){
 		$scope.$emit('closeSidenav');
 
@@ -1580,16 +538,38 @@ app
 							'withTrashed': false,
 						},
 						{
-							'relation':'goals.supervisor_goal_responses.user',
+							'relation':'goals.supervisor_goal_responses',
 							'withTrashed': false,
+							'where': [
+								{
+									'label': 'confirmed', 
+									'condition': '=',
+									'value': 1,
+								},
+							],
+							'orderBy': {
+								'label':'updated_at',
+								'sort': 'desc',
+							},
 						},
 						{
 							'relation':'behavioral_competencies.behavioral_competency',
 							'withTrashed': false,
 						},
 						{
-							'relation':'behavioral_competencies.supervisor_behavioral_competency_responses.user',
+							'relation':'behavioral_competencies.supervisor_behavioral_competency_responses',
 							'withTrashed': false,
+							'where': [
+								{
+									'label': 'confirmed', 
+									'condition': '=',
+									'value': 1,
+								},
+							],
+							'orderBy': {
+								'label':'updated_at',
+								'sort': 'desc',
+							},
 						},
 					];
 					$scope.request.where = [
@@ -1611,6 +591,29 @@ app
 							setInit();
 						})
 				})
+		}
+
+		var rating = function(data){
+			if(data < 70)
+	        {
+	            return 1;
+	        }
+	        else if(data >= 70 && data < 80)
+	        {
+	            return 2;             
+	        }
+	        else if(data >= 80 && data < 90)
+	        {
+	            return 3;             
+	        }
+	        else if(data >= 90 && data < 96)
+	        {
+	            return 4;             
+	        }
+	        else if(data >= 96 && data <= 100)
+	        {
+	            return 5;             
+	        }
 		}
 
 		/* Formats every data in the paginated call */
@@ -1980,53 +983,38 @@ app
 
 		$scope.confirm = function(){
 			var dialog = {
-				'title':'Confirm Results',
-				'message': 'Enter Password',
-				'ok': 'Submit',
-				'cancel': 'cancel',
+				'template':'/app/components/reviews/templates/dialogs/confirm-results-dialog.template.html',
+				'controller':'confirmResultsDialogController',
 			}
 
-			Helper.prompt(dialog)
-				.then(function(response){
-					Helper.preload();
+			Helper.customDialog(dialog)
+				.then(function(){
+					Helper.notify('Results applied.');
+					$state.go('main');
+				});
+		}
 
-					var request = {
-						'password': response,
-					}
-
-					var review = function(){						
-						Helper.post('/review/confirm', request)
-							.success(function(data){
-								if(data)
-								{
-									var confirm = {
-										'title': 'Incorrect Password',
-										'message': 'The password you have entered is incorrect. Please try again.',
-										'ok': 'Okay',
-										'cancel': 'cancel',	
-									}
-
-									Helper.confirm()
-										.then(function(){
-											$scope.confirm();	
-										})
-								}
-								else{
-									Helper.stop();
-									Helper.notify('Results applied.');
-									$state.go('main');
-								}
-							})
-							.error(function(){
-								Helper.failed()
-									.then(function(){
-										$scope.confirm();			
-									})
-							})
-					}
-
-					review();
-				})
+		var rating = function(data){
+			if(data < 70)
+	        {
+	            return 1;
+	        }
+	        else if(data >= 70 && data < 80)
+	        {
+	            return 2;             
+	        }
+	        else if(data >= 80 && data < 90)
+	        {
+	            return 3;             
+	        }
+	        else if(data >= 90 && data < 96)
+	        {
+	            return 4;             
+	        }
+	        else if(data >= 96 && data <= 100)
+	        {
+	            return 5;             
+	        }
 		}
 
 		$scope.init = function(query){		
@@ -2042,7 +1030,6 @@ app
 									{
 										$state.go('page-not-found');
 									}
-
 
 									data.appraisal_form.appraisal_period.start = new Date(data.appraisal_form.appraisal_period.start);
 									data.appraisal_form.appraisal_period.end = new Date(data.appraisal_form.appraisal_period.end);
@@ -2074,30 +1061,20 @@ app
 										supervisor.behavioral_competencies += supervisor_behavioral_competency.supervisor_rating;
 									});
 
-									$scope.goals_self_assessment_rating_average = Math.floor(self_assessment.goals);
-									
-									if(supervisor.goals < 70)
-							        {
-							            $scope.goals_supervisor_rating_average = 1;
-							        }
-							        else if(supervisor.goals >= 70 && supervisor.goals < 80)
-							        {
-							            $scope.goals_supervisor_rating_average = 2;             
-							        }
-							        else if(supervisor.goals >= 80 && supervisor.goals < 90)
-							        {
-							            $scope.goals_supervisor_rating_average = 3;             
-							        }
-							        else if(supervisor.goals >= 90 && supervisor.goals < 96)
-							        {
-							            $scope.goals_supervisor_rating_average = 4;             
-							        }
-							        else if(supervisor.goals >= 96 && supervisor.goals <= 100)
-							        {
-							            $scope.goals_supervisor_rating_average = 5;             
-							        }
+									$scope.goals_supervisor_rating_average = rating(supervisor.goals);
+									$scope.goals_self_assessment_rating_average = Math.round(self_assessment.goals);
 
-									$scope.confirmed = $filter('filter')($scope.review.goals.supervisor_goal_responses, {'confirmed': 1}, true) ? true : false;
+									$scope.behavioral_competencies_supervisor_rating_average = supervisor.behavioral_competencies / $scope.review.behavioral_competencies.length;
+									$scope.behavioral_competencies_self_assessment_rating_average = self_assessment.behavioral_competencies / $scope.review.behavioral_competencies.length;
+									
+									$scope.confirmed = $filter('filter')($scope.review.goals[0].supervisor_goal_responses, {'confirmed': 1}, true) ? true : false;
+
+									if(!$scope.confirmed)
+									{
+										$scope.review.average_goals_score = Math.round(($scope.goals_self_assessment_rating_average  + $scope.goals_supervisor_rating_average) / 2);
+										$scope.review.average_behavioral_competency_score = Math.round(($scope.behavioral_competencies_self_assessment_rating_average  + $scope.behavioral_competencies_supervisor_rating_average) / 2);
+										$scope.review.overall_rating = Math.round($scope.review.average_goals_score * $scope.review.appraisal_form.appraisal_period.goals_percentage + $scope.review.average_behavioral_competency_score * $scope.review.appraisal_form.appraisal_period.behavioral_competency_percentage);
+									}
 
 									$scope.isLoading = false;
 								})
@@ -2130,6 +1107,261 @@ app
 
 		$scope.isLoading = true;
 		$scope.init($scope.request);
+	}]);
+app
+	.controller('mainViewController', ['$scope', '$filter', '$state', '$mdDialog', '$mdSidenav', '$mdToast', 'Helper', 'FileUploader', function($scope, $filter, $state, $mdDialog, $mdSidenav, $mdToast, Helper, FileUploader){
+		$scope.toggleSidenav = function(menuID){
+			$mdSidenav(menuID).toggle();
+		}
+
+		$scope.menu = {};
+		$scope.menu.pages = [];
+
+		$scope.menu.static = [
+			{
+				'state': 'main',
+				'icon': 'mdi-home',
+				'label': 'Home',
+				'show': true,
+			},
+			{
+				'state': 'main.appraisal-forms',
+				'icon': 'mdi-playlist-check',
+				'label': 'Appraisal Forms',
+			},
+			{
+				'state': 'main.dashboard',
+				'icon': 'mdi-view-dashboard',
+				'label': 'Dashboard',
+			},
+			{
+				'state': 'main.team-reviews',
+				'icon': 'mdi-account-multiple',
+				'label': 'Team Reviews',
+			},
+		];
+
+		$scope.menu.section = [];
+
+		$scope.menu.section[0] = {
+			'name':'Settings',
+			'icon':'mdi-settings',
+		}
+
+		$scope.menu.pages[0] = [
+			{
+				'label': 'Appraisal Periods',
+				action: function(){
+					$state.go('main.appraisal-periods');
+				},
+			},
+			{
+				'label': 'Departments',
+				action: function(){
+					$state.go('main.departments');
+				},
+			},
+			{
+				'label': 'Users',
+				action: function(){
+					$state.go('main.users');
+				},
+			},
+		]
+
+		// set section as active
+		$scope.setActive = function(index){
+		 	angular.element($('[aria-label="'+ 'section-' + index + '"]').closest('li').toggleClass('active'));
+		 	angular.element($('[aria-label="'+ 'section-' + index + '"]').closest('li').siblings().removeClass('active'));
+		};
+		
+		$scope.logout = function(){
+			Helper.post('/user/logout')
+				.success(function(){
+					window.location.href = '/';
+				});
+		}
+
+		$scope.changePassword = function()
+		{
+			$mdDialog.show({
+		      controller: 'changePasswordDialogController',
+		      templateUrl: '/app/shared/templates/dialogs/change-password-dialog.template.html',
+		      parent: angular.element(document.body),
+		      fullscreen: true,
+		    })
+		    .then(function(){
+		    	Helper.notify('Password changed.')
+		    });
+		}
+
+		var uploader = {};
+
+		uploader.filter = {
+            name: 'photoFilter',
+            fn: function(item /*{File|FileLikeObject}*/, options) {
+                var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+                return '|jpg|png|jpeg|bmp|gif|'.indexOf(type) !== -1;
+            }
+        };
+
+        uploader.sizeFilter = {
+		    'name': 'enforceMaxFileSize',
+		    'fn': function (item) {
+		        return item.size <= 2000000;
+		    }
+        }
+
+        uploader.error = function(item /*{File|FileLikeObject}*/, filter, options) {
+            $scope.fileError = true;
+            $scope.photoUploader.queue = [];
+        };
+
+        uploader.headers = { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')};
+
+		$scope.clickUpload = function(){
+		    angular.element('#upload').trigger('click');
+		};
+
+		$scope.markAllAsRead = function(){
+			Helper.post('/user/mark-all-as-read')
+				.success(function(){
+					$scope.user.unread_notifications = [];
+				})
+		}
+
+		var fetchUnreadNotifications = function(){
+			Helper.post('/user/check')
+	    		.success(function(data){
+	    			$scope.user = data;
+	    		});
+		}
+
+		Helper.post('/user/check')
+			.success(function(data){
+				var settings = false;
+				var settings_menu = [];
+
+				$scope.menu.static[1].show = $filter('filter')(data.roles, {'name':'parameters'}, true) ? true : false;
+				$scope.menu.static[2].show = $filter('filter')(data.roles, {'name':'dashboard'}, true) ? true : false;
+
+				if($filter('filter')(data.roles, {'name':'supervisor'}, true) || $filter('filter')(data.roles, {'name':'director'}, true) || data.head_of)
+				{
+					$scope.menu.static[3].show = true					
+				}
+
+				$scope.menu.pages[0][0].show = $filter('filter')(data.roles, {'name':'appraisal-periods'}, true) ? true : false;
+				$scope.menu.pages[0][1].show = $filter('filter')(data.roles, {'name':'manage-departments'}, true) ? true : false;
+				$scope.menu.pages[0][2].show = $filter('filter')(data.roles, {'name':'manage-users'}, true) ? true : false;
+
+				var notifications = {
+					'state': 'main.notifications',
+					'icon': 'mdi-bell',
+					'label': 'Notifications',
+					'show': true,
+				}
+
+				$scope.menu.static.push(notifications);
+
+				$scope.user = data;
+
+				$scope.currentTime = Date.now();
+
+				Helper.setAuthUser(data);
+
+				/* Photo Uploader */
+				$scope.photoUploader = new FileUploader({
+					url: '/user/upload-avatar/' + $scope.user.id,
+					headers: uploader.headers,
+					queueLimit : 1
+				})
+
+				// FILTERS
+		        $scope.photoUploader.filters.push(uploader.filter);
+		        $scope.photoUploader.filters.push(uploader.sizeFilter);
+		        
+				$scope.photoUploader.onWhenAddingFileFailed = uploader.error;
+				$scope.photoUploader.onAfterAddingFile  = function(){
+					$scope.fileError = false;
+					if($scope.photoUploader.queue.length)
+					{	
+						$scope.photoUploader.uploadAll()
+					}
+				};
+
+				$scope.photoUploader.onCompleteItem  = function(data, response){
+					if($scope.user.avatar_path)
+					{
+						$scope.currentTime = Date.now();
+						$scope.photoUploader.queue = [];
+					}
+					else{
+						$state.go($state.current, {}, {reload:true});
+					}
+				}
+
+				var pusher = new Pusher('ade8d83d4ed5455e3e18', {
+			      	encrypted: true,
+			      	auth: {
+					    headers: {
+					      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+					    }
+				  	}
+			    });
+
+				var channel = {};
+
+				channel.user = pusher.subscribe('private-App.User.' + $scope.user.id);
+
+				channel.user.bindings = [
+				 	channel.user.bind('Illuminate\\Notifications\\Events\\BroadcastNotificationCreated', function(data) {
+				 		// formating the notification
+				 		data.created_at = data.attachment.created_at;
+
+				 		data.data = {};
+				 		data.data.attachment = data.attachment;
+				 		data.data.url = data.url;
+				 		data.data.withParams = data.withParams;
+				 		data.data.sender = data.sender;
+				 		data.data.message = data.message;
+
+				 		// pushes the new notification in the unread_notifications array
+				 		$scope.$apply(function(){
+					    	$scope.user.unread_notifications.unshift(data);
+				 		});
+
+				 		// notify the user with a toast message
+				 		Helper.notify(data.sender.name + ' ' + data.message);
+
+				 		if($state.current.name == data.data.url)
+						{
+							$state.go($state.current, {}, {reload:true});
+						}
+				    }),
+				];
+			})
+
+		$scope.markAsRead = function(notification){
+			Helper.post('/user/mark-as-read', notification)
+				.success(function(){
+					var index = $scope.user.unread_notifications.indexOf(notification);
+
+					$scope.user.unread_notifications.splice(index, 1);
+				})
+				.error(function(){
+					Helper.error();
+				});
+		}
+
+		$scope.read = function(notification){			
+			$state.go(notification.data.url);
+
+			$scope.markAsRead(notification);
+		}
+
+		$scope.$on('closeSidenav', function(){
+			$mdSidenav('left').close();
+		});
 	}]);
 app
 	.controller('appraisalPeriodsContentContainerController', ['$scope', '$state', 'Helper', function($scope, $state, Helper){
@@ -3251,91 +2483,838 @@ app
 		setInit();
 	}]);
 app
-	.controller('appraisalFormDialogController', ['$scope', '$state', 'Helper', function($scope, $state, Helper){
-		var appraisalFormID = Helper.fetch();
+	.controller('confirmResultsDialogController', ['$scope', '$stateParams', 'Helper', function($scope, $stateParams, Helper) {
+		var supervisorID = $stateParams.supervisorID;
 
-		$scope.cancel = function(){
-			Helper.cancel();
-		}
+		$scope.review = {}
 
-		$scope.manageEmployees = function(){
-			Helper.stop();
+		$scope.review.id = $stateParams.reviewID;
+		$scope.review.supervisor_id = $stateParams.supervisorID;
 
-			$state.go('main.manage-appraisal-form-employees', {'appraisalFormID': appraisalFormID});
-		}
+		$scope.busy = false;
 
-		$scope.update = function(){
-			Helper.stop();
+		$scope.submit = function(){
+			if($scope.confirmationForm.$invalid){
+				angular.forEach($scope.confirmationForm.$error, function(field){
+					angular.forEach(field, function(errorField){
+						errorField.$setTouched();
+					});
+				});
 
-			$state.go('main.manage-appraisal-forms', {'appraisalFormID': appraisalFormID});
-		}
+				return;
+			}
 
-		$scope.delete = function(){
-			Helper.stop($scope.appraisal_form);
-		}
+			$scope.busy = true;
 
-		var query = {};
+			Helper.post('/review/confirm', $scope.review)
+				.success(function(data){
+					$scope.busy = false;
 
-		query.with = [
-			{
-				'relation': 'account',
-				'withTrashed': false,
-			},
-			{
-				'relation': 'department',
-				'withTrashed': false,
-			},
-			{
-				'relation': 'goals',
-				'withTrashed': false,
-			},
-			{
-				'relation': 'behavioral_competencies',
-				'withTrashed': false,
-			},
-			{
-				'relation': 'reviews.user',
-				'withTrashed': false,
-			},
-			{
-				'relation': 'reviews.goals',
-				'withTrashed': false,
-			},
-			{
-				'relation': 'reviews.behavioral_competencies',
-				'withTrashed': false,
-			},
-		];
-
-		query.where = [
-			{
-				'label': 'id',
-				'condition': '=',
-				'value': appraisalFormID,
-			},
-		];
-
-		query.first = true;
-
-		Helper.post('/appraisal-form/enlist', query)
-			.success(function(data){
-				angular.forEach(data.reviews, function(review){
-					if(review.behavioral_competencies.length || review.goals.length)
+					if(data)
 					{
-						$scope.hideUpdate = true;
+						$scope.incorrect = true;
+					}
+					else{
+						Helper.stop();
 					}
 				})
-
-				$scope.appraisal_form = data;
-
-			})
-			.error(function(){
-				Helper.error();
-			});
+				.error(function(){
+					$scope.busy = false;
+					$scope.error = true;
+				})
+		}
 	}]);
 app
-	.controller('appraisalFormsToolbarController', ['$scope', '$filter', function($scope, $filter){
-		$scope.toolbar.childState = 'Appraisal Forms';
+	.controller('appraisalFormsContentContainerController', ['$scope', '$state', 'Helper', function($scope, $state, Helper){
+		$scope.$emit('closeSidenav');
+
+		$scope.state = $state.current.name;
+		/*
+		 * Object for toolbar
+		 *
+		*/
+		$scope.toolbar = {};
+
+		$scope.toolbar.toggleActive = function(){
+			$scope.showInactive = !$scope.showInactive;
+		}
+		$scope.toolbar.sortBy = function(filter){
+			filter.sortReverse = !filter.sortReverse;			
+			$scope.sortType = filter.type;
+			$scope.sortReverse = filter.sortReverse;
+		}
+
+		/*
+		 * Object for fab
+		 *
+		*/
+		$scope.fab = {};
+		$scope.fab.icon = 'mdi-plus';
+
+		$scope.fab.label = 'Users';
+
+		$scope.fab.action = function(){
+			$state.go('main.manage-appraisal-forms');
+		}
+
+
+		/* Action originates from toolbar */
+		$scope.$on('search', function(){
+			$scope.showInactive = true;
+			$scope.request.search = $scope.toolbar.searchText;
+			$scope.refresh();
+		});
+
+		/* Listens for any request for refresh */
+		$scope.$on('refresh', function(){
+			$scope.showInactive = false;
+			$scope.request.search = null;
+			$scope.$broadcast('close');
+			$scope.refresh();
+		});
+
+		$scope.view = function(id){
+			Helper.set(id);
+
+			var dialog = {
+				'controller': 'appraisalFormDialogController',
+				'template': '/app/components/appraisal-forms/templates/dialogs/appraisal-form-dialog.template.html',
+				'fullscreen': true,
+			}
+
+			Helper.customDialog(dialog)
+				.then(function(data){
+					if(data){
+						$scope.delete(data);
+					}
+				}, function(){
+					return;
+				})
+		}
+
+		$scope.update = function(data){
+			$state.go('main.manage-appraisal-forms', {'appraisalFormID':data.id});
+		}
+
+		$scope.delete = function(data){
+			var dialog = {};
+			dialog.title = 'Delete';
+			dialog.message = 'Delete ' + data.department.name + ' appraisal form?'
+			dialog.ok = 'Delete';
+			dialog.cancel = 'Cancel';
+
+			Helper.confirm(dialog)
+				.then(function(){
+					Helper.delete('/appraisal-form/' + data.id)
+						.success(function(){
+							$scope.refresh();
+							Helper.notify('Appraisal form deleted.');
+						})
+						.error(function(){
+							Helper.error();
+						});
+				}, function(){
+					return;
+				})
+		}
+
+		/* Formats every data in the paginated call */
+		var pushItem = function(data){
+			data.deleted_at =  data.deleted_at ? new Date(data.deleted_at) : null;
+			data.hideDelete = data.reviews_count ? true : false;
+
+			data.appraisal_period.start = new Date(data.appraisal_period.start);
+			data.appraisal_period.end = new Date(data.appraisal_period.end);
+
+			angular.forEach(data.reviews, function(review){
+				if(review.behavioral_competencies.length || review.goals.length)
+				{
+					data.hideMenu = true;
+				}
+			})
+
+			console.log(data.hideMenu)
+
+			var item = {};
+
+			item.display = data.name;
+
+			$scope.toolbar.items.push(item);
+		}
+
+		$scope.init = function(query){
+			$scope.appraisal_form = {};
+			$scope.appraisal_form.items = [];
+			$scope.toolbar.items = [];
+
+			// 2 is default so the next page to be loaded will be page 2 
+			$scope.appraisal_form.page = 2;
+
+			Helper.post('/appraisal-form/enlist', query)
+				.success(function(data){
+					$scope.appraisal_form.details = data;
+					$scope.appraisal_form.items = data.data;
+					$scope.appraisal_form.show = true;
+
+					$scope.fab.show = true;
+
+					if(data.data.length){
+						// iterate over each record and set the format
+						angular.forEach(data.data, function(item){
+							pushItem(item);
+						});
+					}
+
+					$scope.appraisal_form.paginateLoad = function(){
+						// kills the function if ajax is busy or pagination reaches last page
+						if($scope.appraisal_form.busy || ($scope.appraisal_form.page > $scope.appraisal_form.details.last_page)){
+							$scope.isLoading = false;
+							return;
+						}
+						/**
+						 * Executes pagination call
+						 *
+						*/
+						// sets to true to disable pagination call if still busy.
+						$scope.appraisal_form.busy = true;
+						$scope.isLoading = true;
+						// Calls the next page of pagination.
+						Helper.post('/appraisal-form/enlist' + '?page=' + $scope.appraisal_form.page, query)
+							.success(function(data){
+								// increment the page to set up next page for next AJAX Call
+								$scope.appraisal_form.page++;
+
+								// iterate over each data then splice it to the data array
+								angular.forEach(data.data, function(item, key){
+									pushItem(item);
+									$scope.appraisal_form.items.push(item);
+								});
+
+								// Enables again the pagination call for next call.
+								$scope.appraisal_form.busy = false;
+								$scope.isLoading = false;
+							});
+					}
+				});
+		}
+
+		$scope.refresh = function(){
+			$scope.isLoading = true;
+  			$scope.appraisal_form.show = false;
+
+  			$scope.init($scope.request);
+		};
+
+		Helper.post('/user/check')
+    		.success(function(data){
+    			var user = data;
+				
+				$scope.request = {};
+
+				$scope.request.withTrashed = true;
+				$scope.request.paginate = 20;	
+				$scope.request.with = [
+					{
+						'relation':'appraisal_period',
+						'withTrashed':false,
+					},
+					{
+						'relation':'account',
+						'withTrashed':false,
+					},
+					{
+						'relation':'department',
+						'withTrashed':false,
+					},
+					{
+						'relation':'reviews.behavioral_competencies',
+						'withTrashed': false,
+					},
+					{
+						'relation':'reviews.goals',
+						'withTrashed': false,
+					},
+				];
+				$scope.request.withCount = [
+					{
+						'relation':'reviews',
+						'withTrashed': false,
+					},
+				];
+				$scope.request.where = [];
+
+				if(!user.super_admin)
+				{
+					$scope.request.where.push(
+						{
+							'label': 'department_id',
+							'condition': '=',
+							'value': user.department_id,
+						}
+					);
+				}
+
+				$scope.isLoading = true;
+				$scope.$broadcast('close');
+
+				$scope.init($scope.request);
+    		});
+
+	}]);
+app
+	.controller('manageAppraisalFormEmployeesContentContainerController', ['$scope', '$filter', '$state', '$stateParams', 'Helper', function($scope, $filter, $state, $stateParams, Helper){
+		$scope.$emit('closeSidenav');
+
+		$scope.form = {};
+		$scope.form.include_all = false;
+
+		var appraisalFormID = $stateParams.appraisalFormID;
+
+		/*
+		 * Object for toolbar
+		 *
+		*/
+		$scope.toolbar = {};
+
+		$scope.toolbar.hideSearchIcon = true;
+
+		$scope.toolbar.parentState = 'Appraisal Form';
+		$scope.toolbar.childState =  'Employees';
+
+		var error_dialog = {
+			'title': 'Aw Snap!',
+			'message': 'An error occured loading the resource.',
+			'ok': 'Try Again'
+		}
+
+		$scope.items = [];
+
+		$scope.querySearch = function(query){
+			var results = query ? $filter('filter')($scope.items, query) : $scope.items;
+			return results;
+		}
+
+		$scope.checkAll = function(){
+			if($scope.form.include_all)
+			{
+				$scope.appraisal_form.reviews = $scope.items;
+			}
+			else{
+				$scope.appraisal_form.reviews = [];
+			}
+		}
+
+		/*
+		 * Object for fab
+		 *
+		*/
+		$scope.fab = {};
+		$scope.fab.icon = 'mdi-check';
+		$scope.fab.label = 'Submit';
+		$scope.fab.show = true;
+
+		$scope.fab.action = function(){
+			$scope.busy = true;
+
+			Helper.preload();
+
+			if(!appraisalFormID)
+			{
+				Helper.post('/review', $scope.appraisal_form.reviews)
+					.success(function(data){
+						Helper.stop();
+						$state.go('main.appraisal-forms');
+					})
+					.error(function(){
+						$scope.busy = false;
+						Helper.error();
+					})
+			}
+			else
+			{
+				Helper.put('/review/' + appraisalFormID, $scope.appraisal_form.reviews)
+					.success(function(data){
+						Helper.stop();
+						$state.go('main.appraisal-forms');
+					})
+					.error(function(){
+						$scope.busy = false;
+						Helper.error();
+					})	
+			}
+		}
+
+		$scope.init = function(){		
+			var appraisal_form_query = {}
+
+			appraisal_form_query.with = [
+				{
+					'relation': 'appraisal_period',
+					'withTrashed': false,
+				},
+				{
+					'relation': 'department',
+					'withTrashed': false,
+				},
+				{
+					'relation': 'reviews.user',
+					'withTrashed': false,
+				},
+				{
+					'relation': 'reviews.goals',
+					'withTrashed': false,
+				},
+				{
+					'relation': 'reviews.behavioral_competencies',
+					'withTrashed': false,
+				},
+			];
+
+			appraisal_form_query.where = [
+				{
+					'label': 'id',
+					'condition': '=',
+					'value': appraisalFormID,
+				},
+			];
+
+			appraisal_form_query.first = true;
+
+			var appraisalForm = function(){
+				Helper.post('/appraisal-form/enlist', appraisal_form_query)
+					.success(function(data){
+						$scope.locked_reviews = [];
+
+						var exclude_users = [];
+
+						angular.forEach(data.reviews, function(item, idx){
+							var name = item.user.first_name + ' ' + item.user.last_name;
+
+							if(item.goals.length || item.behavioral_competencies.length)
+							{
+								$scope.locked_reviews.push(name);
+								exclude_users.push(item.user_id);
+							}
+
+							item.user_id = item.user.id;
+							item.name = name;
+							item.image = item.user.avatar_path ? '/user/avatar/' + item.user_id : '/img/2Color-Favicon_512x512-1.png';
+						});
+						
+						data.appraisal_period.start = new Date(data.appraisal_period.start);
+						data.appraisal_period.end = new Date(data.appraisal_period.end);
+
+						$scope.appraisal_form = data;
+						// $scope.appraisal_form.reviews = [];
+
+						var users_query = {}
+
+						users_query.where = [
+							{
+								'label': 'department_id',
+								'condition': '=',
+								'value': $scope.appraisal_form.department_id,
+							},
+						];
+
+						users_query.whereNotIn = [
+							{
+								'label': 'id',
+								'values': exclude_users,
+							},
+						];
+
+						var users = function(){
+							Helper.post('/user/enlist', users_query)
+								.success(function(data){
+									angular.forEach(data, function(user){
+										var item = {};
+
+										item.user_id = user.id;
+										item.appraisal_form_id = appraisalFormID;
+										item.name = user.last_name + ', ' + user.first_name;
+										item.email = user.email;
+										item.image = user.avatar_path ? '/user/avatar/' + user.id : '/img/2Color-Favicon_512x512-1.png';
+										
+										$scope.items.push(item);
+									});
+
+									$scope.users = data;
+								})
+								.error(function(){
+									Helper.confirm(error_dialog)
+										.then(function(){
+											users();
+										});
+								});
+						}
+
+						users();
+					})
+					.error(function(){
+						Helper.confirm(error_dialog)
+							.then(function(){
+								appraisalForm();
+							});
+					});
+			}
+
+			appraisalForm();
+		}();
+	}]);
+app
+	.controller('manageAppraisalFormsContentContainerController', ['$scope', '$state', '$stateParams', 'Helper', function($scope, $state, $stateParams, Helper){
+		$scope.$emit('closeSidenav');
+
+		$scope.form = {};
+
+		var appraisalFormID = $stateParams.appraisalFormID;
+
+		/*
+		 * Object for toolbar
+		 *
+		*/
+		$scope.toolbar = {};
+
+		$scope.toolbar.hideSearchIcon = true;
+
+		$scope.toolbar.parentState = 'Appraisal Forms';
+		$scope.toolbar.childState =  appraisalFormID ? 'Edit' : 'New';
+
+		var error_dialog = {
+			'title': 'Aw Snap!',
+			'message': 'An error occured loading the resource.',
+			'ok': 'Try Again'
+		}
+
+		var appraisalPeriods = function(){		
+			Helper.get('/appraisal-period')
+				.success(function(data){
+					angular.forEach(data, function(item){
+						item.start = new Date(item.start);
+						item.end = new Date(item.end);
+					});
+
+					$scope.appraisal_periods = data;
+				})
+				.error(function(){
+					Helper.confirm(error_dialog)
+						.then(function(){
+							appraisalPeriods();
+						});
+				});
+		}
+
+		var departments = function(department_id){
+			var request = {
+				'with': [
+					{
+						'relation': 'accounts',
+						'withTrashed': false,
+					},
+				]
+			}
+
+			if(department_id){
+				request.where = [
+					{
+						'label':'id',
+						'condition': '=',
+						'value': department_id,
+					},
+				]
+
+				request.first = true;
+			}
+
+			var fetch = function(){
+				Helper.post('/department/enlist', request)
+					.success(function(data){
+						if(department_id){
+							$scope.appraisal_form.department = data;
+						}
+						else{
+							$scope.departments = data;
+						}
+					})
+					.error(function(){
+						Helper.confirm(error_dialog)
+							.then(function(){
+								fetch();
+							});
+					});
+			}
+
+			fetch();
+		}
+
+		$scope.setAccounts = function(department_id, reset){
+			if(reset)
+			{	
+				$scope.appraisal_form.account_id = null;
+			}
+			
+			var request = {
+				'where': [
+					{
+						'label': 'department_id',
+						'condition': '=',
+						'value': department_id,
+					},
+				],
+			}
+
+			var accounts = function(){
+				Helper.post('/account/enlist', request)
+					.success(function(data){
+						$scope.accounts = data;
+					})
+					.error(function(){
+						Helper.failed()
+							.then(function(){
+								accounts();
+							})
+					})
+			}
+
+			accounts();
+		}
+
+		/*
+		 * Object for fab
+		 *
+		*/
+		$scope.fab = {};
+		$scope.fab.icon = 'mdi-check';
+		$scope.fab.label = 'Submit';
+		$scope.fab.show = true;
+
+		$scope.fab.action = function(){
+			if($scope.form.appraisalForm.$invalid){
+				angular.forEach($scope.form.appraisalForm.$error, function(field){
+					angular.forEach(field, function(errorField){
+						errorField.$setTouched();
+					});
+				});
+
+				return;
+			}
+
+			if($scope.total_weight == 100)
+			{
+				$scope.busy = true;
+
+				Helper.preload();
+
+				if(!appraisalFormID)
+				{
+					Helper.post('/appraisal-form', $scope.appraisal_form)
+						.success(function(data){
+							Helper.stop();
+							$state.go('main.appraisal-forms');
+						})
+						.error(function(){
+							$scope.busy = false;
+							Helper.error();
+						})
+				}
+				else{
+					Helper.put('/appraisal-form/' + appraisalFormID, $scope.appraisal_form)
+						.success(function(data){
+							Helper.stop();
+							$state.go('main.appraisal-forms');
+						})
+						.error(function(){
+							$scope.busy = false;
+							Helper.error();
+						})
+				}
+			}
+			else{
+				$scope.incomplete_goals = true;
+			}
+		}
+
+		$scope.addGoal = function(){
+			$scope.appraisal_form.goals.push({});
+		}
+		
+		$scope.setGoal = function(){
+			$scope.total_weight = 0;
+
+			angular.forEach($scope.appraisal_form.goals, function(item){
+				if(item.weight)
+				{
+					$scope.total_weight += item.weight;		
+				}
+			});
+
+			if($scope.total_weight == 100)
+			{
+				$scope.incomplete_goals = false;
+			}
+		}
+
+		$scope.removeGoal = function(idx){
+			if(appraisalFormID)
+			{
+				var dialog = {
+					'title': 'Remove Goal',
+					'message': 'This goal will be removed permanently.',
+					'ok': 'Delete',
+					'cancel': 'cancel',
+				}
+
+				Helper.confirm(dialog)
+					.then(function(){
+						Helper.delete('/goal/' + $scope.appraisal_form.goals[idx].id)
+							.success(function(){
+								$scope.appraisal_form.goals.splice(idx, 1);
+								$scope.setGoal();
+							})
+							.error(function(){
+								Helper.error();
+							});
+					}, function(){
+						return;
+					});
+			}
+			else{				
+				$scope.appraisal_form.goals.splice(idx, 1);
+				$scope.setGoal();
+			}
+		}
+
+		$scope.addBehavioralCompetency = function(){
+			$scope.appraisal_form.behavioral_competencies.push({});
+		}
+
+		$scope.removeBehavioralCompetency = function(idx){
+			if(appraisalFormID)
+			{
+				var dialog = {
+					'title': 'Remove Behavioral Competency',
+					'message': 'This item will be removed permanently.',
+					'ok': 'Delete',
+					'cancel': 'Cancel',
+				}
+
+				Helper.confirm(dialog)
+					.then(function(){
+						Helper.delete('/behavioral-competency/' + $scope.appraisal_form.behavioral_competencies[idx].id)
+							.success(function(){
+								$scope.appraisal_form.behavioral_competencies.splice(idx, 1);
+							})
+							.error(function(){
+								Helper.error();
+							});
+					}, function(){
+						return;
+					});
+			}
+			else{				
+				$scope.appraisal_form.behavioral_competencies.splice(idx, 1);
+			}
+		}
+
+		$scope.init = function(){
+			Helper.post('/user/check')
+				.success(function(data){
+					$scope.super_admin = data.super_admin;
+					
+					appraisalPeriods();
+
+					if($scope.super_admin){
+						departments();
+					}
+					else{
+						departments(data.department_id);
+					}
+
+					
+					if(!appraisalFormID)
+					{
+						$scope.appraisal_form = {};
+						
+						$scope.appraisal_form.goals = [{}];
+						$scope.appraisal_form.behavioral_competencies = [{}];
+					}
+					else{
+						var query = {}
+
+						query.with = [
+							{
+								'relation': 'appraisal_period',
+								'withTrashed': false,
+							},
+							{
+								'relation': 'department.accounts',
+								'withTrashed': false,
+							},
+							{
+								'relation': 'goals',
+								'withTrashed': false,
+							},
+							{
+								'relation': 'behavioral_competencies',
+								'withTrashed': false,
+							},
+							{
+								'relation': 'reviews.behavioral_competencies',
+								'withTrashed': false,		
+							},
+							{
+								'relation': 'reviews.goals',
+								'withTrashed': false,		
+							}
+						];
+
+						query.where = [
+							{
+								'label': 'id',
+								'condition': '=',
+								'value': appraisalFormID,
+							},
+						];
+
+						query.first = true;
+
+						var appraisalForm = function(){
+							Helper.post('/appraisal-form/enlist', query)
+								.success(function(data){
+									angular.forEach(data.reviews, function(review){
+										if(review.behavioral_competencies.length || review.goals.length)
+										{
+											$state.go('page-not-found');
+										}
+									})
+
+									angular.forEach(data.goals, function(item){
+										item.weight = item.weight * 100;
+									});
+
+									$scope.appraisal_form = data;
+
+									$scope.setGoal();
+									$scope.setAccounts(data.department_id);
+								})
+								.error(function(){
+									Helper.confirm(error_dialog)
+										.then(function(){
+											appraisalForm();
+										});
+								});
+						}
+
+						appraisalForm();
+					}
+				})
+		}();
+	}]);
+app
+	.controller('appraisalPeriodsToolbarController', ['$scope', '$filter', function($scope, $filter){
+		$scope.toolbar.parentState = 'Settings';
+		$scope.toolbar.childState = 'Appraisal Periods';
 
 		$scope.$on('close', function(){
 			$scope.hideSearchBar();
@@ -3383,13 +3362,18 @@ app
 
 		$scope.toolbar.sort = [
 			{
-				'label': 'Appraisal Year',
-				'type': 'appraisal_year',
+				'label': 'Start',
+				'type': 'start',
 				'sortReverse': false,
 			},
 			{
-				'label': 'Department',
-				'type': 'department',
+				'label': 'End',
+				'type': 'end',
+				'sortReverse': false,
+			},
+			{
+				'label': 'Appraisal Year',
+				'type': 'appraisal_year',
 				'sortReverse': false,
 			},
 			{
@@ -3404,126 +3388,12 @@ app
 		}
 	}]);
 app
-	.controller('notificationsContentContainerController', ['$scope', '$state', 'Helper', function($scope, $state, Helper){
-		$scope.$emit('closeSidenav');
-
-		/*
-		 * Object for toolbar
-		 *
-		*/
-		$scope.toolbar = {};
-
-		/* Action originates from toolbar */
-		$scope.$on('search', function(){
-			$scope.request.search = $scope.toolbar.searchText;
-			$scope.refresh();
-		});
-
-		/* Listens for any request for refresh */
-		$scope.$on('refresh', function(){
-			$scope.request.search = null;
-			$scope.$broadcast('close');
-			$scope.refresh();
-		});
-
-		var pushItem = function(item){
-			var item = {
-				'display': item.data.sender.name,
-				'message': item.data.message,
-			}
-
-			$scope.toolbar.items.push(item);
-		}
-
-		$scope.readNotification = function(notification){
-			if(notification.data.withParams)
-			{
-				$state.go(notification.data.url, {'id':notification.data.attachment.id});
-			}
-			else{
-				$state.go(notification.data.url);
-			}
-		}
-
-		$scope.init = function(query){
-			$scope.notification = {};
-			$scope.notification.items = [];
-			$scope.toolbar.items = [];
-
-			// 2 is default so the next page to be loaded will be page 2 
-			$scope.notification.page = 2;
-
-			Helper.post('/user/notifications', query)
-				.success(function(data){
-					$scope.notification.details = data;
-					$scope.notification.items = data.data;
-					$scope.notification.show = true;
-
-					if(data.data.length){
-						// iterate over each record and set the format
-						angular.forEach(data.data, function(item){
-							pushItem(item);
-						});
-					}
-
-					$scope.notification.paginateLoad = function(){
-						// kills the function if ajax is busy or pagination reaches last page
-						if($scope.notification.busy || ($scope.notification.page > $scope.notification.details.last_page)){
-							$scope.isLoading = false;
-							return;
-						}
-						/**
-						 * Executes pagination call
-						 *
-						*/
-						// sets to true to disable pagination call if still busy.
-						$scope.notification.busy = true;
-						$scope.isLoading = true;
-						// Calls the next page of pagination.
-						Helper.post('/user/notifications' + '?page=' + $scope.notification.page, query)
-							.success(function(data){
-								// increment the page to set up next page for next AJAX Call
-								$scope.notification.page++;
-
-								// iterate over each data then splice it to the data array
-								angular.forEach(data.data, function(item, key){
-									pushItem(item);
-									$scope.notification.items.push(item);
-								});
-
-								// Enables again the pagination call for next call.
-								$scope.notification.busy = false;
-								$scope.isLoading = false;
-							});
-					}
-				})
-		}
-
-		$scope.refresh = function(){
-			$scope.isLoading = true;
-  			$scope.notification.show = false;
-			$scope.request.where = null;
-
-  			$scope.init($scope.request);
-		};
-
-		$scope.request = {
-			'paginate':20,
-		}
-
-		$scope.init($scope.request);
-	}]);
-app
-	.controller('notificationsToolbarController', ['$scope', '$filter', function($scope, $filter){
-		$scope.toolbar.childState = 'Notifications';
+	.controller('departmentsToolbarController', ['$scope', '$filter', function($scope, $filter){
+		$scope.toolbar.parentState = 'Settings';
+		$scope.toolbar.childState = 'Departments';
 
 		$scope.$on('close', function(){
 			$scope.hideSearchBar();
-		});
-
-		$scope.$on('open', function(){
-			$scope.showSearchBar();
-			$scope.searchUserInput();
 		});
 
 		$scope.toolbar.getItems = function(query){
@@ -3537,7 +3407,7 @@ app
 		 *
 		*/
 		$scope.showSearchBar = function(){
-			$scope.notification.busy = true;
+			$scope.model.busy = true;
 			$scope.searchBar = true;
 		};
 
@@ -3551,6 +3421,8 @@ app
 			$scope.toolbar.searchItem = '';
 			/* Cancels the paginate when the user sent a query */
 			if($scope.searched){
+				$scope.model.page = 1;
+				$scope.model.items = [];
 				$scope.searched = false;
 				$scope.$emit('refresh');
 			}
@@ -3562,7 +3434,178 @@ app
 		};
 
 		$scope.toolbar.options = true;
-		
+		$scope.toolbar.showInactive = true;
+
+		$scope.toolbar.sort = [
+			{
+				'label': 'Name',
+				'type': 'employee_number',
+				'sortReverse': false,
+			},
+			{
+				'label': 'Recently added',
+				'type': 'created_at',
+				'sortReverse': false,
+			},
+		];
+
+		$scope.toolbar.refresh = function(){
+			$scope.$emit('refresh');
+		}
+	}]);
+app
+	.controller('usersToolbarController', ['$scope', '$filter', function($scope, $filter){
+		$scope.toolbar.parentState = 'Settings';
+		$scope.toolbar.childState = 'Users';
+
+		$scope.$on('close', function(){
+			$scope.hideSearchBar();
+		});
+
+		$scope.toolbar.getItems = function(query){
+			var results = query ? $filter('filter')($scope.toolbar.items, query) : $scope.toolbar.items;
+			return results;
+		}
+
+		$scope.toolbar.searchAll = true;
+		/**
+		 * Reveals the search bar.
+		 *
+		*/
+		$scope.showSearchBar = function(){
+			$scope.model.busy = true;
+			$scope.searchBar = true;
+		};
+
+		/**
+		 * Hides the search bar.
+		 *
+		*/
+		$scope.hideSearchBar = function(){
+			$scope.searchBar = false;
+			$scope.toolbar.searchText = '';
+			$scope.toolbar.searchItem = '';
+			/* Cancels the paginate when the user sent a query */
+			if($scope.searched){
+				$scope.model.page = 1;
+				$scope.model.no_matches = false;
+				$scope.model.items = [];
+				$scope.searched = false;
+				$scope.$emit('refresh');
+			}
+		};
+
+		$scope.searchUserInput = function(){
+			$scope.$emit('search');
+			$scope.searched = true;
+		};
+
+		$scope.toolbar.options = true;
+		$scope.toolbar.showInactive = true;
+
+		$scope.toolbar.sort = [
+			{
+				'label': 'Employee Number',
+				'type': 'employee_number',
+				'sortReverse': false,
+			},
+			{
+				'label': 'Last Name',
+				'type': 'last_name',
+				'sortReverse': false,
+			},
+			{
+				'label': 'First Name',
+				'type': 'first_name',
+				'sortReverse': false,
+			},
+			{
+				'label': 'Email',
+				'type': 'email',
+				'sortReverse': false,
+			},
+			{
+				'label': 'Recently added',
+				'type': 'created_at',
+				'sortReverse': false,
+			},
+		];
+
+		$scope.toolbar.refresh = function(){
+			$scope.$emit('refresh');
+		}
+	}]);
+app
+	.controller('teamReviewsToolbarController', ['$scope', '$filter', function($scope, $filter){
+		$scope.toolbar.childState = 'Team Reviews';
+
+		$scope.$on('close', function(){
+			$scope.hideSearchBar();
+		});
+
+		$scope.toolbar.getItems = function(query){
+			var results = query ? $filter('filter')($scope.toolbar.items, query) : $scope.toolbar.items;
+			return results;
+		}
+
+		$scope.toolbar.searchAll = true;
+		/**
+		 * Reveals the search bar.
+		 *
+		*/
+		$scope.showSearchBar = function(){
+			$scope.model.busy = true;
+			$scope.searchBar = true;
+		};
+
+		/**
+		 * Hides the search bar.
+		 *
+		*/
+		$scope.hideSearchBar = function(){
+			$scope.searchBar = false;
+			$scope.toolbar.searchText = '';
+			$scope.toolbar.searchItem = '';
+			/* Cancels the paginate when the user sent a query */
+			if($scope.searched){
+				$scope.model.page = 1;
+				$scope.model.items = [];
+				$scope.searched = false;
+				$scope.$emit('refresh');
+			}
+		};
+
+		$scope.searchUserInput = function(){
+			$scope.$emit('search');
+			$scope.searched = true;
+		};
+
+		$scope.toolbar.options = true;
+		$scope.toolbar.showInactive = true;
+
+		$scope.toolbar.sort = [
+			{
+				'label': 'Start',
+				'type': 'start',
+				'sortReverse': false,
+			},
+			{
+				'label': 'End',
+				'type': 'end',
+				'sortReverse': false,
+			},
+			{
+				'label': 'Appraisal Year',
+				'type': 'appraisal_year',
+				'sortReverse': false,
+			},
+			{
+				'label': 'Recently added',
+				'type': 'created_at',
+				'sortReverse': false,
+			},
+		];
+
 		$scope.toolbar.refresh = function(){
 			$scope.$emit('refresh');
 		}
@@ -4207,9 +4250,91 @@ app
 		}
 	}]);
 app
-	.controller('appraisalPeriodsToolbarController', ['$scope', '$filter', function($scope, $filter){
-		$scope.toolbar.parentState = 'Settings';
-		$scope.toolbar.childState = 'Appraisal Periods';
+	.controller('appraisalFormDialogController', ['$scope', '$state', 'Helper', function($scope, $state, Helper){
+		var appraisalFormID = Helper.fetch();
+
+		$scope.cancel = function(){
+			Helper.cancel();
+		}
+
+		$scope.manageEmployees = function(){
+			Helper.stop();
+
+			$state.go('main.manage-appraisal-form-employees', {'appraisalFormID': appraisalFormID});
+		}
+
+		$scope.update = function(){
+			Helper.stop();
+
+			$state.go('main.manage-appraisal-forms', {'appraisalFormID': appraisalFormID});
+		}
+
+		$scope.delete = function(){
+			Helper.stop($scope.appraisal_form);
+		}
+
+		var query = {};
+
+		query.with = [
+			{
+				'relation': 'account',
+				'withTrashed': false,
+			},
+			{
+				'relation': 'department',
+				'withTrashed': false,
+			},
+			{
+				'relation': 'goals',
+				'withTrashed': false,
+			},
+			{
+				'relation': 'behavioral_competencies',
+				'withTrashed': false,
+			},
+			{
+				'relation': 'reviews.user',
+				'withTrashed': false,
+			},
+			{
+				'relation': 'reviews.goals',
+				'withTrashed': false,
+			},
+			{
+				'relation': 'reviews.behavioral_competencies',
+				'withTrashed': false,
+			},
+		];
+
+		query.where = [
+			{
+				'label': 'id',
+				'condition': '=',
+				'value': appraisalFormID,
+			},
+		];
+
+		query.first = true;
+
+		Helper.post('/appraisal-form/enlist', query)
+			.success(function(data){
+				angular.forEach(data.reviews, function(review){
+					if(review.behavioral_competencies.length || review.goals.length)
+					{
+						$scope.hideUpdate = true;
+					}
+				})
+
+				$scope.appraisal_form = data;
+
+			})
+			.error(function(){
+				Helper.error();
+			});
+	}]);
+app
+	.controller('appraisalFormsToolbarController', ['$scope', '$filter', function($scope, $filter){
+		$scope.toolbar.childState = 'Appraisal Forms';
 
 		$scope.$on('close', function(){
 			$scope.hideSearchBar();
@@ -4256,85 +4381,14 @@ app
 		$scope.toolbar.showInactive = true;
 
 		$scope.toolbar.sort = [
-			{
-				'label': 'Start',
-				'type': 'start',
-				'sortReverse': false,
-			},
-			{
-				'label': 'End',
-				'type': 'end',
-				'sortReverse': false,
-			},
 			{
 				'label': 'Appraisal Year',
 				'type': 'appraisal_year',
 				'sortReverse': false,
 			},
 			{
-				'label': 'Recently added',
-				'type': 'created_at',
-				'sortReverse': false,
-			},
-		];
-
-		$scope.toolbar.refresh = function(){
-			$scope.$emit('refresh');
-		}
-	}]);
-app
-	.controller('departmentsToolbarController', ['$scope', '$filter', function($scope, $filter){
-		$scope.toolbar.parentState = 'Settings';
-		$scope.toolbar.childState = 'Departments';
-
-		$scope.$on('close', function(){
-			$scope.hideSearchBar();
-		});
-
-		$scope.toolbar.getItems = function(query){
-			var results = query ? $filter('filter')($scope.toolbar.items, query) : $scope.toolbar.items;
-			return results;
-		}
-
-		$scope.toolbar.searchAll = true;
-		/**
-		 * Reveals the search bar.
-		 *
-		*/
-		$scope.showSearchBar = function(){
-			$scope.model.busy = true;
-			$scope.searchBar = true;
-		};
-
-		/**
-		 * Hides the search bar.
-		 *
-		*/
-		$scope.hideSearchBar = function(){
-			$scope.searchBar = false;
-			$scope.toolbar.searchText = '';
-			$scope.toolbar.searchItem = '';
-			/* Cancels the paginate when the user sent a query */
-			if($scope.searched){
-				$scope.model.page = 1;
-				$scope.model.items = [];
-				$scope.searched = false;
-				$scope.$emit('refresh');
-			}
-		};
-
-		$scope.searchUserInput = function(){
-			$scope.$emit('search');
-			$scope.searched = true;
-		};
-
-		$scope.toolbar.options = true;
-		$scope.toolbar.showInactive = true;
-
-		$scope.toolbar.sort = [
-			{
-				'label': 'Name',
-				'type': 'employee_number',
+				'label': 'Department',
+				'type': 'department',
 				'sortReverse': false,
 			},
 			{
@@ -4349,93 +4403,126 @@ app
 		}
 	}]);
 app
-	.controller('usersToolbarController', ['$scope', '$filter', function($scope, $filter){
-		$scope.toolbar.parentState = 'Settings';
-		$scope.toolbar.childState = 'Users';
+	.controller('notificationsContentContainerController', ['$scope', '$state', 'Helper', function($scope, $state, Helper){
+		$scope.$emit('closeSidenav');
 
-		$scope.$on('close', function(){
-			$scope.hideSearchBar();
+		/*
+		 * Object for toolbar
+		 *
+		*/
+		$scope.toolbar = {};
+
+		/* Action originates from toolbar */
+		$scope.$on('search', function(){
+			$scope.request.search = $scope.toolbar.searchText;
+			$scope.refresh();
 		});
 
-		$scope.toolbar.getItems = function(query){
-			var results = query ? $filter('filter')($scope.toolbar.items, query) : $scope.toolbar.items;
-			return results;
-		}
+		/* Listens for any request for refresh */
+		$scope.$on('refresh', function(){
+			$scope.request.search = null;
+			$scope.$broadcast('close');
+			$scope.refresh();
+		});
 
-		$scope.toolbar.searchAll = true;
-		/**
-		 * Reveals the search bar.
-		 *
-		*/
-		$scope.showSearchBar = function(){
-			$scope.model.busy = true;
-			$scope.searchBar = true;
-		};
-
-		/**
-		 * Hides the search bar.
-		 *
-		*/
-		$scope.hideSearchBar = function(){
-			$scope.searchBar = false;
-			$scope.toolbar.searchText = '';
-			$scope.toolbar.searchItem = '';
-			/* Cancels the paginate when the user sent a query */
-			if($scope.searched){
-				$scope.model.page = 1;
-				$scope.model.no_matches = false;
-				$scope.model.items = [];
-				$scope.searched = false;
-				$scope.$emit('refresh');
+		var pushItem = function(item){
+			var item = {
+				'display': item.data.sender.name,
+				'message': item.data.message,
 			}
-		};
 
-		$scope.searchUserInput = function(){
-			$scope.$emit('search');
-			$scope.searched = true;
-		};
-
-		$scope.toolbar.options = true;
-		$scope.toolbar.showInactive = true;
-
-		$scope.toolbar.sort = [
-			{
-				'label': 'Employee Number',
-				'type': 'employee_number',
-				'sortReverse': false,
-			},
-			{
-				'label': 'Last Name',
-				'type': 'last_name',
-				'sortReverse': false,
-			},
-			{
-				'label': 'First Name',
-				'type': 'first_name',
-				'sortReverse': false,
-			},
-			{
-				'label': 'Email',
-				'type': 'email',
-				'sortReverse': false,
-			},
-			{
-				'label': 'Recently added',
-				'type': 'created_at',
-				'sortReverse': false,
-			},
-		];
-
-		$scope.toolbar.refresh = function(){
-			$scope.$emit('refresh');
+			$scope.toolbar.items.push(item);
 		}
+
+		$scope.readNotification = function(notification){
+			if(notification.data.withParams)
+			{
+				$state.go(notification.data.url, {'id':notification.data.attachment.id});
+			}
+			else{
+				$state.go(notification.data.url);
+			}
+		}
+
+		$scope.init = function(query){
+			$scope.notification = {};
+			$scope.notification.items = [];
+			$scope.toolbar.items = [];
+
+			// 2 is default so the next page to be loaded will be page 2 
+			$scope.notification.page = 2;
+
+			Helper.post('/user/notifications', query)
+				.success(function(data){
+					$scope.notification.details = data;
+					$scope.notification.items = data.data;
+					$scope.notification.show = true;
+
+					if(data.data.length){
+						// iterate over each record and set the format
+						angular.forEach(data.data, function(item){
+							pushItem(item);
+						});
+					}
+
+					$scope.notification.paginateLoad = function(){
+						// kills the function if ajax is busy or pagination reaches last page
+						if($scope.notification.busy || ($scope.notification.page > $scope.notification.details.last_page)){
+							$scope.isLoading = false;
+							return;
+						}
+						/**
+						 * Executes pagination call
+						 *
+						*/
+						// sets to true to disable pagination call if still busy.
+						$scope.notification.busy = true;
+						$scope.isLoading = true;
+						// Calls the next page of pagination.
+						Helper.post('/user/notifications' + '?page=' + $scope.notification.page, query)
+							.success(function(data){
+								// increment the page to set up next page for next AJAX Call
+								$scope.notification.page++;
+
+								// iterate over each data then splice it to the data array
+								angular.forEach(data.data, function(item, key){
+									pushItem(item);
+									$scope.notification.items.push(item);
+								});
+
+								// Enables again the pagination call for next call.
+								$scope.notification.busy = false;
+								$scope.isLoading = false;
+							});
+					}
+				})
+		}
+
+		$scope.refresh = function(){
+			$scope.isLoading = true;
+  			$scope.notification.show = false;
+			$scope.request.where = null;
+
+  			$scope.init($scope.request);
+		};
+
+		$scope.request = {
+			'paginate':20,
+		}
+
+		$scope.init($scope.request);
 	}]);
 app
-	.controller('teamReviewsToolbarController', ['$scope', '$filter', function($scope, $filter){
-		$scope.toolbar.childState = 'Team Reviews';
+	.controller('notificationsToolbarController', ['$scope', '$filter', function($scope, $filter){
+		$scope.toolbar.childState = 'Notifications';
 
 		$scope.$on('close', function(){
 			$scope.hideSearchBar();
+		});
+
+		$scope.$on('open', function(){
+			$scope.showSearchBar();
+			$scope.searchUserInput();
 		});
 
 		$scope.toolbar.getItems = function(query){
@@ -4449,7 +4536,7 @@ app
 		 *
 		*/
 		$scope.showSearchBar = function(){
-			$scope.model.busy = true;
+			$scope.notification.busy = true;
 			$scope.searchBar = true;
 		};
 
@@ -4463,8 +4550,6 @@ app
 			$scope.toolbar.searchItem = '';
 			/* Cancels the paginate when the user sent a query */
 			if($scope.searched){
-				$scope.model.page = 1;
-				$scope.model.items = [];
 				$scope.searched = false;
 				$scope.$emit('refresh');
 			}
@@ -4476,31 +4561,7 @@ app
 		};
 
 		$scope.toolbar.options = true;
-		$scope.toolbar.showInactive = true;
-
-		$scope.toolbar.sort = [
-			{
-				'label': 'Start',
-				'type': 'start',
-				'sortReverse': false,
-			},
-			{
-				'label': 'End',
-				'type': 'end',
-				'sortReverse': false,
-			},
-			{
-				'label': 'Appraisal Year',
-				'type': 'appraisal_year',
-				'sortReverse': false,
-			},
-			{
-				'label': 'Recently added',
-				'type': 'created_at',
-				'sortReverse': false,
-			},
-		];
-
+		
 		$scope.toolbar.refresh = function(){
 			$scope.$emit('refresh');
 		}

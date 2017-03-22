@@ -103,7 +103,6 @@ class Review extends Model
             $review_goal_response->employee_remarks = $goal['employee_remarks'];
 
             $review_goal_response->save();
-
         }
     }
 
@@ -117,7 +116,6 @@ class Review extends Model
             $review_behavioral_competency_response->employee_remarks = $behavioral_competency['employee_remarks'];
 
             $review_behavioral_competency_response->save();
-
         }
     }
 
@@ -136,7 +134,6 @@ class Review extends Model
             ]);
 
             $review_goal_response->supervisor_goal_responses()->save($supervisor_goal_response);
-
         }
     }
 
@@ -180,5 +177,48 @@ class Review extends Model
 
             $supervisor_behavioral_competency_response->save();                        
         }
+    }
+
+    public function confirmSupervisorResponse()
+    {
+        $self_assessment_goals = 0;
+        $self_assessment_behavioral_competencies = 0;
+
+        $supervisor_goals = 0;
+        $supervisor_behavioral_competencies = 0;
+
+        foreach ($this->goals as $goal) {
+            $supervisor_goal_response = SupervisorGoalResponse::find($goal['supervisor_goal_responses'][0]['id']);
+
+            $supervisor_goal_response->confirmed = true;
+
+            $supervisor_goal_response->save();
+
+            $self_assessment_goals += $goal['self_assessment'] * $goal['goal']['weight'];
+            $supervisor_goals += $supervisor_goal_response->raw_score * $goal['goal']['weight'];
+        }
+
+        foreach ($this->behavioral_competencies as $behavioral_competency) {
+            $supervisor_behavioral_competency_response = SupervisorBehavioralCompetencyResponse::find($behavioral_competency['supervisor_behavioral_competency_responses'][0]['id']);
+
+            $supervisor_behavioral_competency_response->confirmed = true;
+
+            $supervisor_behavioral_competency_response->save();
+
+            $self_assessment_behavioral_competencies += $behavioral_competency['self_appraisal_rating'];
+            $supervisor_behavioral_competencies += $supervisor_behavioral_competency_response->supervisor_rating;
+        }
+
+        $goals_supervisor_rating_average = $this->raw_score_rating($supervisor_goals);
+        $goals_self_assessment_rating_average = round($self_assessment_goals);
+
+        $behavioral_competencies_supervisor_rating_average = $supervisor_behavioral_competencies / count($this->behavioral_competencies);
+        $behavioral_competencies_self_assessment_rating_average = $self_assessment_behavioral_competencies / count($this->behavioral_competencies);
+
+        $this->average_goals_score = round(($goals_self_assessment_rating_average  + $goals_supervisor_rating_average) / 2);
+        $this->average_behavioral_competency_score = round(($behavioral_competencies_self_assessment_rating_average  + $behavioral_competencies_supervisor_rating_average) / 2);
+        $this->overall_rating = round($this->average_goals_score * $this->appraisal_form->appraisal_period->goals_percentage + $this->average_behavioral_competency_score * $this->appraisal_form->appraisal_period->behavioral_competency_percentage);
+
+        $this->save();                         
     }
 }

@@ -44,16 +44,38 @@ app
 							'withTrashed': false,
 						},
 						{
-							'relation':'goals.supervisor_goal_responses.user',
+							'relation':'goals.supervisor_goal_responses',
 							'withTrashed': false,
+							'where': [
+								{
+									'label': 'confirmed', 
+									'condition': '=',
+									'value': 1,
+								},
+							],
+							'orderBy': {
+								'label':'updated_at',
+								'sort': 'desc',
+							},
 						},
 						{
 							'relation':'behavioral_competencies.behavioral_competency',
 							'withTrashed': false,
 						},
 						{
-							'relation':'behavioral_competencies.supervisor_behavioral_competency_responses.user',
+							'relation':'behavioral_competencies.supervisor_behavioral_competency_responses',
 							'withTrashed': false,
+							'where': [
+								{
+									'label': 'confirmed', 
+									'condition': '=',
+									'value': 1,
+								},
+							],
+							'orderBy': {
+								'label':'updated_at',
+								'sort': 'desc',
+							},
 						},
 					];
 					$scope.request.where = [
@@ -75,6 +97,29 @@ app
 							setInit();
 						})
 				})
+		}
+
+		var rating = function(data){
+			if(data < 70)
+	        {
+	            return 1;
+	        }
+	        else if(data >= 70 && data < 80)
+	        {
+	            return 2;             
+	        }
+	        else if(data >= 80 && data < 90)
+	        {
+	            return 3;             
+	        }
+	        else if(data >= 90 && data < 96)
+	        {
+	            return 4;             
+	        }
+	        else if(data >= 96 && data <= 100)
+	        {
+	            return 5;             
+	        }
 		}
 
 		/* Formats every data in the paginated call */

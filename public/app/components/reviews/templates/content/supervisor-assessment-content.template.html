@@ -63,12 +63,23 @@
 				</div>
 				<div>
 					<md-subheader>Average Score</md-subheader>
-					
+					<table class="table">
+						<tr>
+							<th>Goals: {{review.appraisal_form.appraisal_period.goals_percentage * 100}}%</th>
+							<th>Behavioral Competency: {{review.appraisal_form.appraisal_period.behavioral_competency_percentage * 100}}%</th>
+							<th>Overall Rating</th>
+						</tr>
+						<tr>
+							<th>{{review.average_goals_score}}</th>
+							<th>{{review.average_behavioral_competency_score}}</th>
+							<th>{{review.overall_rating}}</th>
+						</tr>
+					</table>
 				</div>
 				<div ng-if="review.commitment_remarks">
 					<md-subheader>Commitment Remarks</md-subheader>
 					<div layout-padding>
-						<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Nobis quia vitae impedit delectus, voluptatem recusandae deleniti laudantium quis aliquid ad dicta eaque. Fugit aspernatur, voluptate ut ad, qui similique a!</p>
+						<p>{{review.commitment_remarks}}</p>
 					</div>
 				</div>
 				<md-subheader ng-if="review.trainings_needed_self_assessment || review.trainings_needed_supervisor_assessment">Trainings Needed</md-subheader>
@@ -79,10 +90,9 @@
 					</div>
 					<div layout-padding flex ng-if="review.trainings_needed_supervisor_assessment">
 						<md-subheader>Supervisor Assessment</md-subheader>
-						<p>{{review.trainings_needed_supervisor_assessment}}</p>
+						<p>{{review.appraisal_form.appraisal_period.behavioral_competency_percentage}}</p>
 					</div>
 				</div>
-				
 			</md-card-content>
 			<md-card-actions layout="row" layout-align="start center" ng-if="!confirmed">
 	          	<md-button class="md-primary" ng-click="confirm()">Confirm</md-button>

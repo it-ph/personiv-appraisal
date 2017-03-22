@@ -75,53 +75,38 @@ app
 
 		$scope.confirm = function(){
 			var dialog = {
-				'title':'Confirm Results',
-				'message': 'Enter Password',
-				'ok': 'Submit',
-				'cancel': 'cancel',
+				'template':'/app/components/reviews/templates/dialogs/confirm-results-dialog.template.html',
+				'controller':'confirmResultsDialogController',
 			}
 
-			Helper.prompt(dialog)
-				.then(function(response){
-					Helper.preload();
+			Helper.customDialog(dialog)
+				.then(function(){
+					Helper.notify('Results applied.');
+					$state.go('main');
+				});
+		}
 
-					var request = {
-						'password': response,
-					}
-
-					var review = function(){						
-						Helper.post('/review/confirm', request)
-							.success(function(data){
-								if(data)
-								{
-									var confirm = {
-										'title': 'Incorrect Password',
-										'message': 'The password you have entered is incorrect. Please try again.',
-										'ok': 'Okay',
-										'cancel': 'cancel',	
-									}
-
-									Helper.confirm()
-										.then(function(){
-											$scope.confirm();	
-										})
-								}
-								else{
-									Helper.stop();
-									Helper.notify('Results applied.');
-									$state.go('main');
-								}
-							})
-							.error(function(){
-								Helper.failed()
-									.then(function(){
-										$scope.confirm();			
-									})
-							})
-					}
-
-					review();
-				})
+		var rating = function(data){
+			if(data < 70)
+	        {
+	            return 1;
+	        }
+	        else if(data >= 70 && data < 80)
+	        {
+	            return 2;             
+	        }
+	        else if(data >= 80 && data < 90)
+	        {
+	            return 3;             
+	        }
+	        else if(data >= 90 && data < 96)
+	        {
+	            return 4;             
+	        }
+	        else if(data >= 96 && data <= 100)
+	        {
+	            return 5;             
+	        }
 		}
 
 		$scope.init = function(query){		
@@ -137,7 +122,6 @@ app
 									{
 										$state.go('page-not-found');
 									}
-
 
 									data.appraisal_form.appraisal_period.start = new Date(data.appraisal_form.appraisal_period.start);
 									data.appraisal_form.appraisal_period.end = new Date(data.appraisal_form.appraisal_period.end);
@@ -169,30 +153,20 @@ app
 										supervisor.behavioral_competencies += supervisor_behavioral_competency.supervisor_rating;
 									});
 
-									$scope.goals_self_assessment_rating_average = Math.floor(self_assessment.goals);
-									
-									if(supervisor.goals < 70)
-							        {
-							            $scope.goals_supervisor_rating_average = 1;
-							        }
-							        else if(supervisor.goals >= 70 && supervisor.goals < 80)
-							        {
-							            $scope.goals_supervisor_rating_average = 2;             
-							        }
-							        else if(supervisor.goals >= 80 && supervisor.goals < 90)
-							        {
-							            $scope.goals_supervisor_rating_average = 3;             
-							        }
-							        else if(supervisor.goals >= 90 && supervisor.goals < 96)
-							        {
-							            $scope.goals_supervisor_rating_average = 4;             
-							        }
-							        else if(supervisor.goals >= 96 && supervisor.goals <= 100)
-							        {
-							            $scope.goals_supervisor_rating_average = 5;             
-							        }
+									$scope.goals_supervisor_rating_average = rating(supervisor.goals);
+									$scope.goals_self_assessment_rating_average = Math.round(self_assessment.goals);
 
-									$scope.confirmed = $filter('filter')($scope.review.goals.supervisor_goal_responses, {'confirmed': 1}, true) ? true : false;
+									$scope.behavioral_competencies_supervisor_rating_average = supervisor.behavioral_competencies / $scope.review.behavioral_competencies.length;
+									$scope.behavioral_competencies_self_assessment_rating_average = self_assessment.behavioral_competencies / $scope.review.behavioral_competencies.length;
+									
+									$scope.confirmed = $filter('filter')($scope.review.goals[0].supervisor_goal_responses, {'confirmed': 1}, true) ? true : false;
+
+									if(!$scope.confirmed)
+									{
+										$scope.review.average_goals_score = Math.round(($scope.goals_self_assessment_rating_average  + $scope.goals_supervisor_rating_average) / 2);
+										$scope.review.average_behavioral_competency_score = Math.round(($scope.behavioral_competencies_self_assessment_rating_average  + $scope.behavioral_competencies_supervisor_rating_average) / 2);
+										$scope.review.overall_rating = Math.round($scope.review.average_goals_score * $scope.review.appraisal_form.appraisal_period.goals_percentage + $scope.review.average_behavioral_competency_score * $scope.review.appraisal_form.appraisal_period.behavioral_competency_percentage);
+									}
 
 									$scope.isLoading = false;
 								})
