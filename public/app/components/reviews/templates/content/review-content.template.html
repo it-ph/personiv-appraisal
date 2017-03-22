@@ -26,8 +26,17 @@
 							<td>{{goal.goal.weight * 100}}</td>
 							<td>{{goal.self_assessment}}</td>
 							<td>{{goal.employee_remarks}}</td>
-							<td>{{goal.supervisor_rating}}</td>
-							<td>{{goal.supervisor_remarks}}</td>
+							<td>{{goal.supervisor_goal_responses[0].supervisor_rating}}</td>
+							<td>{{goal.supervisor_goal_responses[0].supervisor_remarks}}</td>
+						</tr>
+						<tr>
+							<th>Total</th>
+							<th></th>
+							<th>100%</th>
+							<th>{{goals_self_assessment_rating_average}}</th>
+							<th></th>
+							<th>{{goals_supervisor_rating_average}}</th>
+							<th></th>
 						</tr>
 					</table>
 				</div>
@@ -47,13 +56,45 @@
 							<td class="col-sm-3 col-md-3 col-lg-3 col-xl-3">{{behavioral_competency.behavioral_competency.description}}</td>
 							<td>{{behavioral_competency.self_appraisal_rating}}</td>
 							<td>{{behavioral_competency.employee_remarks}}</td>
-							<td>{{behavioral_competency.supervisor_rating}}</td>
-							<td>{{behavioral_competency.supervisor_remarks}}</td>
+							<td>{{behavioral_competency.supervisor_behavioral_competency_responses[0].supervisor_rating}}</td>
+							<td>{{behavioral_competency.supervisor_behavioral_competency_responses[0].supervisor_remarks}}</td>
 						</tr>
 					</table>
 				</div>
+				<div>
+					<md-subheader>Average Score</md-subheader>
+					<table class="table">
+						<tr>
+							<th>Goals: {{review.appraisal_form.appraisal_period.goals_percentage * 100}}%</th>
+							<th>Behavioral Competency: {{review.appraisal_form.appraisal_period.behavioral_competency_percentage * 100}}%</th>
+							<th>Overall Rating</th>
+						</tr>
+						<tr>
+							<th>{{review.average_goals_score}}</th>
+							<th>{{review.average_behavioral_competency_score}}</th>
+							<th>{{review.overall_rating}}</th>
+						</tr>
+					</table>
+				</div>
+				<div ng-if="review.commitment_remarks">
+					<md-subheader>Commitment Remarks</md-subheader>
+					<div layout-padding>
+						<p>{{review.commitment_remarks}}</p>
+					</div>
+				</div>
+				<md-subheader ng-if="review.trainings_needed_self_assessment || review.trainings_needed_supervisor_assessment">Trainings Needed</md-subheader>
+				<div layout="row" flex>
+					<div layout-padding flex ng-if="review.trainings_needed_self_assessment">
+						<md-subheader>Self Assessment</md-subheader>
+						<p>{{review.trainings_needed_self_assessment}}</p>
+					</div>
+					<div layout-padding flex ng-if="review.trainings_needed_supervisor_assessment">
+						<md-subheader>Supervisor Assessment</md-subheader>
+						<p>{{review.appraisal_form.appraisal_period.behavioral_competency_percentage}}</p>
+					</div>
+				</div>
 			</md-card-content>
-			<md-card-actions layout="row" layout-align="start center" ng-if="!review.overall_rating && review.goals.length && review.behavioral_competencies.length">
+			<md-card-actions layout="row" layout-align="start center">
 	          	<md-button class="md-primary" ng-click="evaluate(review.id)">Evaluate</md-button>
 	        </md-card-actions>
 		</md-card>

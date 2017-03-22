@@ -46,13 +46,14 @@ app
 						{
 							'relation':'goals.supervisor_goal_responses',
 							'withTrashed': false,
-							'where': [
-								{
-									'label': 'confirmed', 
-									'condition': '=',
-									'value': 1,
-								},
-							],
+							// 'where': [
+							// 	{
+							// 		'label': 'confirmed', 
+							// 		'condition': '=',
+							// 		'value': 1,
+							// 	},
+							// ],
+							'with': ['user'],
 							'orderBy': {
 								'label':'updated_at',
 								'sort': 'desc',
@@ -65,13 +66,14 @@ app
 						{
 							'relation':'behavioral_competencies.supervisor_behavioral_competency_responses',
 							'withTrashed': false,
-							'where': [
-								{
-									'label': 'confirmed', 
-									'condition': '=',
-									'value': 1,
-								},
-							],
+							// 'where': [
+							// 	{
+							// 		'label': 'confirmed', 
+							// 		'condition': '=',
+							// 		'value': 1,
+							// 	},
+							// ],
+							'with': ['user'],
 							'orderBy': {
 								'label':'updated_at',
 								'sort': 'desc',

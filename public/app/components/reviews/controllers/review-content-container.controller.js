@@ -34,8 +34,40 @@ app
 				'withTrashed': false,
 			},
 			{
+				'relation':'goals.supervisor_goal_responses',
+				'withTrashed': false,
+				'where': [
+					{
+						'label': 'confirmed', 
+						'condition': '=',
+						'value': 1,
+					},
+					{
+						'label': 'rank', 
+						'condition': '=',
+						'value': 'supervisor',
+					},
+				],
+			},
+			{
 				'relation':'behavioral_competencies.behavioral_competency',
 				'withTrashed': false,
+			},
+			{
+				'relation':'behavioral_competencies.supervisor_behavioral_competency_responses',
+				'withTrashed': false,
+				'where': [
+					{
+						'label': 'confirmed', 
+						'condition': '=',
+						'value': 1,
+					},
+					{
+						'label': 'rank', 
+						'condition': '=',
+						'value': 'supervisor',
+					},
+				],
 			},
 			{
 				'relation':'user',

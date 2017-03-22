@@ -59,6 +59,51 @@ app
 							]
 						});
 					}
+
+					if(data.head_of)
+					{
+						$scope.request.with.push({
+							'relation': 'reviews',
+							'withTrashed': false,
+							// 'has': ['behavioral_competencies', 'goals'],
+							'whereHas': [
+								{
+									'relation': 'behavioral_competencies.supervisor_behavioral_competency_responses',
+									'where': [
+										{
+											'label': 'confirmed',
+											'condition': '=',
+											'value': 1
+										},
+									],
+									'where': [
+										{
+											'label': 'rank',
+											'condition': '=',
+											'value': 'supervisor'
+										},
+									],
+								},
+								{
+									'relation': 'goals.supervisor_goal_responses',
+									'where': [
+										{
+											'label': 'confirmed',
+											'condition': '=',
+											'value': 1
+										},
+									],
+									'where': [
+										{
+											'label': 'rank',
+											'condition': '=',
+											'value': 'supervisor'
+										},
+									],
+								}
+							]
+						});
+					}
 					
 					$scope.request.where = [
 						{

@@ -44,6 +44,7 @@ app
 						'value': supervisorID,
 					},
 				],
+				'with':['user'],
 			},
 			{
 				'relation':'behavioral_competencies.behavioral_competency',
@@ -59,6 +60,7 @@ app
 						'value': supervisorID,
 					},
 				],
+				'with':['user'],
 			},
 			{
 				'relation':'user',
@@ -126,7 +128,9 @@ app
 									data.appraisal_form.appraisal_period.start = new Date(data.appraisal_form.appraisal_period.start);
 									data.appraisal_form.appraisal_period.end = new Date(data.appraisal_form.appraisal_period.end);
 
-									$scope.toolbar.childState = data.goals[0].supervisor_goal_responses[0].user.last_name + ', ' + data.goals[0].supervisor_goal_responses[0].user.first_name;
+									var current_supervisor = $filter('filter')(data.goals[0].supervisor_goal_responses, {'user_id': supervisorID});
+
+									$scope.toolbar.childState = current_supervisor[0].user.last_name + ', ' + current_supervisor[0].user.first_name;
 									
 									$scope.review = data;
 
