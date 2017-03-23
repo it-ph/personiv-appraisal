@@ -237,18 +237,21 @@ class ReviewController extends Controller
             for ($i=0; $i < count($request->with); $i++) { 
                 if(!$request->input('with')[$i]['withTrashed'])
                 {
-                    if(isset($request->input('with')[$i]['orderBy']))
-                    {
-                        $reviews->orderBy($request->input('with')[$i]['orderBy']['label'], $request->input('with')[$i]['orderBy']['sort']);
-                    }
-
                     if(isset($request->input('with')[$i]['with']))
                     {
                         $reviews->with([$request->input('with')[$i]['relation'] => function($query) use($request, $i){
                             foreach ($request->input('with')[$i]['with'] as $with) {
                                 $query->with($with);
                             }
+
+                            if(isset($request->input('with')[$i]['orderBy']))
+                            {
+                                foreach ($request->input('with')[$i]['orderBy'] as $orderBy) {
+                                    $query->orderBy($orderBy['label'], $orderBy['sort']);
+                                }
+                            }
                         }]);
+
 
                         continue;
                     }
@@ -260,7 +263,7 @@ class ReviewController extends Controller
                                 $query->where($where['label'], $where['condition'], $where['value']);
                             }
                             
-                            // $query->with('user');
+                            $query->with('user');
                         }]);
                         
                         continue;

@@ -1,11 +1,25 @@
 app
 	.controller('confirmResultsDialogController', ['$scope', '$stateParams', 'Helper', function($scope, $stateParams, Helper) {
-		var supervisorID = $stateParams.supervisorID;
+		var query = {
+			'where' : [
+				{
+					'label':'id',
+					'condition':'=',
+					'value': $stateParams.reviewID,
+				}
+			],
+			'first': true,
+		}
 
-		$scope.review = {}
+		Helper.post('/review/enlist', query)
+			.success(function(data){
+				$scope.review = data;
+				$scope.review.supervisor_id = $stateParams.supervisorID;
+			})
+			.error(function(){
+				Helper.error();
+			})
 
-		$scope.review.id = $stateParams.reviewID;
-		$scope.review.supervisor_id = $stateParams.supervisorID;
 
 		$scope.busy = false;
 

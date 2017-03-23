@@ -44,7 +44,7 @@ app
 						'value': supervisorID,
 					},
 				],
-				'with':['user'],
+				// 'with':['user'],
 			},
 			{
 				'relation':'behavioral_competencies.behavioral_competency',
@@ -60,7 +60,7 @@ app
 						'value': supervisorID,
 					},
 				],
-				'with':['user'],
+				// 'with':['user'],
 			},
 			{
 				'relation':'user',
@@ -163,7 +163,7 @@ app
 									$scope.behavioral_competencies_supervisor_rating_average = supervisor.behavioral_competencies / $scope.review.behavioral_competencies.length;
 									$scope.behavioral_competencies_self_assessment_rating_average = self_assessment.behavioral_competencies / $scope.review.behavioral_competencies.length;
 									
-									$scope.confirmed = $filter('filter')($scope.review.goals[0].supervisor_goal_responses, {'confirmed': 1}, true) ? true : false;
+									$scope.confirmed = $filter('filter')($scope.review.goals[0].supervisor_goal_responses, {'confirmed': 1}).length ? true : false;
 
 									if(!$scope.confirmed)
 									{

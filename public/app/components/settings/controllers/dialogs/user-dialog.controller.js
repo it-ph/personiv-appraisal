@@ -76,7 +76,7 @@ app
 										}
 									})
 									.error(function(){
-										$scope.error();
+										Helper.error();
 									})
 							});
 						})
@@ -156,7 +156,12 @@ app
 				})
 		}
 
-		$scope.getSupervisors = function(){
+		$scope.getSupervisors = function(reset){
+			if(reset)
+			{
+				$scope.model.immediate_supervisor_id = null
+			}
+
 			var request = {
 				'where': [
 					{

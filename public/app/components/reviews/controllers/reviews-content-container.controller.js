@@ -54,10 +54,16 @@ app
 							// 	},
 							// ],
 							'with': ['user'],
-							'orderBy': {
-								'label':'updated_at',
-								'sort': 'desc',
-							},
+							'orderBy': [
+								{
+									'label':'confirmed',
+									'sort': 'desc',
+								},
+								{
+									'label':'updated_at',
+									'sort': 'desc',
+								},
+							],
 						},
 						{
 							'relation':'behavioral_competencies.behavioral_competency',
@@ -74,10 +80,16 @@ app
 							// 	},
 							// ],
 							'with': ['user'],
-							'orderBy': {
-								'label':'updated_at',
-								'sort': 'desc',
-							},
+							'orderBy': [
+								{
+									'label':'confirmed',
+									'sort': 'desc',
+								},
+								{
+									'label':'updated_at',
+									'sort': 'desc',
+								},
+							]
 						},
 					];
 					$scope.request.where = [

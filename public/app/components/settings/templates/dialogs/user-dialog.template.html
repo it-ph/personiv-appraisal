@@ -97,7 +97,7 @@
                 <!-- Account -->
                 <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
                     <label>Account</label>
-                    <md-select name="Account" ng-model="model.account_id" ng-disabled="busy || !accounts.length" ng-change="getSupervisors()">
+                    <md-select name="Account" ng-model="model.account_id" ng-disabled="busy || !accounts.length" ng-change="getSupervisors(true)">
                         <md-option ng-repeat="account in accounts | orderBy:'name'" value="{{account.id}}">{{account.name}}</md-option>
                     </md-select>
                 </md-input-container>

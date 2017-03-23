@@ -22,7 +22,7 @@
 						</tr>
 						<tr ng-repeat="goal in review.goals">
 							<td>{{goal.goal.parameter}}</td>
-							<td>{{goal.raw_score}}</td>
+							<td>{{goal.supervisor_goal_responses[0].raw_score}}</td>
 							<td>{{goal.goal.weight * 100}}</td>
 							<td>{{goal.self_assessment}}</td>
 							<td>{{goal.employee_remarks}}</td>

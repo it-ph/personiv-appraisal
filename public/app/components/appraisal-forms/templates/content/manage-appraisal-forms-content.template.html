@@ -23,9 +23,9 @@
                     </div>
                 </md-input-container>
                 <!-- Account -->
-                <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
+                <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm ng-if="accounts.length">
                     <label>Account</label>
-                    <md-select name="Account" ng-model="appraisal_form.account_id" ng-disabled="busy || !accounts.length">
+                    <md-select name="Account" ng-model="appraisal_form.account_id" ng-disabled="busy">
                         <md-option ng-repeat="account in accounts" value="{{account.id}}">{{account.name}}</md-option>
                     </md-select>
                 </md-input-container>

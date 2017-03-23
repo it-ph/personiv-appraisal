@@ -167,6 +167,7 @@ class AppraisalFormController extends Controller
         DB::transaction(function() use($request, $appraisal_form){
             $appraisal_form->appraisal_period_id = $request->input('appraisal_period_id');
             $appraisal_form->department_id = $request->department_id;
+            $appraisal_form->account_id = $request->account_id;
             $appraisal_form->description = $request->description;
 
             $appraisal_form->save();

@@ -152,6 +152,11 @@ app
 								'condition': '=',
 								'value': $scope.appraisal_form.department_id,
 							},
+							{
+								'label': 'account_id',
+								'condition': '=',
+								'value': $scope.appraisal_form.account_id,
+							},
 						];
 
 						users_query.whereNotIn = [

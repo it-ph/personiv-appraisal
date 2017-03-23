@@ -132,17 +132,22 @@ app
 				var settings = false;
 				var settings_menu = [];
 
-				$scope.menu.static[1].show = $filter('filter')(data.roles, {'name':'parameters'}, true) ? true : false;
-				$scope.menu.static[2].show = $filter('filter')(data.roles, {'name':'dashboard'}, true) ? true : false;
+				$scope.menu.static[1].show = $filter('filter')(data.roles, {'name':'parameters'}, true).length ? true : false;
+				$scope.menu.static[2].show = $filter('filter')(data.roles, {'name':'dashboard'}, true).length ? true : false;
 
-				if($filter('filter')(data.roles, {'name':'supervisor'}, true) || $filter('filter')(data.roles, {'name':'director'}, true) || data.head_of)
+				if($filter('filter')(data.roles, {'name':'supervisor'}, true).length || $filter('filter')(data.roles, {'name':'director'}, true).length || data.head_of)
 				{
 					$scope.menu.static[3].show = true					
 				}
 
-				$scope.menu.pages[0][0].show = $filter('filter')(data.roles, {'name':'appraisal-periods'}, true) ? true : false;
-				$scope.menu.pages[0][1].show = $filter('filter')(data.roles, {'name':'manage-departments'}, true) ? true : false;
-				$scope.menu.pages[0][2].show = $filter('filter')(data.roles, {'name':'manage-users'}, true) ? true : false;
+				$scope.menu.pages[0][0].show = $filter('filter')(data.roles, {'name':'appraisal-periods'}, true).length ? true : false;
+				$scope.menu.pages[0][1].show = $filter('filter')(data.roles, {'name':'manage-departments'}, true).length ? true : false;
+				$scope.menu.pages[0][2].show = $filter('filter')(data.roles, {'name':'manage-users'}, true).length ? true : false;
+
+				if($scope.menu.pages[0][0].show  || $scope.menu.pages[0][1].show || $scope.menu.pages[0][2].show)
+				{
+					$scope.menu.section[0].show = true;
+				}
 
 				var notifications = {
 					'state': 'main.notifications',

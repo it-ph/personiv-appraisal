@@ -256,6 +256,10 @@ app
 		$scope.init = function(){
 			Helper.post('/user/check')
 				.success(function(data){
+					var user = data;
+
+					$scope.appraisal_form = {};
+
 					$scope.super_admin = data.super_admin;
 					
 					appraisalPeriods();
@@ -265,15 +269,21 @@ app
 					}
 					else{
 						departments(data.department_id);
+						$scope.appraisal_form.department_id = data.department_id;
 					}
 
-					
 					if(!appraisalFormID)
-					{
-						$scope.appraisal_form = {};
-						
+					{	
 						$scope.appraisal_form.goals = [{}];
 						$scope.appraisal_form.behavioral_competencies = [{}];
+
+						if(!data.account_id)
+						{
+							$scope.setAccounts(data.department_id);
+						}
+						else{
+							$scope.appraisal_form.account_id = data.account_id;
+						}
 					}
 					else{
 						var query = {}
@@ -332,7 +342,10 @@ app
 									$scope.appraisal_form = data;
 
 									$scope.setGoal();
-									$scope.setAccounts(data.department_id);
+									if(user.super_admin)
+									{
+										$scope.setAccounts(data.department_id);
+									}
 								})
 								.error(function(){
 									Helper.confirm(error_dialog)
