@@ -99,7 +99,7 @@ app
 									data.appraisal_form.appraisal_period.start = new Date(data.appraisal_form.appraisal_period.start);
 									data.appraisal_form.appraisal_period.end = new Date(data.appraisal_form.appraisal_period.end);
 
-									$scope.toolbar.childState = data.user.last_name + ', ' + data.user.first_name + ' ' + data.user.middle_name.charAt(0).toUpperCase() +'.';
+									$scope.toolbar.childState = data.user.last_name + ', ' + data.user.first_name;
 									
 									$scope.review = data;
 
