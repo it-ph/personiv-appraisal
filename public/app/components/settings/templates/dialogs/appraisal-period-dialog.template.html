@@ -20,19 +20,19 @@
                     <div class="validation-messages" ng-messages="appraisalPeriodForm.Start.$error" ng-if="appraisalPeriodForm.Start.$touched">
                         <div ng-message="valid">The entered value is not a date!</div>
                         <div ng-message="required">This date is required!</div>
-                        <div ng-message="mindate">Date is too early!</div>
-                        <div ng-message="maxdate">Date is too late!</div>
+                        <div ng-message="mindate">Date Start cannot be earlier than 12/1/2015</div>
+                        <div ng-message="maxdate">Date start cannot be later than date end</div>
                     </div>
                 </div>
                 <!-- End -->
                 <div flex-xs="100" flex-sm="100" flex-gt-sm>
                     <h4>End</h4>
-                    <md-datepicker name="End" ng-model="appraisal_period.end" md-placeholder="Enter date" md-min-date="appraisal_period.start" md-max-date="today" ng-disabled="busy" ng-change="checkDuplicate()"></md-datepicker>
+                    <md-datepicker name="End" ng-model="appraisal_period.end" md-placeholder="Enter date" md-min-date="appraisal_period.start" ng-disabled="busy" ng-change="checkDuplicate()"></md-datepicker>
                     <div class="validation-messages" ng-messages="appraisalPeriodForm.End.$error" ng-if="appraisalPeriodForm.End.$touched">
                         <div ng-message="valid">The entered value is not a date!</div>
                         <div ng-message="required">This date is required!</div>
-                        <div ng-message="mindate">Date is too early!</div>
-                        <div ng-message="maxdate">Date is too late!</div>
+                        <div ng-message="mindate">Date end cannot be earlier that date start</div>
+                        <!-- <div ng-message="maxdate">Date cannot be later than today</div> -->
                     </div>
                 </div>
             </div>

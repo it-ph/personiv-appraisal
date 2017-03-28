@@ -36,9 +36,14 @@ app
 
 			Helper.post(route + '/enlist', query)
 				.success(function(data){
-					data.start = new Date(data.start);
-					data.end = new Date(data.end);
 					$scope.appraisal_period = data;
+
+					$scope.appraisal_period.behavioral_competency_percentage = $scope.appraisal_period.behavioral_competency_percentage * 100;
+					$scope.appraisal_period.goals_percentage = $scope.appraisal_period.goals_percentage * 100;
+
+					$scope.appraisal_period.start = new Date($scope.appraisal_period.start);
+					$scope.appraisal_period.end = new Date($scope.appraisal_period.end);
+					
 
 				})
 				.error(function(){
@@ -63,9 +68,26 @@ app
 		}		
 
 		$scope.checkDuplicate = function(){
+			if($scope.appraisal_period.start > $scope.appraisal_period.end)
+			{
+				$scope.appraisal_period.end = new Date($scope.appraisal_period.start);
+			}
+
+			$scope.appraisal_period.start = new Date($scope.appraisal_period.start).toDateString();
+			$scope.appraisal_period.end = new Date($scope.appraisal_period.end).toDateString();
+
 			Helper.post(route + '/check-duplicate', $scope.appraisal_period)
 				.success(function(data){
 					$scope.duplicate = data;
+
+					$scope.appraisal_period.start = new Date($scope.appraisal_period.start);
+					$scope.appraisal_period.end = new Date($scope.appraisal_period.end);
+				})
+				.error(function(){
+					$scope.error = true;
+
+					$scope.appraisal_period.start = new Date($scope.appraisal_period.start);
+					$scope.appraisal_period.end = new Date($scope.appraisal_period.end);	
 				})
 		}
 

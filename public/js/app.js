@@ -384,6 +384,266 @@ app
 			})
 	}]);
 app
+	.controller('mainViewController', ['$scope', '$filter', '$state', '$mdDialog', '$mdSidenav', '$mdToast', 'Helper', 'FileUploader', function($scope, $filter, $state, $mdDialog, $mdSidenav, $mdToast, Helper, FileUploader){
+		$scope.toggleSidenav = function(menuID){
+			$mdSidenav(menuID).toggle();
+		}
+
+		$scope.menu = {};
+		$scope.menu.pages = [];
+
+		$scope.menu.static = [
+			{
+				'state': 'main',
+				'icon': 'mdi-home',
+				'label': 'Home',
+				'show': true,
+			},
+			{
+				'state': 'main.appraisal-forms',
+				'icon': 'mdi-playlist-check',
+				'label': 'Appraisal Forms',
+			},
+			{
+				'state': 'main.dashboard',
+				'icon': 'mdi-view-dashboard',
+				'label': 'Dashboard',
+			},
+			{
+				'state': 'main.team-reviews',
+				'icon': 'mdi-account-multiple',
+				'label': 'Team Reviews',
+			},
+		];
+
+		$scope.menu.section = [];
+
+		$scope.menu.section[0] = {
+			'name':'Settings',
+			'icon':'mdi-settings',
+		}
+
+		$scope.menu.pages[0] = [
+			{
+				'label': 'Appraisal Periods',
+				action: function(){
+					$state.go('main.appraisal-periods');
+				},
+			},
+			{
+				'label': 'Departments',
+				action: function(){
+					$state.go('main.departments');
+				},
+			},
+			{
+				'label': 'Users',
+				action: function(){
+					$state.go('main.users');
+				},
+			},
+		]
+
+		// set section as active
+		$scope.setActive = function(index){
+		 	angular.element($('[aria-label="'+ 'section-' + index + '"]').closest('li').toggleClass('active'));
+		 	angular.element($('[aria-label="'+ 'section-' + index + '"]').closest('li').siblings().removeClass('active'));
+		};
+		
+		$scope.logout = function(){
+			Helper.post('/user/logout')
+				.success(function(){
+					window.location.href = '/';
+				});
+		}
+
+		$scope.changePassword = function()
+		{
+			$mdDialog.show({
+		      controller: 'changePasswordDialogController',
+		      templateUrl: '/app/shared/templates/dialogs/change-password-dialog.template.html',
+		      parent: angular.element(document.body),
+		      fullscreen: true,
+		    })
+		    .then(function(){
+		    	Helper.notify('Password changed.')
+		    });
+		}
+
+		var uploader = {};
+
+		uploader.filter = {
+            name: 'photoFilter',
+            fn: function(item /*{File|FileLikeObject}*/, options) {
+                var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
+                return '|jpg|png|jpeg|bmp|gif|'.indexOf(type) !== -1;
+            }
+        };
+
+        uploader.sizeFilter = {
+		    'name': 'enforceMaxFileSize',
+		    'fn': function (item) {
+		        return item.size <= 2000000;
+		    }
+        }
+
+        uploader.error = function(item /*{File|FileLikeObject}*/, filter, options) {
+            $scope.fileError = true;
+            $scope.photoUploader.queue = [];
+        };
+
+        uploader.headers = { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')};
+
+		$scope.clickUpload = function(){
+		    angular.element('#upload').trigger('click');
+		};
+
+		$scope.markAllAsRead = function(){
+			Helper.post('/user/mark-all-as-read')
+				.success(function(){
+					$scope.user.unread_notifications = [];
+				})
+		}
+
+		var fetchUnreadNotifications = function(){
+			Helper.post('/user/check')
+	    		.success(function(data){
+	    			$scope.user = data;
+	    		});
+		}
+
+		Helper.post('/user/check')
+			.success(function(data){
+				var settings = false;
+				var settings_menu = [];
+
+				$scope.menu.static[1].show = $filter('filter')(data.roles, {'name':'parameters'}, true).length ? true : false;
+				$scope.menu.static[2].show = $filter('filter')(data.roles, {'name':'dashboard'}, true).length ? true : false;
+
+				if($filter('filter')(data.roles, {'name':'supervisor'}, true).length || $filter('filter')(data.roles, {'name':'director'}, true).length || data.head_of)
+				{
+					$scope.menu.static[3].show = true					
+				}
+
+				$scope.menu.pages[0][0].show = $filter('filter')(data.roles, {'name':'appraisal-periods'}, true).length ? true : false;
+				$scope.menu.pages[0][1].show = $filter('filter')(data.roles, {'name':'manage-departments'}, true).length ? true : false;
+				$scope.menu.pages[0][2].show = $filter('filter')(data.roles, {'name':'manage-users'}, true).length ? true : false;
+
+				if($scope.menu.pages[0][0].show  || $scope.menu.pages[0][1].show || $scope.menu.pages[0][2].show)
+				{
+					$scope.menu.section[0].show = true;
+				}
+
+				var notifications = {
+					'state': 'main.notifications',
+					'icon': 'mdi-bell',
+					'label': 'Notifications',
+					'show': true,
+				}
+
+				$scope.menu.static.push(notifications);
+
+				$scope.user = data;
+
+				$scope.currentTime = Date.now();
+
+				Helper.setAuthUser(data);
+
+				/* Photo Uploader */
+				$scope.photoUploader = new FileUploader({
+					url: '/user/upload-avatar/' + $scope.user.id,
+					headers: uploader.headers,
+					queueLimit : 1
+				})
+
+				// FILTERS
+		        $scope.photoUploader.filters.push(uploader.filter);
+		        $scope.photoUploader.filters.push(uploader.sizeFilter);
+		        
+				$scope.photoUploader.onWhenAddingFileFailed = uploader.error;
+				$scope.photoUploader.onAfterAddingFile  = function(){
+					$scope.fileError = false;
+					if($scope.photoUploader.queue.length)
+					{	
+						$scope.photoUploader.uploadAll()
+					}
+				};
+
+				$scope.photoUploader.onCompleteItem  = function(data, response){
+					if($scope.user.avatar_path)
+					{
+						$scope.currentTime = Date.now();
+						$scope.photoUploader.queue = [];
+					}
+					else{
+						$state.go($state.current, {}, {reload:true});
+					}
+				}
+
+				var pusher = new Pusher('ade8d83d4ed5455e3e18', {
+			      	encrypted: true,
+			      	auth: {
+					    headers: {
+					      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+					    }
+				  	}
+			    });
+
+				var channel = {};
+
+				channel.user = pusher.subscribe('private-App.User.' + $scope.user.id);
+
+				channel.user.bindings = [
+				 	channel.user.bind('Illuminate\\Notifications\\Events\\BroadcastNotificationCreated', function(data) {
+				 		// formating the notification
+				 		data.created_at = data.attachment.created_at;
+
+				 		data.data = {};
+				 		data.data.attachment = data.attachment;
+				 		data.data.url = data.url;
+				 		data.data.withParams = data.withParams;
+				 		data.data.sender = data.sender;
+				 		data.data.message = data.message;
+
+				 		// pushes the new notification in the unread_notifications array
+				 		$scope.$apply(function(){
+					    	$scope.user.unread_notifications.unshift(data);
+				 		});
+
+				 		// notify the user with a toast message
+				 		Helper.notify(data.sender.name + ' ' + data.message);
+
+				 		if($state.current.name == data.data.url)
+						{
+							$state.go($state.current, {}, {reload:true});
+						}
+				    }),
+				];
+			})
+
+		$scope.markAsRead = function(notification){
+			Helper.post('/user/mark-as-read', notification)
+				.success(function(){
+					var index = $scope.user.unread_notifications.indexOf(notification);
+
+					$scope.user.unread_notifications.splice(index, 1);
+				})
+				.error(function(){
+					Helper.error();
+				});
+		}
+
+		$scope.read = function(notification){			
+			$state.go(notification.data.url);
+
+			$scope.markAsRead(notification);
+		}
+
+		$scope.$on('closeSidenav', function(){
+			$mdSidenav('left').close();
+		});
+	}]);
+app
 	.controller('appraisalFormsContentContainerController', ['$scope', '$state', 'Helper', function($scope, $state, Helper){
 		$scope.$emit('closeSidenav');
 
@@ -1187,266 +1447,6 @@ app
 					}
 				})
 		}();
-	}]);
-app
-	.controller('mainViewController', ['$scope', '$filter', '$state', '$mdDialog', '$mdSidenav', '$mdToast', 'Helper', 'FileUploader', function($scope, $filter, $state, $mdDialog, $mdSidenav, $mdToast, Helper, FileUploader){
-		$scope.toggleSidenav = function(menuID){
-			$mdSidenav(menuID).toggle();
-		}
-
-		$scope.menu = {};
-		$scope.menu.pages = [];
-
-		$scope.menu.static = [
-			{
-				'state': 'main',
-				'icon': 'mdi-home',
-				'label': 'Home',
-				'show': true,
-			},
-			{
-				'state': 'main.appraisal-forms',
-				'icon': 'mdi-playlist-check',
-				'label': 'Appraisal Forms',
-			},
-			{
-				'state': 'main.dashboard',
-				'icon': 'mdi-view-dashboard',
-				'label': 'Dashboard',
-			},
-			{
-				'state': 'main.team-reviews',
-				'icon': 'mdi-account-multiple',
-				'label': 'Team Reviews',
-			},
-		];
-
-		$scope.menu.section = [];
-
-		$scope.menu.section[0] = {
-			'name':'Settings',
-			'icon':'mdi-settings',
-		}
-
-		$scope.menu.pages[0] = [
-			{
-				'label': 'Appraisal Periods',
-				action: function(){
-					$state.go('main.appraisal-periods');
-				},
-			},
-			{
-				'label': 'Departments',
-				action: function(){
-					$state.go('main.departments');
-				},
-			},
-			{
-				'label': 'Users',
-				action: function(){
-					$state.go('main.users');
-				},
-			},
-		]
-
-		// set section as active
-		$scope.setActive = function(index){
-		 	angular.element($('[aria-label="'+ 'section-' + index + '"]').closest('li').toggleClass('active'));
-		 	angular.element($('[aria-label="'+ 'section-' + index + '"]').closest('li').siblings().removeClass('active'));
-		};
-		
-		$scope.logout = function(){
-			Helper.post('/user/logout')
-				.success(function(){
-					window.location.href = '/';
-				});
-		}
-
-		$scope.changePassword = function()
-		{
-			$mdDialog.show({
-		      controller: 'changePasswordDialogController',
-		      templateUrl: '/app/shared/templates/dialogs/change-password-dialog.template.html',
-		      parent: angular.element(document.body),
-		      fullscreen: true,
-		    })
-		    .then(function(){
-		    	Helper.notify('Password changed.')
-		    });
-		}
-
-		var uploader = {};
-
-		uploader.filter = {
-            name: 'photoFilter',
-            fn: function(item /*{File|FileLikeObject}*/, options) {
-                var type = '|' + item.type.slice(item.type.lastIndexOf('/') + 1) + '|';
-                return '|jpg|png|jpeg|bmp|gif|'.indexOf(type) !== -1;
-            }
-        };
-
-        uploader.sizeFilter = {
-		    'name': 'enforceMaxFileSize',
-		    'fn': function (item) {
-		        return item.size <= 2000000;
-		    }
-        }
-
-        uploader.error = function(item /*{File|FileLikeObject}*/, filter, options) {
-            $scope.fileError = true;
-            $scope.photoUploader.queue = [];
-        };
-
-        uploader.headers = { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')};
-
-		$scope.clickUpload = function(){
-		    angular.element('#upload').trigger('click');
-		};
-
-		$scope.markAllAsRead = function(){
-			Helper.post('/user/mark-all-as-read')
-				.success(function(){
-					$scope.user.unread_notifications = [];
-				})
-		}
-
-		var fetchUnreadNotifications = function(){
-			Helper.post('/user/check')
-	    		.success(function(data){
-	    			$scope.user = data;
-	    		});
-		}
-
-		Helper.post('/user/check')
-			.success(function(data){
-				var settings = false;
-				var settings_menu = [];
-
-				$scope.menu.static[1].show = $filter('filter')(data.roles, {'name':'parameters'}, true).length ? true : false;
-				$scope.menu.static[2].show = $filter('filter')(data.roles, {'name':'dashboard'}, true).length ? true : false;
-
-				if($filter('filter')(data.roles, {'name':'supervisor'}, true).length || $filter('filter')(data.roles, {'name':'director'}, true).length || data.head_of)
-				{
-					$scope.menu.static[3].show = true					
-				}
-
-				$scope.menu.pages[0][0].show = $filter('filter')(data.roles, {'name':'appraisal-periods'}, true).length ? true : false;
-				$scope.menu.pages[0][1].show = $filter('filter')(data.roles, {'name':'manage-departments'}, true).length ? true : false;
-				$scope.menu.pages[0][2].show = $filter('filter')(data.roles, {'name':'manage-users'}, true).length ? true : false;
-
-				if($scope.menu.pages[0][0].show  || $scope.menu.pages[0][1].show || $scope.menu.pages[0][2].show)
-				{
-					$scope.menu.section[0].show = true;
-				}
-
-				var notifications = {
-					'state': 'main.notifications',
-					'icon': 'mdi-bell',
-					'label': 'Notifications',
-					'show': true,
-				}
-
-				$scope.menu.static.push(notifications);
-
-				$scope.user = data;
-
-				$scope.currentTime = Date.now();
-
-				Helper.setAuthUser(data);
-
-				/* Photo Uploader */
-				$scope.photoUploader = new FileUploader({
-					url: '/user/upload-avatar/' + $scope.user.id,
-					headers: uploader.headers,
-					queueLimit : 1
-				})
-
-				// FILTERS
-		        $scope.photoUploader.filters.push(uploader.filter);
-		        $scope.photoUploader.filters.push(uploader.sizeFilter);
-		        
-				$scope.photoUploader.onWhenAddingFileFailed = uploader.error;
-				$scope.photoUploader.onAfterAddingFile  = function(){
-					$scope.fileError = false;
-					if($scope.photoUploader.queue.length)
-					{	
-						$scope.photoUploader.uploadAll()
-					}
-				};
-
-				$scope.photoUploader.onCompleteItem  = function(data, response){
-					if($scope.user.avatar_path)
-					{
-						$scope.currentTime = Date.now();
-						$scope.photoUploader.queue = [];
-					}
-					else{
-						$state.go($state.current, {}, {reload:true});
-					}
-				}
-
-				var pusher = new Pusher('ade8d83d4ed5455e3e18', {
-			      	encrypted: true,
-			      	auth: {
-					    headers: {
-					      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-					    }
-				  	}
-			    });
-
-				var channel = {};
-
-				channel.user = pusher.subscribe('private-App.User.' + $scope.user.id);
-
-				channel.user.bindings = [
-				 	channel.user.bind('Illuminate\\Notifications\\Events\\BroadcastNotificationCreated', function(data) {
-				 		// formating the notification
-				 		data.created_at = data.attachment.created_at;
-
-				 		data.data = {};
-				 		data.data.attachment = data.attachment;
-				 		data.data.url = data.url;
-				 		data.data.withParams = data.withParams;
-				 		data.data.sender = data.sender;
-				 		data.data.message = data.message;
-
-				 		// pushes the new notification in the unread_notifications array
-				 		$scope.$apply(function(){
-					    	$scope.user.unread_notifications.unshift(data);
-				 		});
-
-				 		// notify the user with a toast message
-				 		Helper.notify(data.sender.name + ' ' + data.message);
-
-				 		if($state.current.name == data.data.url)
-						{
-							$state.go($state.current, {}, {reload:true});
-						}
-				    }),
-				];
-			})
-
-		$scope.markAsRead = function(notification){
-			Helper.post('/user/mark-as-read', notification)
-				.success(function(){
-					var index = $scope.user.unread_notifications.indexOf(notification);
-
-					$scope.user.unread_notifications.splice(index, 1);
-				})
-				.error(function(){
-					Helper.error();
-				});
-		}
-
-		$scope.read = function(notification){			
-			$state.go(notification.data.url);
-
-			$scope.markAsRead(notification);
-		}
-
-		$scope.$on('closeSidenav', function(){
-			$mdSidenav('left').close();
-		});
 	}]);
 app
 	.controller('reviewContentContainerController', ['$scope', '$filter', '$state', '$stateParams', 'Helper', function($scope, $filter, $state, $stateParams, Helper){
@@ -3388,6 +3388,170 @@ app
 		setInit();
 	}]);
 app
+	.controller('notificationsContentContainerController', ['$scope', '$state', 'Helper', function($scope, $state, Helper){
+		$scope.$emit('closeSidenav');
+
+		/*
+		 * Object for toolbar
+		 *
+		*/
+		$scope.toolbar = {};
+
+		/* Action originates from toolbar */
+		$scope.$on('search', function(){
+			$scope.request.search = $scope.toolbar.searchText;
+			$scope.refresh();
+		});
+
+		/* Listens for any request for refresh */
+		$scope.$on('refresh', function(){
+			$scope.request.search = null;
+			$scope.$broadcast('close');
+			$scope.refresh();
+		});
+
+		var pushItem = function(item){
+			var item = {
+				'display': item.data.sender.name,
+				'message': item.data.message,
+			}
+
+			$scope.toolbar.items.push(item);
+		}
+
+		$scope.readNotification = function(notification){
+			if(notification.data.withParams)
+			{
+				$state.go(notification.data.url, {'id':notification.data.attachment.id});
+			}
+			else{
+				$state.go(notification.data.url);
+			}
+		}
+
+		$scope.init = function(query){
+			$scope.notification = {};
+			$scope.notification.items = [];
+			$scope.toolbar.items = [];
+
+			// 2 is default so the next page to be loaded will be page 2 
+			$scope.notification.page = 2;
+
+			Helper.post('/user/notifications', query)
+				.success(function(data){
+					$scope.notification.details = data;
+					$scope.notification.items = data.data;
+					$scope.notification.show = true;
+
+					if(data.data.length){
+						// iterate over each record and set the format
+						angular.forEach(data.data, function(item){
+							pushItem(item);
+						});
+					}
+
+					$scope.notification.paginateLoad = function(){
+						// kills the function if ajax is busy or pagination reaches last page
+						if($scope.notification.busy || ($scope.notification.page > $scope.notification.details.last_page)){
+							$scope.isLoading = false;
+							return;
+						}
+						/**
+						 * Executes pagination call
+						 *
+						*/
+						// sets to true to disable pagination call if still busy.
+						$scope.notification.busy = true;
+						$scope.isLoading = true;
+						// Calls the next page of pagination.
+						Helper.post('/user/notifications' + '?page=' + $scope.notification.page, query)
+							.success(function(data){
+								// increment the page to set up next page for next AJAX Call
+								$scope.notification.page++;
+
+								// iterate over each data then splice it to the data array
+								angular.forEach(data.data, function(item, key){
+									pushItem(item);
+									$scope.notification.items.push(item);
+								});
+
+								// Enables again the pagination call for next call.
+								$scope.notification.busy = false;
+								$scope.isLoading = false;
+							});
+					}
+				})
+		}
+
+		$scope.refresh = function(){
+			$scope.isLoading = true;
+  			$scope.notification.show = false;
+			$scope.request.where = null;
+
+  			$scope.init($scope.request);
+		};
+
+		$scope.request = {
+			'paginate':20,
+		}
+
+		$scope.init($scope.request);
+	}]);
+app
+	.controller('notificationsToolbarController', ['$scope', '$filter', function($scope, $filter){
+		$scope.toolbar.childState = 'Notifications';
+
+		$scope.$on('close', function(){
+			$scope.hideSearchBar();
+		});
+
+		$scope.$on('open', function(){
+			$scope.showSearchBar();
+			$scope.searchUserInput();
+		});
+
+		$scope.toolbar.getItems = function(query){
+			var results = query ? $filter('filter')($scope.toolbar.items, query) : $scope.toolbar.items;
+			return results;
+		}
+
+		$scope.toolbar.searchAll = true;
+		/**
+		 * Reveals the search bar.
+		 *
+		*/
+		$scope.showSearchBar = function(){
+			$scope.notification.busy = true;
+			$scope.searchBar = true;
+		};
+
+		/**
+		 * Hides the search bar.
+		 *
+		*/
+		$scope.hideSearchBar = function(){
+			$scope.searchBar = false;
+			$scope.toolbar.searchText = '';
+			$scope.toolbar.searchItem = '';
+			/* Cancels the paginate when the user sent a query */
+			if($scope.searched){
+				$scope.searched = false;
+				$scope.$emit('refresh');
+			}
+		};
+
+		$scope.searchUserInput = function(){
+			$scope.$emit('search');
+			$scope.searched = true;
+		};
+
+		$scope.toolbar.options = true;
+		
+		$scope.toolbar.refresh = function(){
+			$scope.$emit('refresh');
+		}
+	}]);
+app
 	.controller('appraisalFormDialogController', ['$scope', '$state', 'Helper', function($scope, $state, Helper){
 		var appraisalFormID = Helper.fetch();
 
@@ -3672,170 +3836,6 @@ app
 		}
 	}]);
 app
-	.controller('notificationsContentContainerController', ['$scope', '$state', 'Helper', function($scope, $state, Helper){
-		$scope.$emit('closeSidenav');
-
-		/*
-		 * Object for toolbar
-		 *
-		*/
-		$scope.toolbar = {};
-
-		/* Action originates from toolbar */
-		$scope.$on('search', function(){
-			$scope.request.search = $scope.toolbar.searchText;
-			$scope.refresh();
-		});
-
-		/* Listens for any request for refresh */
-		$scope.$on('refresh', function(){
-			$scope.request.search = null;
-			$scope.$broadcast('close');
-			$scope.refresh();
-		});
-
-		var pushItem = function(item){
-			var item = {
-				'display': item.data.sender.name,
-				'message': item.data.message,
-			}
-
-			$scope.toolbar.items.push(item);
-		}
-
-		$scope.readNotification = function(notification){
-			if(notification.data.withParams)
-			{
-				$state.go(notification.data.url, {'id':notification.data.attachment.id});
-			}
-			else{
-				$state.go(notification.data.url);
-			}
-		}
-
-		$scope.init = function(query){
-			$scope.notification = {};
-			$scope.notification.items = [];
-			$scope.toolbar.items = [];
-
-			// 2 is default so the next page to be loaded will be page 2 
-			$scope.notification.page = 2;
-
-			Helper.post('/user/notifications', query)
-				.success(function(data){
-					$scope.notification.details = data;
-					$scope.notification.items = data.data;
-					$scope.notification.show = true;
-
-					if(data.data.length){
-						// iterate over each record and set the format
-						angular.forEach(data.data, function(item){
-							pushItem(item);
-						});
-					}
-
-					$scope.notification.paginateLoad = function(){
-						// kills the function if ajax is busy or pagination reaches last page
-						if($scope.notification.busy || ($scope.notification.page > $scope.notification.details.last_page)){
-							$scope.isLoading = false;
-							return;
-						}
-						/**
-						 * Executes pagination call
-						 *
-						*/
-						// sets to true to disable pagination call if still busy.
-						$scope.notification.busy = true;
-						$scope.isLoading = true;
-						// Calls the next page of pagination.
-						Helper.post('/user/notifications' + '?page=' + $scope.notification.page, query)
-							.success(function(data){
-								// increment the page to set up next page for next AJAX Call
-								$scope.notification.page++;
-
-								// iterate over each data then splice it to the data array
-								angular.forEach(data.data, function(item, key){
-									pushItem(item);
-									$scope.notification.items.push(item);
-								});
-
-								// Enables again the pagination call for next call.
-								$scope.notification.busy = false;
-								$scope.isLoading = false;
-							});
-					}
-				})
-		}
-
-		$scope.refresh = function(){
-			$scope.isLoading = true;
-  			$scope.notification.show = false;
-			$scope.request.where = null;
-
-  			$scope.init($scope.request);
-		};
-
-		$scope.request = {
-			'paginate':20,
-		}
-
-		$scope.init($scope.request);
-	}]);
-app
-	.controller('notificationsToolbarController', ['$scope', '$filter', function($scope, $filter){
-		$scope.toolbar.childState = 'Notifications';
-
-		$scope.$on('close', function(){
-			$scope.hideSearchBar();
-		});
-
-		$scope.$on('open', function(){
-			$scope.showSearchBar();
-			$scope.searchUserInput();
-		});
-
-		$scope.toolbar.getItems = function(query){
-			var results = query ? $filter('filter')($scope.toolbar.items, query) : $scope.toolbar.items;
-			return results;
-		}
-
-		$scope.toolbar.searchAll = true;
-		/**
-		 * Reveals the search bar.
-		 *
-		*/
-		$scope.showSearchBar = function(){
-			$scope.notification.busy = true;
-			$scope.searchBar = true;
-		};
-
-		/**
-		 * Hides the search bar.
-		 *
-		*/
-		$scope.hideSearchBar = function(){
-			$scope.searchBar = false;
-			$scope.toolbar.searchText = '';
-			$scope.toolbar.searchItem = '';
-			/* Cancels the paginate when the user sent a query */
-			if($scope.searched){
-				$scope.searched = false;
-				$scope.$emit('refresh');
-			}
-		};
-
-		$scope.searchUserInput = function(){
-			$scope.$emit('search');
-			$scope.searched = true;
-		};
-
-		$scope.toolbar.options = true;
-		
-		$scope.toolbar.refresh = function(){
-			$scope.$emit('refresh');
-		}
-	}]);
-app
 	.controller('appraisalPeriodDialogController', ['$scope', 'Helper', function($scope, Helper){
 		$scope.config = Helper.fetch();
 
@@ -3873,9 +3873,14 @@ app
 
 			Helper.post(route + '/enlist', query)
 				.success(function(data){
-					data.start = new Date(data.start);
-					data.end = new Date(data.end);
 					$scope.appraisal_period = data;
+
+					$scope.appraisal_period.behavioral_competency_percentage = $scope.appraisal_period.behavioral_competency_percentage * 100;
+					$scope.appraisal_period.goals_percentage = $scope.appraisal_period.goals_percentage * 100;
+
+					$scope.appraisal_period.start = new Date($scope.appraisal_period.start);
+					$scope.appraisal_period.end = new Date($scope.appraisal_period.end);
+					
 
 				})
 				.error(function(){
@@ -3900,9 +3905,26 @@ app
 		}		
 
 		$scope.checkDuplicate = function(){
+			if($scope.appraisal_period.start > $scope.appraisal_period.end)
+			{
+				$scope.appraisal_period.end = new Date($scope.appraisal_period.start);
+			}
+
+			$scope.appraisal_period.start = new Date($scope.appraisal_period.start).toDateString();
+			$scope.appraisal_period.end = new Date($scope.appraisal_period.end).toDateString();
+
 			Helper.post(route + '/check-duplicate', $scope.appraisal_period)
 				.success(function(data){
 					$scope.duplicate = data;
+
+					$scope.appraisal_period.start = new Date($scope.appraisal_period.start);
+					$scope.appraisal_period.end = new Date($scope.appraisal_period.end);
+				})
+				.error(function(){
+					$scope.error = true;
+
+					$scope.appraisal_period.start = new Date($scope.appraisal_period.start);
+					$scope.appraisal_period.end = new Date($scope.appraisal_period.end);	
 				})
 		}
 
@@ -4247,12 +4269,12 @@ app
 		}
 
 		$scope.setAccounts = function(department_id, reset){
-			$scope.getSupervisors();
-
 			if(reset)
 			{	
 				$scope.model.account_id = null;
 			}
+
+			$scope.getSupervisors(reset);
 			
 			var request = {
 				'where': [

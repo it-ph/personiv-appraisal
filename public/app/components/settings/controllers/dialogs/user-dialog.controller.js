@@ -116,12 +116,12 @@ app
 		}
 
 		$scope.setAccounts = function(department_id, reset){
-			$scope.getSupervisors();
-
 			if(reset)
 			{	
 				$scope.model.account_id = null;
 			}
+
+			$scope.getSupervisors(reset);
 			
 			var request = {
 				'where': [
