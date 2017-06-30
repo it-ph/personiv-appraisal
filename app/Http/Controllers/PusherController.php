@@ -10,9 +10,18 @@ class PusherController extends Controller
 {
     public function auth(Request $request)
     {
-    	// key, secret, app_id
-    	$pusher = new Pusher('ade8d83d4ed5455e3e18', '2a557c5a3543eff6ccd7', '292399');
+    	$pusher = new Pusher(env('PUSHER_KEY'), env('PUSHER_SECRET'), env('PUSHER_APP_ID'), array('cluster' => 'PUSHER_APP_CLUSTER'));
     	
     	echo $pusher->socket_auth($request->channel_name, $request->socket_id);
+    }
+
+    public function config(Request $request)
+    {
+        $config = [
+            'key' => env('PUSHER_KEY'),
+            'cluster' => env('PUSHER_APP_CLUSTER'),
+        ];
+
+        return response()->json($config);        
     }
 }

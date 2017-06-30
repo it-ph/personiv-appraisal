@@ -35,7 +35,11 @@ Route::resource('role', 'RolesController');
 Route::resource('user', 'UserController');
 Route::resource('user-role', 'UserRoleController');
 
-Route::post('/pusher/auth', 'PusherController@auth');
+/* Pusher Routes */
+Route::group(['prefiex' => 'pusher'], function(){
+	Route::post('auth', 'PusherController@auth');
+	Route::post('config', 'PusherController@config');
+});
 
 /* User Routes */
 Route::group(['prefix' => 'user'], function(){

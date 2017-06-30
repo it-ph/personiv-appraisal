@@ -195,45 +195,53 @@ app
 					}
 				}
 
-				var pusher = new Pusher('ade8d83d4ed5455e3e18', {
-			      	encrypted: true,
-			      	auth: {
-					    headers: {
-					      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-					    }
-				  	}
-			    });
+				Helper.post('/pusher/config')
+					.success(function(config){
+						var pusher = new Pusher(config.key, {
+							cluster: config.cluster,
+							encrypted: true,
+							auth: {
+								headers: {
+								'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+								}
+							}
+						});
 
-				var channel = {};
+						var channel = {};
 
-				channel.user = pusher.subscribe('private-App.User.' + $scope.user.id);
+						channel.user = pusher.subscribe('private-App.User.' + $scope.user.id);
 
-				channel.user.bindings = [
-				 	channel.user.bind('Illuminate\\Notifications\\Events\\BroadcastNotificationCreated', function(data) {
-				 		// formating the notification
-				 		data.created_at = data.attachment.created_at;
+						channel.user.bindings = [
+							channel.user.bind('Illuminate\\Notifications\\Events\\BroadcastNotificationCreated', function(data) {
+								// formating the notification
+								data.created_at = data.attachment.created_at;
 
-				 		data.data = {};
-				 		data.data.attachment = data.attachment;
-				 		data.data.url = data.url;
-				 		data.data.withParams = data.withParams;
-				 		data.data.sender = data.sender;
-				 		data.data.message = data.message;
+								data.data = {};
+								data.data.attachment = data.attachment;
+								data.data.url = data.url;
+								data.data.withParams = data.withParams;
+								data.data.sender = data.sender;
+								data.data.message = data.message;
 
-				 		// pushes the new notification in the unread_notifications array
-				 		$scope.$apply(function(){
-					    	$scope.user.unread_notifications.unshift(data);
-				 		});
+								// pushes the new notification in the unread_notifications array
+								$scope.$apply(function(){
+									$scope.user.unread_notifications.unshift(data);
+								});
 
-				 		// notify the user with a toast message
-				 		Helper.notify(data.sender.name + ' ' + data.message);
+								// notify the user with a toast message
+								Helper.notify(data.sender.name + ' ' + data.message);
 
-				 		if($state.current.name == data.data.url)
-						{
-							$state.go($state.current, {}, {reload:true});
-						}
-				    }),
-				];
+								if($state.current.name == data.data.url)
+								{
+									$state.go($state.current, {}, {reload:true});
+								}
+							}),
+						];
+					})
+					.error(function(){
+						Helper.error();
+					})
+
 			})
 
 		$scope.markAsRead = function(notification){
